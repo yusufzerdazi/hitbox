@@ -127,6 +127,6 @@ setInterval(() => {
     io.emit("allPlayers", allClients.map(socket => socket.player));
 }, 1000 / 60);
 
-http.listen(3001, () => {
+http.listen(process.env.PORT || 3001, () => {
   console.log('listening on *:3001');
 });
