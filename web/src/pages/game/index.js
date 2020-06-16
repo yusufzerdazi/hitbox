@@ -13,7 +13,7 @@ class Game extends React.Component {
   }
 
   componentDidMount() {
-    this.socket = io('http://localhost:3001');
+    this.socket = io(process.env.REACT_APP_SERVER);
 
     // this.socket.on('playerDetails', player => {
     //   player.currentUser = true;
