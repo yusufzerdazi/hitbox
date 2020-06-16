@@ -9,6 +9,9 @@ const JUMPSPEED = 20;
 const PLATFORMHEIGHT = 270;
 const PLAYERSIZE = 50;
 const SHUNTSPEED = 10;
+const WIDTH = 960;
+const HEIGHT = 540;
+const WALLDAMPING = 0.75;
 var COLLISIONCOOLDOWN = 0;
 
 var allClients = [];
@@ -20,8 +23,8 @@ io.on('connection', (socket) => {
     console.log('Got connect.')
 
     socket.player = {
-        colour: allClients.length == 1 ? "blue" : "red",
-        x: allClients.length == 1 ? 200 : 760,
+        colour: randomColor(),
+        x: 100 + 100 * allClients.length,
         y: PLATFORMHEIGHT,
         xVelocity: 0,
         yVelocity: 0,
@@ -44,7 +47,7 @@ io.on('connection', (socket) => {
     socket.on('disconnect', function() {
        console.log('Got disconnect!');
        var i = allClients.indexOf(socket);
-       allClients.splice(i, 1);
+       allClients[i].disconnected = true;
     });
 });
 
@@ -75,27 +78,57 @@ calculateMovement = () => {
         client.player.x += client.player.xVelocity;
         client.player.y = Math.min(client.player.y + client.player.yVelocity, PLATFORMHEIGHT);
     });
+    allClients.forEach(client => {
+        if(client.player.x < 0) {
+            client.player.x = 0;
+            client.player.xVelocity = -client.player.xVelocity * WALLDAMPING;
+        }
+        if(client.player.x > (WIDTH - PLAYERSIZE)) {
+            client.player.x = WIDTH - PLAYERSIZE;
+            client.player.xVelocity = -client.player.xVelocity * WALLDAMPING;;
+        }
+        if(client.player.y < 0) {
+            client.player.y = 0;
+            client.player.yVelocity = 0;
+        }
+    });
 }
 
 calculateCollision = () => {
-    if(allClients.length == 2 && COLLISIONCOOLDOWN == 0){
-        if(Math.abs(allClients[0].player.x - allClients[1].player.x) <= PLAYERSIZE && Math.abs(allClients[0].player.y - allClients[1].player.y) <= PLAYERSIZE) {
-            COLLISIONCOOLDOWN = 10;
-            if(Math.abs(allClients[0].player.xVelocity) < Math.abs(allClients[1].player.xVelocity)){
-                allClients[0].player.xVelocity = allClients[1].player.xVelocity + (SHUNTSPEED * Math.sign(allClients[1].player.xVelocity));
-                allClients[0].player.health = Math.max(allClients[0].player.health - Math.abs(allClients[1].player.xVelocity), 0);
-            } else if (Math.abs(allClients[0].player.xVelocity) == Math.abs(allClients[1].player.xVelocity)) {
-                allClients[0].player.xVelocity = - allClients[0].player.xVelocity;
-                allClients[1].player.xVelocity = - allClients[1].player.xVelocity;
-                allClients[0].player.health = Math.max(allClients[0].player.health - 0.5 * Math.abs(allClients[0].player.xVelocity), 0);
-                allClients[1].player.health = Math.max(allClients[1].player.health - 0.5 * Math.abs(allClients[1].player.xVelocity), 0);
-            } else {
-                allClients[1].player.xVelocity = allClients[0].player.xVelocity + (SHUNTSPEED * Math.sign(allClients[0].player.xVelocity));
-                allClients[1].player.health = Math.max(allClients[1].player.health - Math.abs(allClients[0].player.xVelocity), 0);
-            }
-        }
+    var wasCollision = false;
+    if(COLLISIONCOOLDOWN == 0){
+        allClients.forEach((client, i) => {
+            allOtherClients = allClients.slice(i + 1, allClients.length);
+            allOtherClients.forEach(otherClient => {
+                if(Math.abs(client.player.x - otherClient.player.x) <= PLAYERSIZE && Math.abs(client.player.y - otherClient.player.y) <= PLAYERSIZE) {
+                    COLLISIONCOOLDOWN = 10;
+                    wasCollision = true;
+                    if(Math.abs(client.player.xVelocity) < Math.abs(otherClient.player.xVelocity)){
+                        client.player.xVelocity = otherClient.player.xVelocity + (SHUNTSPEED * Math.sign(otherClient.player.xVelocity));
+                        client.player.health = Math.max(client.player.health - Math.abs(otherClient.player.xVelocity), 0);
+                    } else if (Math.abs(client.player.xVelocity) == Math.abs(otherClient.player.xVelocity)) {
+                        client.player.xVelocity = - client.player.xVelocity;
+                        otherClient.player.xVelocity = - otherClient.player.xVelocity;
+                        client.player.health = Math.max(client.player.health - 0.5 * Math.abs(client.player.xVelocity), 0);
+                        otherClient.player.health = Math.max(otherClient.player.health - 0.5 * Math.abs(otherClient.player.xVelocity), 0);
+                    } else {
+                        otherClient.player.xVelocity = client.player.xVelocity + (SHUNTSPEED * Math.sign(client.player.xVelocity));
+                        otherClient.player.health = Math.max(otherClient.player.health - Math.abs(client.player.xVelocity), 0);
+                    }
+
+                    if(client.player.y < otherClient.player.y){
+                        client.player.yVelocity = - Math.abs(client.player.yVelocity);
+                        otherClient.player.yVelocity = Math.abs(otherClient.player.yVelocity);
+                    } else if(client.player.y > otherClient.player.y) {
+                        client.player.yVelocity = Math.abs(client.player.yVelocity);
+                        otherClient.player.yVelocity = - Math.abs(otherClient.player.yVelocity);
+                    }
+                }
+            })
+        });
     }
     COLLISIONCOOLDOWN = Math.max(0, COLLISIONCOOLDOWN - 1);
+    return wasCollision;
 }
 
 calculateEnd = () => {
@@ -109,8 +142,8 @@ calculateEnd = () => {
 reset = () => {
     allClients.forEach((client, i)=> {
         client.player = {
-            colour: i == 1 ? "blue" : "red",
-            x: i == 1 ? 200 : 760,
+            colour: client.player.colour,
+            x: 100 + 150 * allClients.length,
             y: PLATFORMHEIGHT,
             xVelocity: 0,
             yVelocity: 0,
@@ -119,10 +152,18 @@ reset = () => {
     });
 }
 
+removeDisconnectedPlayers = () => {
+    allClients = allClients.filter(client => !client.disconnected);
+}
+
 setInterval(() => {
+    removeDisconnectedPlayers();
     calculateSpeed();
     calculateMovement();
-    calculateCollision();
+    wasCollision = calculateCollision();
+    if(wasCollision){
+        io.emit("collision");
+    }
     calculateEnd();
     io.emit("allPlayers", allClients.map(socket => socket.player));
 }, 1000 / 60);
@@ -130,3 +171,5 @@ setInterval(() => {
 http.listen(process.env.PORT || 3001, () => {
   console.log('listening on *:3001');
 });
+
+var randomColor = () => "#000000".replace(/0/g,function(){return (~~(Math.random()*16)).toString(16);});
