@@ -2,10 +2,12 @@
 import React from 'react';
 import io from 'socket.io-client';
 import styles from './styles.module.css';
+import * as THREE from 'three';
 
 class Game extends React.Component {
   constructor(props){
     super(props);
+    this.listener = new THREE.AudioListener();
     this.state = {
       playerSize: 50,
       players: []
@@ -15,16 +17,11 @@ class Game extends React.Component {
   componentDidMount() {
     this.socket = io(process.env.REACT_APP_SERVER);
 
-    // this.socket.on('playerDetails', player => {
-    //   player.currentUser = true;
-    //   const players = this.state.players;
-    //   players.push(player);
-    //   this.setState({players: players});
-    // })
-
     this.socket.on('allPlayers', players => {
       this.setState({players: players})
     })
+
+    this.socket.on('collision', () => this.playSound('click.mp3'))
 
     setInterval(() => {
       this.update();
@@ -85,6 +82,15 @@ class Game extends React.Component {
     ctx.fillStyle = player.colour;
     ctx.rect(player.x, player.y + (100 - player.health)/2, this.state.playerSize, player.health/2);
     ctx.fill();
+  }
+
+  playSound(soundFile){
+    var sound = new THREE.Audio( this.listener );
+    var audioLoader = new THREE.AudioLoader();
+    audioLoader.load(soundFile, function( buffer ) {
+      sound.setBuffer( buffer );
+      sound.play();
+    });
   }
 
   render() {
