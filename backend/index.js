@@ -143,7 +143,7 @@ reset = () => {
     allClients.forEach((client, i)=> {
         client.player = {
             colour: client.player.colour,
-            x: 100 + 150 * allClients.length,
+            x: 100 + 150 * i,
             y: PLATFORMHEIGHT,
             xVelocity: 0,
             yVelocity: 0,
