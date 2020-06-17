@@ -8,6 +8,8 @@ class Game extends React.Component {
   constructor(props){
     super(props);
     this.listener = new THREE.AudioListener();
+    this.addAi = this.addAi.bind(this);
+    this.play = this.play.bind(this);
     this.state = {
       playerSize: 50,
       players: []
@@ -21,7 +23,7 @@ class Game extends React.Component {
       this.setState({players: players})
     })
 
-    this.socket.on('collision', () => this.playSound('click.mp3'))
+    this.socket.on('collision', () => this.playSound('click.mp3'));
 
     setInterval(() => {
       this.update();
@@ -65,7 +67,7 @@ class Game extends React.Component {
     ctx.fill();
     ctx.beginPath();
     ctx.fillStyle = "grey";
-    ctx.rect(0, 320, 960, 540);
+    ctx.rect(0, 400, 960, 540);
     ctx.fill();
   }
 
@@ -76,12 +78,18 @@ class Game extends React.Component {
 
     ctx.fillStyle = "black";
     ctx.beginPath();
-    ctx.rect(player.x, player.y, this.state.playerSize, (100 - player.health)/2);
+    ctx.rect(player.x, player.y - this.state.playerSize, this.state.playerSize, (this.state.playerSize * (100 - player.health) / 100));
     ctx.fill();
     ctx.beginPath();
     ctx.fillStyle = player.colour;
-    ctx.rect(player.x, player.y + (100 - player.health)/2, this.state.playerSize, player.health/2);
+    ctx.rect(player.x, player.y, this.state.playerSize, -(this.state.playerSize * player.health / 100));
     ctx.fill();
+    
+    ctx.strokeStyle = player.colour;
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.rect(player.x + 3, player.y - 3, this.state.playerSize - 6, - this.state.playerSize + 6);
+    ctx.stroke();
   }
 
   playSound(soundFile){
@@ -93,10 +101,24 @@ class Game extends React.Component {
     });
   }
 
+  addAi(){
+    this.socket.emit('addAi');
+  }
+
+  play(){
+    this.socket.emit('play');
+  }
+
   render() {
+    const scores = <div className={styles.scores}>{this.state.players.map((d, i) => <span className={styles.score} style={{color: d.colour}} key={i}>{d.score}</span>)}</div>;
     return (
       <>
         <canvas ref="canvas" width={960} height={540} />
+        <div  className={styles.addAi}>
+          <span onClick={this.addAi} className={styles.addAiButton}>+AI</span>
+          <span onClick={this.play} className={styles.addAiButton}>Play</span>
+        </div>
+        {scores}
       </>
     );
   }
