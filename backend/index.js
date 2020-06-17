@@ -12,6 +12,8 @@ const SHUNTSPEED = 5;
 const WIDTH = 960;
 const HEIGHT = 540;
 const WALLDAMPING = 0.75;
+const DAMAGETHRESHOLD = 5;
+
 var AIALIVE = true;
 
 var allClients = [];
@@ -135,24 +137,30 @@ calculateCollision = () => {
             if(Math.abs((client.player.x + client.player.xVelocity) - (otherClient.player.x + otherClient.player.xVelocity)) <= PLAYERSIZE
                     && Math.abs((client.player.y + client.player.yVelocity) - (otherClient.player.y + otherClient.player.yVelocity)) <= PLAYERSIZE) {
                 wasCollision = true;
+
+                clientSpeed = Math.sqrt(Math.pow(client.player.xVelocity, 2) + Math.pow(client.player.yVelocity, 2));
+                otherClientSpeed = Math.sqrt(Math.pow(otherClient.player.xVelocity, 2) + Math.pow(otherClient.player.yVelocity, 2));
+                speedDifference = Math.abs(clientSpeed - otherClientSpeed);
+                if(clientSpeed < otherClientSpeed && speedDifference >= DAMAGETHRESHOLD){
+                    client.player.health = Math.max(client.player.health - otherClientSpeed, 0);
+                    client.player.invincibility = 100;
+                } else if(speedDifference <= DAMAGETHRESHOLD){
+                    client.player.health = Math.max(client.player.health - 0.5 * otherClientSpeed, 0);
+                }
+
                 if(Math.abs(client.player.xVelocity) < Math.abs(otherClient.player.xVelocity)){
                     client.player.newXVelocity = otherClient.player.xVelocity + (SHUNTSPEED * Math.sign(otherClient.player.xVelocity));
-                    client.player.health = Math.max(client.player.health - Math.abs(otherClient.player.xVelocity), 0);
-                    client.player.invincibility = 100;
                 } else if (Math.abs(client.player.xVelocity) == Math.abs(otherClient.player.xVelocity)) {
                     var flip = Math.sign(client.player.xVelocity) * Math.sign(otherClient.player.xVelocity)
                     client.player.newXVelocity = flip * client.player.xVelocity;
-                    client.player.health = Math.max(client.player.health - 0.5 * Math.abs(client.player.xVelocity), 0);
                 }
+
                 if(Math.abs(client.player.yVelocity) < Math.abs(otherClient.player.yVelocity)){
                     otherClient.player.newYVelocity = - otherClient.player.yVelocity;
                     client.player.newYVelocity = otherClient.player.yVelocity + (SHUNTSPEED * Math.sign(otherClient.player.yVelocity));
-                    client.player.health = Math.max(client.player.health - Math.abs(otherClient.player.yVelocity), 0);
-                    client.player.invincibility = 100;
                 } else if (Math.abs(client.player.yVelocity) == Math.abs(otherClient.player.yVelocity)) {
                     var flip = Math.sign(client.player.yVelocity) * Math.sign(otherClient.player.yVelocity)
                     client.player.newYVelocity = flip * client.player.yVelocity;
-                    client.player.health = Math.max(client.player.health - 0.5 * Math.abs(client.player.yVelocity), 0);
                 }
             }
         })
