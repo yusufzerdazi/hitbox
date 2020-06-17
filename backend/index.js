@@ -13,6 +13,7 @@ const WIDTH = 960;
 const HEIGHT = 540;
 const WALLDAMPING = 0.75;
 const DAMAGETHRESHOLD = 5;
+const FRICTION = 0.9;
 
 var AIALIVE = true;
 
@@ -39,6 +40,9 @@ io.on('connection', (socket) => {
 
     socket.on('right', pressed => {
         socket.player ? socket.player.right = pressed : null;
+    });
+    socket.on('boostRight', pressed => {
+        socket.player ? socket.player.boostRight = pressed : null;
     });
     socket.on('left', pressed => {
         socket.player ? socket.player.left = pressed : null;
@@ -86,12 +90,21 @@ io.on('connection', (socket) => {
 
 calculateSpeed = () => {
     allClients.forEach(client => {
-        if(client.player.right){
-            client.player.xVelocity = Math.min(client.player.xVelocity + ACCELERATION, TERMINAL);
+        if(client.player.boostRight){
+            client.player.xVelocity = 40;
         }
-        if(client.player.left){
-            client.player.xVelocity = Math.max(client.player.xVelocity - ACCELERATION, -TERMINAL);
+        else if(Math.abs(client.player.xVelocity) <= TERMINAL){
+            if(client.player.right){
+                client.player.xVelocity = Math.min(client.player.xVelocity + ACCELERATION, TERMINAL);
+            }
+            if(client.player.left){
+                client.player.xVelocity = Math.max(client.player.xVelocity - ACCELERATION, -TERMINAL);
+            }
+        } else {
+            aboveTerminal = Math.abs(client.player.xVelocity) - TERMINAL;
+            client.player.xVelocity = TERMINAL + aboveTerminal * FRICTION;
         }
+        
         if(client.player.space && client.player.y == PLATFORMHEIGHT){
             client.player.yVelocity = -JUMPSPEED;
         }
