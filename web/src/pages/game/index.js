@@ -9,10 +9,15 @@ class Game extends React.Component {
     super(props);
     this.listener = new THREE.AudioListener();
     this.addAi = this.addAi.bind(this);
+    this.removeAi = this.removeAi.bind(this);
     this.play = this.play.bind(this);
+    this.quit = this.quit.bind(this);
+    this.toggleSound = this.toggleSound.bind(this);
+    this.toggleAi = this.toggleAi.bind(this);
     this.state = {
       playerSize: 50,
-      players: []
+      players: [],
+      soundEnabled: false
     };
   }
 
@@ -23,7 +28,7 @@ class Game extends React.Component {
       this.setState({players: players})
     })
 
-    this.socket.on('collision', () => this.playSound('click.mp3'));
+    this.socket.on('collision', () => this.state.soundEnabled ? this.playSound('click.mp3') : () => {});
 
     setInterval(() => {
       this.update();
@@ -105,8 +110,24 @@ class Game extends React.Component {
     this.socket.emit('addAi');
   }
 
+  removeAi(){
+    this.socket.emit('removeAi');
+  }
+
   play(){
     this.socket.emit('play');
+  }
+
+  quit(){
+    this.socket.emit('quit');
+  }
+
+  toggleSound(){
+    this.setState({soundEnabled: !this.state.soundEnabled})
+  }
+  
+  toggleAi(){
+    this.socket.emit('toggleAi');
   }
 
   render() {
@@ -116,7 +137,11 @@ class Game extends React.Component {
         <canvas ref="canvas" width={960} height={540} />
         <div  className={styles.addAi}>
           <span onClick={this.addAi} className={styles.addAiButton}>+AI</span>
+          <span onClick={this.removeAi} className={styles.addAiButton}>-AI</span>
           <span onClick={this.play} className={styles.addAiButton}>Play</span>
+          <span onClick={this.quit} className={styles.addAiButton}>Quit</span>
+          <span onClick={this.toggleSound} className={styles.addAiButton}>Toggle Sound</span>
+          <span onClick={this.toggleAi} className={styles.addAiButton}>Toggle AI</span>
         </div>
         {scores}
       </>
