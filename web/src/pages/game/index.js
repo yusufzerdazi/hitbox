@@ -3,6 +3,7 @@ import React from 'react';
 import io from 'socket.io-client';
 import styles from './styles.module.css';
 import * as THREE from 'three';
+import hitbox from '../../assets/hitbox.svg';
 
 class Game extends React.Component {
   constructor(props){
@@ -14,7 +15,10 @@ class Game extends React.Component {
     this.quit = this.quit.bind(this);
     this.toggleSound = this.toggleSound.bind(this);
     this.toggleAi = this.toggleAi.bind(this);
+    this.handleChange = this.handleChange.bind(this);
     this.state = {
+      nameClass: styles.name,
+      nameInputClass: styles.nameInput,
       playerSize: 50,
       players: [],
       soundEnabled: false
@@ -78,12 +82,10 @@ class Game extends React.Component {
 
   drawPlayer(player){
     const ctx = this.refs.canvas.getContext("2d");
-    // change this colour to change the colour of your 
-    // "pen" in the canvas 
-
+    if(!player.alive) ctx.globalAlpha = 0.3;
     ctx.fillStyle = "black";
     ctx.beginPath();
-    ctx.rect(player.x, player.y - this.state.playerSize, this.state.playerSize, (this.state.playerSize * (100 - player.health) / 100));
+    if(player.alive) ctx.rect(player.x, player.y - this.state.playerSize, this.state.playerSize, (this.state.playerSize * (100 - player.health) / 100));
     ctx.fill();
     ctx.beginPath();
     ctx.fillStyle = player.colour;
@@ -93,8 +95,12 @@ class Game extends React.Component {
     ctx.strokeStyle = player.colour;
     ctx.lineWidth = 6;
     ctx.beginPath();
+    if(player.name){
+      ctx.fillText(player.name, player.x, player.y - this.state.playerSize - 3);
+    }
     ctx.rect(player.x + 3, player.y - 3, this.state.playerSize - 6, - this.state.playerSize + 6);
     ctx.stroke();
+    ctx.globalAlpha = 1;
   }
 
   playSound(soundFile){
@@ -115,7 +121,14 @@ class Game extends React.Component {
   }
 
   play(){
-    this.socket.emit('play');
+    if(this.state.name){
+      this.socket.emit('play', {name: this.state.name});
+      this.state.nameClass = styles.name;
+      this.state.nameInputClass = styles.nameInput;
+    } else {
+      this.state.nameClass = styles.name + ' ' + styles.red;
+      this.state.nameInputClass = styles.nameInput + ' ' + styles.red;
+    }
   }
 
   quit(){
@@ -130,15 +143,26 @@ class Game extends React.Component {
     this.socket.emit('toggleAi');
   }
 
+  handleChange(event) {
+    this.setState({name: event.target.value});
+  }
+
   render() {
-    const scores = <div className={styles.scores}>{this.state.players.map((d, i) => <span className={styles.score} style={{color: d.colour}} key={i}>{d.score}</span>)}</div>;
+    const scores = 
+    <div className={styles.scores}>
+      <p>{this.state.players.map((d, i) => <span className={styles.score} style={{color: d.colour}} key={i}>{d.name + ':\u00A0' + d.score}</span>)}</p>
+    </div>;
     return (
       <>
+        <div className={styles.titleContainer}>
+          <img className={styles.title} src={hitbox}></img>
+        </div>
         <canvas ref="canvas" width={960} height={540} />
         <div  className={styles.addAi}>
+          <span className={this.state.nameClass}><input onChange={this.handleChange} placeholder="Enter name" className={this.state.nameInputClass} type="text"></input></span>
+          <span onClick={this.play} className={styles.addAiButton}>Play</span>
           <span onClick={this.addAi} className={styles.addAiButton}>+AI</span>
           <span onClick={this.removeAi} className={styles.addAiButton}>-AI</span>
-          <span onClick={this.play} className={styles.addAiButton}>Play</span>
           <span onClick={this.quit} className={styles.addAiButton}>Quit</span>
           <span onClick={this.toggleSound} className={styles.addAiButton}>Toggle Sound</span>
           <span onClick={this.toggleAi} className={styles.addAiButton}>Toggle AI</span>

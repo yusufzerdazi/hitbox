@@ -2,6 +2,7 @@
     font-size: x-large;
     font-weight: bold;
     margin: 10px;
+    display: inline-block;
 }
 
 .addAiButton {
@@ -15,4 +16,30 @@
 
 .addAi {
     margin: 10px
+}
+
+.title {
+    height: 100px;
+}
+
+.titleContainer {
+    margin-bottom: 10px;
+}
+
+.name {
+    font-size: large;
+    font-weight: bold;
+    background-color: white;
+    padding: 5px;
+    margin: 5px;
+}
+
+.red {
+    background-color: pink;
+}
+
+.nameInput {
+    outline: none;
+    border: none;
+    
 }
