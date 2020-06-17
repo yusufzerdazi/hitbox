@@ -19,10 +19,11 @@ var AIALIVE = true;
 var allClients = [];
 io.on('connection', (socket) => {
     console.log('Got connect.')
-    socket.on('play', () => {
+    socket.on('play', (player) => {
         if(!socket.player || socket.player.disconnected){
             allClients.push(socket);
             socket.player = {
+                name: player.name,
                 colour: randomColor(),
                 x: 100 + 100 * allClients.length,
                 y: PLATFORMHEIGHT,
@@ -47,8 +48,10 @@ io.on('connection', (socket) => {
     })
 
     socket.on('addAi', () =>{
+        var colour = randomColor();
         allClients.push({player: {
-            colour: randomColor(),
+            colour: colour,
+            name: colour,
             x: getRandomInt(WIDTH - PLAYERSIZE),
             y: PLATFORMHEIGHT,
             xVelocity: 0,
@@ -69,7 +72,7 @@ io.on('connection', (socket) => {
     })
 
     socket.on('quit', function() {
-        socket.player.disconnected = true;
+        if(socket.player) socket.player.disconnected = true;
     });
 
     socket.on('toggleAi', function() {
@@ -77,10 +80,7 @@ io.on('connection', (socket) => {
     });
     
     socket.on('disconnect', function() {
-       var i = allClients.indexOf(socket);
-       if(allClients[i]){  
-           allClients[i].disconnected = true;
-       }
+       if(socket.player) socket.player.disconnected = true;
     });
 });
 
@@ -196,6 +196,7 @@ calculateEnd = () => {
 reset = () => {
     allClients.forEach((client, i)=> {
         client.player = {
+            name: client.player.name,
             colour: client.player.colour,
             x: getRandomInt(WIDTH - PLAYERSIZE),
             y: PLATFORMHEIGHT,
