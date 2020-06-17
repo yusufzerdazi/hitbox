@@ -8,40 +8,40 @@ const TERMINAL = 20;
 const JUMPSPEED = 20;
 const PLATFORMHEIGHT = 400;
 const PLAYERSIZE = 50;
-const SHUNTSPEED = 10;
+const SHUNTSPEED = 5;
 const WIDTH = 960;
 const HEIGHT = 540;
 const WALLDAMPING = 0.75;
-var COLLISIONCOOLDOWN = 0;
+var AIALIVE = true;
 
 var allClients = [];
 io.on('connection', (socket) => {
     console.log('Got connect.')
     socket.on('play', () => {
-        allClients.push(socket);
-        socket.player = {
-            colour: randomColor(),
-            x: 100 + 100 * allClients.length,
-            y: PLATFORMHEIGHT,
-            xVelocity: 0,
-            yVelocity: 0,
-            health: 100,
-            score: 0,
-            alive: true,
-            invincibility: 0
+        if(!socket.player || socket.player.disconnected){
+            allClients.push(socket);
+            socket.player = {
+                colour: randomColor(),
+                x: 100 + 100 * allClients.length,
+                y: PLATFORMHEIGHT,
+                xVelocity: 0,
+                yVelocity: 0,
+                health: 100,
+                score: 0,
+                alive: true,
+                invincibility: 0
+            }
         }
     });
 
     socket.on('right', pressed => {
-        socket.player.right = pressed;
+        socket.player ? socket.player.right = pressed : null;
     });
     socket.on('left', pressed => {
-        socket.player.left = pressed;
+        socket.player ? socket.player.left = pressed : null;
     });
     socket.on('space', pressed => {
-        if(pressed){
-            socket.player.yVelocity = -JUMPSPEED;
-        }
+        socket.player ? socket.player.space = pressed : null;
     })
 
     socket.on('addAi', () =>{
@@ -58,6 +58,21 @@ io.on('connection', (socket) => {
             invincibility: 0
         }})
     })
+
+    socket.on('removeAi', () =>{
+        aiClients = allClients.filter(c => c.player.ai);
+        if(aiClients.length){
+            aiClients[0].player.disconnected = true;
+        }
+    })
+
+    socket.on('quit', function() {
+        socket.player.disconnected = true;
+    });
+
+    socket.on('toggleAi', function() {
+        AIALIVE = !AIALIVE;
+    });
     
     socket.on('disconnect', function() {
        var i = allClients.indexOf(socket);
@@ -74,6 +89,9 @@ calculateSpeed = () => {
         }
         if(client.player.left){
             client.player.xVelocity = Math.max(client.player.xVelocity - ACCELERATION, -TERMINAL);
+        }
+        if(client.player.space && client.player.y == PLATFORMHEIGHT){
+            client.player.yVelocity = -JUMPSPEED;
         }
         if(!client.player.right && !client.player.left){
             var velSign = Math.sign(client.player.xVelocity);
@@ -122,13 +140,19 @@ calculateCollision = () => {
                     client.player.health = Math.max(client.player.health - Math.abs(otherClient.player.xVelocity), 0);
                     client.player.invincibility = 100;
                 } else if (Math.abs(client.player.xVelocity) == Math.abs(otherClient.player.xVelocity)) {
-                    client.player.newXVelocity = - client.player.xVelocity;
+                    var flip = Math.sign(client.player.xVelocity) * Math.sign(otherClient.player.xVelocity)
+                    client.player.newXVelocity = flip * client.player.xVelocity;
                     client.player.health = Math.max(client.player.health - 0.5 * Math.abs(client.player.xVelocity), 0);
                 }
-
-                if(client.player.y < otherClient.player.y){
-                    client.player.newYVelocity = - Math.abs(client.player.yVelocity);
-                    otherClient.player.newYVelocity = Math.abs(otherClient.player.yVelocity);
+                if(Math.abs(client.player.yVelocity) < Math.abs(otherClient.player.yVelocity)){
+                    otherClient.player.newYVelocity = - otherClient.player.yVelocity;
+                    client.player.newYVelocity = otherClient.player.yVelocity + (SHUNTSPEED * Math.sign(otherClient.player.yVelocity));
+                    client.player.health = Math.max(client.player.health - Math.abs(otherClient.player.yVelocity), 0);
+                    client.player.invincibility = 100;
+                } else if (Math.abs(client.player.yVelocity) == Math.abs(otherClient.player.yVelocity)) {
+                    var flip = Math.sign(client.player.yVelocity) * Math.sign(otherClient.player.yVelocity)
+                    client.player.newYVelocity = flip * client.player.yVelocity;
+                    client.player.health = Math.max(client.player.health - 0.5 * Math.abs(client.player.yVelocity), 0);
                 }
             }
         })
@@ -181,7 +205,7 @@ reset = () => {
 }
 
 removeDisconnectedPlayers = () => {
-    allClients = allClients.filter(client => !client.disconnected);
+    allClients = allClients.filter(client => !client.player.disconnected);
 }
 
 moveAi = () => {
@@ -214,10 +238,10 @@ moveAi = () => {
                 playersAbove ++;
             }
         });
-        if(playersAbove > playersBelow || Math.random() > 0.99){
-            if(Math.random() < 0.9){
-                client.player.yVelocity = -JUMPSPEED;
-            }
+        if((playersAbove > playersBelow && Math.random() < 0.3) || Math.random() > 0.99){
+            client.player.space = true;
+        } else {
+            client.player.space = false;
         }
     });
 }
@@ -238,7 +262,7 @@ setInterval(() => {
     if(wasCollision){
         io.emit("collision");
     }
-    moveAi();
+    AIALIVE ? moveAi() : null;
     calculateDeadPlayers();
     calculateEnd();
     io.emit("allPlayers", allClients.map(socket => socket.player));
