@@ -21,7 +21,8 @@ class Game extends React.Component {
       nameInputClass: styles.nameInput,
       playerSize: 50,
       players: [],
-      soundEnabled: false
+      soundEnabled: false,
+      eMillis: 0
     };
   }
 
@@ -44,13 +45,15 @@ class Game extends React.Component {
       e.keyCode === 65 ? this.socket.emit('left', true) : 
       e.keyCode === 32 ? this.socket.emit('space', true) :
       e.keyCode === 83 ? this.socket.emit('down', true) : null
+      //e.keyCode === 69 ? this.socket.emit('boostRight', true) : null
     );
 
     document.addEventListener("keyup", e =>
       e.keyCode === 68 ? this.socket.emit('right', false) : 
       e.keyCode === 65 ? this.socket.emit('left', false) : 
       e.keyCode === 32 ? this.socket.emit('space', false) :
-      e.keyCode === 83 ? this.socket.emit('down', false) : null
+      e.keyCode === 83 ? this.socket.emit('down', false) :
+      e.keyCode === 69 ? this.socket.emit('boostRight', false) : null
     );
   }
 
