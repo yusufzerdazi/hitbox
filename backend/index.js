@@ -44,6 +44,10 @@ io.on('connection', (socket) => {
     socket.on('boostRight', pressed => {
         socket.player ? socket.player.boostRight = pressed : null;
     });
+    socket.on('boostLeft', pressed => {
+        console.log("boosted left");
+        socket.player ? socket.player.boostLeft = pressed : null;
+    });
     socket.on('left', pressed => {
         socket.player ? socket.player.left = pressed : null;
     });
@@ -91,7 +95,12 @@ io.on('connection', (socket) => {
 calculateSpeed = () => {
     allClients.forEach(client => {
         if(client.player.boostRight){
-            client.player.xVelocity = 40;
+            client.player.xVelocity = 50;
+            client.player.boostRight = false;
+        } 
+        if(client.player.boostLeft){
+            client.player.xVelocity = -50;
+            client.player.boostLeft = false;
         }
         else if(Math.abs(client.player.xVelocity) <= TERMINAL){
             if(client.player.right){
@@ -102,7 +111,7 @@ calculateSpeed = () => {
             }
         } else {
             aboveTerminal = Math.abs(client.player.xVelocity) - TERMINAL;
-            client.player.xVelocity = TERMINAL + aboveTerminal * FRICTION;
+            client.player.xVelocity = Math.sign(client.player.xVelocity) * (TERMINAL + aboveTerminal * FRICTION);
         }
         
         if(client.player.space && client.player.y == PLATFORMHEIGHT){
