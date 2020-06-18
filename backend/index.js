@@ -14,7 +14,7 @@ const WIDTH = 960;
 const HEIGHT = 540;
 const WALLDAMPING = 0.75;
 const DAMAGETHRESHOLD = 5;
-const FRICTION = 0.9;
+const FRICTION = 0.96;
 const BOOSTSPEED = 35;
 const DUCKEDHEIGHT = 1/5;
 const SIMPLEX = new SimplexNoise();
@@ -49,10 +49,10 @@ io.on('connection', (socket) => {
         socket.player ? socket.player.right = pressed : null;
     });
     socket.on('boostRight', pressed => {
-        socket.player ? socket.player.boostRight = pressed : null;
+        socket.player ? socket.player.boostRight = true : null;
     });
     socket.on('boostLeft', pressed => {
-        socket.player ? socket.player.boostLeft = pressed : null;
+        socket.player ? socket.player.boostLeft = true : null;
     });
     socket.on('down', pressed => {
         socket.player ? socket.player.down = pressed : null;
@@ -151,8 +151,7 @@ calculateSpeed = () => {
                 client.player.xVelocity = Math.max(client.player.xVelocity - ACCELERATION, -TERMINAL);
             }
         } else {
-            aboveTerminal = Math.abs(client.player.xVelocity) - TERMINAL;
-            client.player.xVelocity = Math.sign(client.player.xVelocity) * (TERMINAL + aboveTerminal * FRICTION);
+            client.player.xVelocity = client.player.xVelocity * FRICTION;
         }
 
         client.player.boostCooldown = Math.max(client.player.boostCooldown - 1, 0);
@@ -164,9 +163,9 @@ calculateSpeed = () => {
             client.player.yVelocity = -JUMPSPEED;
             client.player.space = false;
         }
-        if(client.player.space && client.player.y != PLATFORMHEIGHT && client.player.boostCooldown == 0){
+        if(client.player.space && client.player.y != PLATFORMHEIGHT && client.player.boostCooldown < 40){
             client.player.yVelocity = -JUMPSPEED;
-            client.player.boostCooldown = 100;
+            client.player.boostCooldown = Math.min(100, client.player.boostCooldown + 60);
         }
         if(!client.player.right && !client.player.left){
             var velSign = Math.sign(client.player.xVelocity);
@@ -265,7 +264,7 @@ calculateCollision = () => {
         }
     })
     invulnerablePlayers().forEach((client, i) => {
-        client.player.invincibility -= 25;
+        client.player.invincibility -= 20;
     });
     return wasCollision;
 }
