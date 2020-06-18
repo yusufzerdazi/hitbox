@@ -3,6 +3,10 @@ var http = require('http').createServer(app);
 var io = require('socket.io')(http);
 var SimplexNoise = require('simplex-noise');
 
+var PlayFab = require("./node_modules/playfab-sdk/Scripts/PlayFab/PlayFab");
+var PlayFabClient = require("./node_modules/playfab-sdk/Scripts/PlayFab/PlayFabClient");
+PlayFab.settings.titleId = "B15E8";
+
 const ACCELERATION = 2;
 const VERTICALACCELERATION = 0.4;
 const TERMINAL = 15;
@@ -62,6 +66,9 @@ io.on('connection', (socket) => {
     });
     socket.on('space', pressed => {
         socket.player ? socket.player.space = pressed : null;
+    });
+    socket.on('click', () => {
+        socket.player ? socket.player.clicked = true : null;
     })
 
     socket.on('addAi', () =>{
@@ -121,14 +128,16 @@ invulnerablePlayers = () => {
 
 calculateSpeed = () => {
     allClients.forEach(client => {
-        if(client.player.boostRight && client.player.boostCooldown == 0){
+        if(client.player.boostRight && client.player.boostLeft){
+            // do nothing
+        } else if(client.player.boostRight && client.player.boostCooldown == 0){
             client.player.xVelocity = BOOSTSPEED;
-            client.player.boostRight = false;
             client.player.boostCooldown = 100;
-        } 
-        if(client.player.boostLeft && client.player.boostCooldown == 0){
+        } else if(client.player.boostLeft && client.player.boostCooldown == 0){
             client.player.xVelocity = -BOOSTSPEED;
-            client.player.boostLeft = false;
+            client.player.boostCooldown = 100;
+        } else if(client.player.clicked && client.player.boostRight == 0 && client.player.xVelocity != 0 && client.player.boostCooldown == 0){
+            client.player.xVelocity = BOOSTSPEED * Math.sign(client.player.xVelocity);
             client.player.boostCooldown = 100;
         }
 
@@ -158,6 +167,7 @@ calculateSpeed = () => {
         client.player.boostRight = false;
         client.player.boostLeft = false;
         client.player.boostDown = false;
+        client.player.clicked = false;
 
         if(client.player.space && client.player.y == PLATFORMHEIGHT){
             client.player.yVelocity = -JUMPSPEED;
@@ -278,6 +288,15 @@ calculateEnd = () => {
     if(alive == 1){
         alivePlayers[0].player.score += 1;
         io.emit('winner', alivePlayers[0].player);
+    }
+    if(allClients.filter(x => x.player.ai).length == 0){
+        allClients.forEach(client => {
+            if(client == alivePlayers[0]){
+                client.emit('win');
+            } else {
+                client.emit('loss');
+            }
+        })
     }
     reset();
 }

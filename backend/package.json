@@ -11,6 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "express": "^4.17.1",
+    "playfab-sdk": "^2.49.200615",
     "simplex-noise": "^2.4.0",
     "socket.io": "^2.3.0"
   }
