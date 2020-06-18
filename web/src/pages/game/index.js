@@ -22,8 +22,17 @@ class Game extends React.Component {
       playerSize: 50,
       players: [],
       soundEnabled: false,
-      eMillis: 0
+      eMillis: 0,
+      ePressed: false,
+      aMillis: 0,
+      aPressed: false,
+      lastWinner: null
     };
+  }
+
+  millis(){
+    var d = new Date();
+    return d.getTime();
   }
 
   componentDidMount() {
@@ -35,26 +44,57 @@ class Game extends React.Component {
 
     this.socket.on('collision', () => this.state.soundEnabled ? this.playSound('click.mp3') : () => {});
 
+    this.socket.on('winner', (winner) => {
+      this.setState({lastWinner: winner});
+    })
+
     setInterval(() => {
       this.update();
       this.draw();
     }, 1000 / 60);
 
-    document.addEventListener("keydown", e =>
-      e.keyCode === 68 ? this.socket.emit('right', true) : 
-      e.keyCode === 65 ? this.socket.emit('left', true) : 
+    document.addEventListener("keydown", e => {
+      var a;
+      if(e.keyCode === 68){
+        if(!this.state.ePressed){
+          const currentMillis = this.millis();
+          if(currentMillis - this.state.eMillis < 500){
+            this.socket.emit('boostRight', true);
+          }
+          this.setState({eMillis: currentMillis});
+        }
+        this.setState({ePressed: true});
+        this.socket.emit('right', true)
+      };
+      if(e.keyCode === 65){
+        if(!this.state.aPressed){
+          const currentMillis = this.millis();
+          if(currentMillis - this.state.aMillis < 500){
+            this.socket.emit('boostLeft', true);
+          }
+          this.setState({aMillis: currentMillis});
+        }
+        this.setState({aPressed: true});
+        this.socket.emit('left', true)
+      };
       e.keyCode === 32 ? this.socket.emit('space', true) :
-      e.keyCode === 83 ? this.socket.emit('down', true) : null
-      //e.keyCode === 69 ? this.socket.emit('boostRight', true) : null
-    );
+      e.keyCode === 83 ? this.socket.emit('down', true) : a = 1;
+    });
 
-    document.addEventListener("keyup", e =>
-      e.keyCode === 68 ? this.socket.emit('right', false) : 
-      e.keyCode === 65 ? this.socket.emit('left', false) : 
+    document.addEventListener("keyup", e => {
+      var a;
+      if(e.keyCode === 68){
+        this.setState({ePressed: false});
+        this.socket.emit('right', false)
+      }
+      if(e.keyCode === 65){
+        this.setState({aPressed: false});
+        this.socket.emit('left', false)
+      }
       e.keyCode === 32 ? this.socket.emit('space', false) :
       e.keyCode === 83 ? this.socket.emit('down', false) :
-      e.keyCode === 69 ? this.socket.emit('boostRight', false) : null
-    );
+      e.keyCode === 69 ? this.socket.emit('boostRight', false) : a = 1;
+    });
   }
 
   update = () => {
@@ -86,22 +126,33 @@ class Game extends React.Component {
   drawPlayer(player){
     const ctx = this.refs.canvas.getContext("2d");
     if(!player.alive) ctx.globalAlpha = 0.3;
-    ctx.fillStyle = "black";
-    ctx.beginPath();
-    if(player.alive) ctx.rect(player.x, player.y - this.state.playerSize, this.state.playerSize, (this.state.playerSize * (100 - player.health) / 100));
-    ctx.fill();
+    var currentPlayerHeight = player.ducked ? this.state.playerSize / 5 : this.state.playerSize;
+    var currentPlayerWidth = player.ducked ? this.state.playerSize * 1.5 : this.state.playerSize;
+    var xOffset = player.ducked ? - 0.25 * this.state.playerSize : 0;
+
     ctx.beginPath();
     ctx.fillStyle = player.colour;
-    ctx.rect(player.x, player.y, this.state.playerSize, -(this.state.playerSize * player.health / 100));
+    ctx.rect(player.x + xOffset, player.y, currentPlayerWidth, - currentPlayerHeight);
+    ctx.fill();
+
+    ctx.fillStyle = "black";
+    ctx.beginPath();
+    if(player.alive) ctx.rect(player.x + currentPlayerWidth / 2 + xOffset, player.y - currentPlayerHeight, currentPlayerWidth / 2, (currentPlayerHeight * (100 - player.health) / 100));
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.fillStyle = 'white';
+    ctx.rect(player.x + xOffset, player.y, currentPlayerWidth / 2, -(currentPlayerHeight * player.boostCooldown / 100));
     ctx.fill();
     
+    ctx.fillStyle = player.colour;
     ctx.strokeStyle = player.colour;
     ctx.lineWidth = 6;
     ctx.beginPath();
     if(player.name){
-      ctx.fillText(player.name, player.x, player.y - this.state.playerSize - 3);
+      ctx.fillText(player.name, player.x + xOffset, player.y - currentPlayerHeight - 3);
     }
-    ctx.rect(player.x + 3, player.y - 3, this.state.playerSize - 6, - this.state.playerSize + 6);
+    ctx.rect(player.x + 3 + xOffset, player.y - 3, currentPlayerWidth - 6, - currentPlayerHeight + 6);
     ctx.stroke();
     ctx.globalAlpha = 1;
   }
@@ -153,7 +204,7 @@ class Game extends React.Component {
   render() {
     const scores = 
     <div className={styles.scores}>
-      <p>{this.state.players.map((d, i) => <span className={styles.score} style={{color: d.colour}} key={i}>{d.name + ':\u00A0' + d.score}</span>)}</p>
+      <p className={styles.scoresContainer}>{this.state.players.map((d, i) => <span className={styles.score} style={{color: d.colour}} key={i}>{d.name + ':\u00A0' + d.score}</span>)}</p>
     </div>;
     return (
       <>
@@ -170,7 +221,18 @@ class Game extends React.Component {
           <span onClick={this.toggleSound} className={styles.addAiButton}>Toggle Sound</span>
           <span onClick={this.toggleAi} className={styles.addAiButton}>Toggle AI</span>
         </div>
+        {this.state.lastWinner ?
+          <div className={styles.winnerContainer}>
+            <span style={{color: this.state.lastWinner.colour}} className={styles.winner}>{this.state.lastWinner.name + ' won the last game.'}</span>
+          </div> : null
+        }
         {scores}
+        <div className={styles.controls}>
+          <div className={styles.control}><b>A:</b> Left (Double tap to boost)</div>
+          <div className={styles.control}><b>S:</b> Duck/Pound</div>
+          <div className={styles.control}><b>D:</b> Right (Double tap to boost)</div>
+          <div className={styles.control}><b>Space:</b> Jump/Double jump</div>
+        </div>
       </>
     );
   }

@@ -1,8 +1,22 @@
 .score {
     font-size: x-large;
     font-weight: bold;
-    margin: 10px;
+    margin: 5px 10px;
     display: inline-block;
+}
+
+.controls {
+    font-size: large;
+    display: inline-block;
+    color: white;
+}
+
+.control {
+    margin: 5px 10px;
+}
+
+.scoresContainer {
+    margin: 5px;
 }
 
 .addAiButton {
@@ -12,6 +26,15 @@
     cursor: pointer;
     padding: 5px;
     margin: 5px;
+}
+
+.winnerContainer {
+    padding-top: 10px;
+}
+
+.winner {
+    font-size: large;
+    font-weight: bold;
 }
 
 .addAi {
