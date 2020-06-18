@@ -228,10 +228,10 @@ class Game extends React.Component {
         }
         {scores}
         <div className={styles.controls}>
-          <div className={styles.control}><b>A:</b> Left (Double tap to boost)</div>
-          <div className={styles.control}><b>S:</b> Duck/Pound</div>
-          <div className={styles.control}><b>D:</b> Right (Double tap to boost)</div>
-          <div className={styles.control}><b>Space:</b> Jump/Double jump</div>
+          <span className={styles.control}><b>A:</b> Left (Double tap to boost)</span>
+          <span className={styles.control}><b>S:</b> Duck/Pound</span>
+          <span className={styles.control}><b>D:</b> Right (Double tap to boost)</span>
+          <span className={styles.control}><b>Space:</b> Jump/Double jump</span>
         </div>
       </>
     );
