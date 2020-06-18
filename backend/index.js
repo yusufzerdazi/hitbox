@@ -1,11 +1,12 @@
 var app = require('express')();
 var http = require('http').createServer(app);
 var io = require('socket.io')(http);
+var SimplexNoise = require('simplex-noise');
 
 const ACCELERATION = 2;
-const VERTICALACCELERATION = 1;
-const TERMINAL = 20;
-const JUMPSPEED = 20;
+const VERTICALACCELERATION = 0.4;
+const TERMINAL = 15;
+const JUMPSPEED = 15;
 const PLATFORMHEIGHT = 400;
 const PLAYERSIZE = 50;
 const SHUNTSPEED = 5;
@@ -14,7 +15,11 @@ const HEIGHT = 540;
 const WALLDAMPING = 0.75;
 const DAMAGETHRESHOLD = 5;
 const FRICTION = 0.9;
+const BOOSTSPEED = 35;
+const DUCKEDHEIGHT = 1/5;
+const SIMPLEX = new SimplexNoise();
 
+var TICKS = 0;
 var AIALIVE = true;
 
 var allClients = [];
@@ -33,7 +38,9 @@ io.on('connection', (socket) => {
                 health: 100,
                 score: 0,
                 alive: true,
-                invincibility: 0
+                invincibility: 0,
+                boostCooldown: 0,
+                ducked: false
             }
         }
     });
@@ -45,8 +52,10 @@ io.on('connection', (socket) => {
         socket.player ? socket.player.boostRight = pressed : null;
     });
     socket.on('boostLeft', pressed => {
-        console.log("boosted left");
         socket.player ? socket.player.boostLeft = pressed : null;
+    });
+    socket.on('down', pressed => {
+        socket.player ? socket.player.down = pressed : null;
     });
     socket.on('left', pressed => {
         socket.player ? socket.player.left = pressed : null;
@@ -68,7 +77,9 @@ io.on('connection', (socket) => {
             score: 0,
             ai: true,
             alive: true,
-            invincibility: 0
+            invincibility: 0,
+            boostCooldown: 0,
+            ducked: false
         }})
     })
 
@@ -92,15 +103,45 @@ io.on('connection', (socket) => {
     });
 });
 
+livingPlayers = () => {
+    return allClients.filter(c => c.player.alive);
+}
+
+movingPlayers = () => {
+    return livingPlayers().filter(c => !c.player.ducked);
+}
+
+vulnerablePlayers = () => {
+    return livingPlayers().filter(c => c.player.invincibility == 0);
+}
+
+invulnerablePlayers = () => {
+    return livingPlayers().filter(c => c.player.invincibility > 0);
+}
+
 calculateSpeed = () => {
     allClients.forEach(client => {
-        if(client.player.boostRight){
-            client.player.xVelocity = 50;
+        if(client.player.boostRight && client.player.boostCooldown == 0){
+            client.player.xVelocity = BOOSTSPEED;
             client.player.boostRight = false;
+            client.player.boostCooldown = 100;
         } 
-        if(client.player.boostLeft){
-            client.player.xVelocity = -50;
+        if(client.player.boostLeft && client.player.boostCooldown == 0){
+            client.player.xVelocity = -BOOSTSPEED;
             client.player.boostLeft = false;
+            client.player.boostCooldown = 100;
+        }
+
+        if(client.player.down && client.player.y == PLATFORMHEIGHT && client.player.yVelocity >= 0){
+            client.player.ducked = true;
+            client.player.boostCooldown = Math.max(client.player.boostCooldown, 20);
+        } else {
+            client.player.ducked = false;
+        }
+
+        if(client.player.down && client.player.boostCooldown == 0 && client.player.y != PLATFORMHEIGHT){
+            client.player.yVelocity = BOOSTSPEED;
+            client.player.boostCooldown = 100;
         }
         else if(Math.abs(client.player.xVelocity) <= TERMINAL){
             if(client.player.right){
@@ -113,9 +154,19 @@ calculateSpeed = () => {
             aboveTerminal = Math.abs(client.player.xVelocity) - TERMINAL;
             client.player.xVelocity = Math.sign(client.player.xVelocity) * (TERMINAL + aboveTerminal * FRICTION);
         }
-        
+
+        client.player.boostCooldown = Math.max(client.player.boostCooldown - 1, 0);
+        client.player.boostRight = false;
+        client.player.boostLeft = false;
+        client.player.boostDown = false;
+
         if(client.player.space && client.player.y == PLATFORMHEIGHT){
             client.player.yVelocity = -JUMPSPEED;
+            client.player.space = false;
+        }
+        if(client.player.space && client.player.y != PLATFORMHEIGHT && client.player.boostCooldown == 0){
+            client.player.yVelocity = -JUMPSPEED;
+            client.player.boostCooldown = 100;
         }
         if(!client.player.right && !client.player.left){
             var velSign = Math.sign(client.player.xVelocity);
@@ -132,11 +183,11 @@ calculateSpeed = () => {
 }
 
 calculateMovement = () => {
-    allClients.filter(c => c.player.alive).forEach(client => {
+    movingPlayers().forEach(client => {
         client.player.x += client.player.xVelocity;
         client.player.y = Math.min(client.player.y + client.player.yVelocity, PLATFORMHEIGHT);
     });
-    allClients.filter(c => c.player.alive).forEach(client => {
+    movingPlayers().forEach(client => {
         if(client.player.x < 0) {
             client.player.x = 0;
             client.player.xVelocity = -client.player.xVelocity * WALLDAMPING;
@@ -152,21 +203,34 @@ calculateMovement = () => {
     });
 }
 
+isCollision = (player1, player2) => {
+    xCollision = Math.abs((player1.x + player1.xVelocity) - (player2.x + player2.xVelocity)) <= PLAYERSIZE;
+    yCollision = Math.abs((player1.y + player1.yVelocity) - (player2.y + player2.yVelocity)) <= PLAYERSIZE - 10;
+    duckedYCollision = (Math.abs((player1.y + player1.yVelocity) - (player2.y + player2.yVelocity)) <= PLAYERSIZE * DUCKEDHEIGHT) ||
+        player2.y + player2.yVelocity > PLATFORMHEIGHT;
+
+    return (!player1.ducked && xCollision && yCollision) || (player1.ducked && xCollision && duckedYCollision);
+}
+
+isDamaged = (player1, player2) => {
+    return !player1.ducked || player2.yVelocity > 0;
+}
+
 calculateCollision = () => {
     var wasCollision = false;
-    allClients.filter(c => c.player.alive && c.player.invincibility == 0).forEach((client, i) => {
-        allClients.filter(c => c.player.alive && c != client).forEach(otherClient => {
-            if(Math.abs((client.player.x + client.player.xVelocity) - (otherClient.player.x + otherClient.player.xVelocity)) <= PLAYERSIZE
-                    && Math.abs((client.player.y + client.player.yVelocity) - (otherClient.player.y + otherClient.player.yVelocity)) <= PLAYERSIZE) {
+    vulnerablePlayers().forEach(client => {
+        movingPlayers().filter(c => c != client && c.player.invincibility == 0).forEach(otherClient => {
+            if(isCollision(client.player, otherClient.player) && isDamaged(client.player, otherClient.player)) {
                 wasCollision = true;
 
                 clientSpeed = Math.sqrt(Math.pow(client.player.xVelocity, 2) + Math.pow(client.player.yVelocity, 2));
                 otherClientSpeed = Math.sqrt(Math.pow(otherClient.player.xVelocity, 2) + Math.pow(otherClient.player.yVelocity, 2));
                 speedDifference = Math.abs(clientSpeed - otherClientSpeed);
-                if(clientSpeed < otherClientSpeed && speedDifference >= DAMAGETHRESHOLD){
+
+                if(clientSpeed < otherClientSpeed){
                     client.player.health = Math.max(client.player.health - otherClientSpeed, 0);
                     client.player.invincibility = 100;
-                } else if(speedDifference <= DAMAGETHRESHOLD){
+                } else if(speedDifference == 0){
                     client.player.health = Math.max(client.player.health - 0.5 * otherClientSpeed, 0);
                 }
 
@@ -177,7 +241,10 @@ calculateCollision = () => {
                     client.player.newXVelocity = flip * client.player.xVelocity;
                 }
 
-                if(Math.abs(client.player.yVelocity) < Math.abs(otherClient.player.yVelocity)){
+                if(client.player.ducked){
+                    client.player.newYVelocity = - otherClient.player.yVelocity;
+                    otherClient.player.newYVelocity = 0;
+                }else if(Math.abs(client.player.yVelocity) < Math.abs(otherClient.player.yVelocity)){
                     otherClient.player.newYVelocity = - otherClient.player.yVelocity;
                     client.player.newYVelocity = otherClient.player.yVelocity + (SHUNTSPEED * Math.sign(otherClient.player.yVelocity));
                 } else if (Math.abs(client.player.yVelocity) == Math.abs(otherClient.player.yVelocity)) {
@@ -187,7 +254,7 @@ calculateCollision = () => {
             }
         })
     });
-    allClients.filter(c => c.player.alive).forEach(client => {
+    livingPlayers().forEach(client => {
         if(client.player.newXVelocity){
             client.player.xVelocity = client.player.newXVelocity;
             client.player.newXVelocity = null;
@@ -197,20 +264,21 @@ calculateCollision = () => {
             client.player.newYVelocity = null;
         }
     })
-    allClients.filter(c => c.player.alive && c.player.invincibility > 0).forEach((client, i) => {
+    invulnerablePlayers().forEach((client, i) => {
         client.player.invincibility -= 25;
     });
     return wasCollision;
 }
 
 calculateEnd = () => {
-    alivePlayers = allClients.filter(c => c.player.alive);
+    alivePlayers = livingPlayers();
     alive = alivePlayers.length;
     if(alive > 1 || allClients.length < 2){
         return;
     }
     if(alive == 1){
         alivePlayers[0].player.score += 1;
+        io.emit('winner', alivePlayers[0].player);
     }
     reset();
 }
@@ -230,7 +298,9 @@ reset = () => {
             alive: true,
             invincibility: 0,
             left: client.player.left,
-            right: client.player.right
+            right: client.player.right,
+            boostCooldown: 0,
+            ducked: false
         }
     });
 }
@@ -240,12 +310,13 @@ removeDisconnectedPlayers = () => {
 }
 
 moveAi = () => {
-    allClients.filter(client => client.player.ai && client.player.alive).forEach((client, i) => {
+    livingPlayers().filter(client => client.player.ai).forEach((client, i) => {
+        playerId = parseInt('0x'+client.player.colour.substr(1));
         playersOnLeft = 0;
         playersOnRight = 0;
         playersAbove = 0;
         playersBelow = 0;
-        allClients.filter(client => client.player.alive).forEach(otherClient => {
+        livingPlayers().forEach(otherClient => {
             if(otherClient.player.x > client.player.x){
                 playersOnRight ++;
             }
@@ -254,14 +325,21 @@ moveAi = () => {
             }
         });
         if(playersOnLeft > playersOnRight){
-            client.player.left = Math.random() < 0.9;
-            client.player.right = Math.random() > 0.9;
+            client.player.left = SIMPLEX.noise2D(2 * playerId, TICKS * 0.01) < 0.8;
+            client.player.right = SIMPLEX.noise2D(2 * playerId, TICKS * 0.01) > 0.8;
+            client.player.boostLeft = Math.random() < 0.01;
+        } else if(playersOnLeft < playersOnRight){
+            client.player.left = SIMPLEX.noise2D(2 * playerId, TICKS * 0.01) > 0.8;
+            client.player.right = SIMPLEX.noise2D(2 * playerId, TICKS * 0.01) < 0.8;
+            client.player.boostRight = Math.random() > 0.99;
         } else {
-            client.player.left = Math.random() > 0.9;
-            client.player.right = Math.random() < 0.9;
+            client.player.left = SIMPLEX.noise2D(2 * playerId, TICKS * 0.01) > 0;
+            client.player.right = SIMPLEX.noise2D(2 * playerId, TICKS * 0.01) < 0;
+            client.player.boostRight = Math.random() > 0.995;
+            client.player.boostLeft = Math.random() > 0.995;
         }
 
-        allClients.filter(x => x != client && x.player.alive).forEach(otherClient => {
+        livingPlayers().filter(x => x != client).forEach(otherClient => {
             if(otherClient.player.y >= client.player.y){
                 playersBelow ++;
             }
@@ -273,12 +351,15 @@ moveAi = () => {
             client.player.space = true;
         } else {
             client.player.space = false;
+            client.player.boostDown = Math.random() < 0.9;
         }
+        
+        client.player.down = SIMPLEX.noise2D(playerId, TICKS * 0.01) < -0.5;
     });
 }
 
 calculateDeadPlayers = () => {
-    allClients.filter(c => c.player.alive).forEach(client => {
+    livingPlayers().forEach(client => {
         if(client.player.health == 0){
             client.player.alive = false;
         }
@@ -297,6 +378,7 @@ setInterval(() => {
     calculateDeadPlayers();
     calculateEnd();
     io.emit("allPlayers", allClients.map(socket => socket.player));
+    TICKS++;
 }, 1000 / 60);
 
 http.listen(process.env.PORT || 3001, () => {
