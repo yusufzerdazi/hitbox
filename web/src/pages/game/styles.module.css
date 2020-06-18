@@ -5,9 +5,14 @@
     display: inline-block;
 }
 
-.controls {
+.text {
     font-size: large;
     display: inline-block;
+    color: white;
+}
+
+.loginText {
+    font-size: large;
     color: white;
 }
 
@@ -41,17 +46,16 @@
     margin: 10px
 }
 
-.title {
-    height: 100px;
-}
-
-.titleContainer {
-    margin-bottom: 10px;
-}
-
 .name {
     font-size: large;
     font-weight: bold;
+    background-color: white;
+    padding: 5px;
+    margin: 5px;
+}
+
+.playFabName{
+    font-size: large;
     background-color: white;
     padding: 5px;
     margin: 5px;
@@ -65,4 +69,20 @@
     outline: none;
     border: none;
     
+}
+
+.googleLogin {
+    text-align: center;
+}
+
+.signInButton {
+    width: 100%
+}
+
+.signInButton > div{
+    margin: 0 auto;
+}
+
+.logInDescription {
+    margin: 5px 0px 10px 0px;
 }

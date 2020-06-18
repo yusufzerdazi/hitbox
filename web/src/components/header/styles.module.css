@@ -1,0 +1,20 @@
+.titleContainer {
+    margin-bottom: 10px;
+}
+
+.title {
+    height: 100px;
+}
+
+.navigationButton {
+    font-size: large;
+    font-weight: bold;
+    background-color: white;
+    cursor: pointer;
+    padding: 5px;
+    margin: 5px;
+}
+
+.navigation {
+    margin: 10px
+}

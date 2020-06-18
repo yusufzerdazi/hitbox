@@ -3,12 +3,12 @@ import React from 'react';
 import io from 'socket.io-client';
 import styles from './styles.module.css';
 import * as THREE from 'three';
-import hitbox from '../../assets/hitbox.svg';
 
 class Game extends React.Component {
   constructor(props){
     super(props);
     this.listener = new THREE.AudioListener();
+
     this.addAi = this.addAi.bind(this);
     this.removeAi = this.removeAi.bind(this);
     this.play = this.play.bind(this);
@@ -17,6 +17,10 @@ class Game extends React.Component {
     this.toggleAi = this.toggleAi.bind(this);
     this.handleChange = this.handleChange.bind(this);
     this.onMousedown = this.onMousedown.bind(this);
+    this.onPlayFabResponse = this.onPlayFabResponse.bind(this);
+    this.onSignIn = this.onSignIn.bind(this);
+    this.setName = this.setName.bind(this);
+
     this.state = {
       nameClass: styles.name,
       nameInputClass: styles.nameInput,
@@ -40,20 +44,45 @@ class Game extends React.Component {
     if (e.which === 1) {
       if(document.pointerLockElement === this.canvas ||
         document.mozPointerLockElement === this.canvas) {
-          this.socket.emit('boostLeft');
+          this.socket.emit('click');
       } else {
         this.canvas.requestPointerLock();
       }
     } else if (e.which === 3) {
       if(document.pointerLockElement === this.canvas ||
         document.mozPointerLockElement === this.canvas) {
-          console.log("boostingRight");
-          this.socket.emit('boostRight');
+          // right click
       }
     }
   }
 
+  componentWillMount() {
+    this.mounted = true;
+  }
+
+  componentWillUnmount() {
+    this.mounted = false;
+    clearInterval(this.interval);
+  }
+
   componentDidMount() {
+    var $this = this;
+    setTimeout(function(){ 
+      window.gapi.signin2.render('g-signin2', {
+        'scope': 'profile email',
+        'theme': 'dark',
+        'onsuccess': this.onSignIn
+      });
+      window.gapi.load('auth2', async () => {
+        var authInstance = await window.gapi.auth2.getAuthInstance();
+        var signedIn = authInstance.isSignedIn.get()
+        if (signedIn) {
+          $this.onSignIn();
+        }
+     })
+    }, 500)
+    
+
     this.socket = io(process.env.REACT_APP_SERVER);
 
     this.canvas = document.getElementsByTagName('canvas')[0];
@@ -73,9 +102,24 @@ class Game extends React.Component {
       this.setState({lastWinner: winner});
     })
 
+    this.socket.on('win', () => {
+      console.log('win');
+      window.PlayFabClientSDK.ExecuteCloudScript({
+        FunctionName: "playerWins",
+        GeneratePlayStreamEvent: true
+      });
+    })
+
+    this.socket.on('loss', () => {
+      console.log('loss');
+      window.PlayFabClientSDK.ExecuteCloudScript({
+        FunctionName: "playerLoses",
+        GeneratePlayStreamEvent: true
+      });
+    })
+
     setInterval(() => {
-      this.update();
-      this.draw();
+      if(this.mounted) this.draw();
     }, 1000 / 60);
 
     document.addEventListener("keydown", e => {
@@ -122,8 +166,8 @@ class Game extends React.Component {
     });
   }
 
-  update = () => {
-    
+  kill = () => {
+    this.setState({end: true});
   }
 
   draw = () => {
@@ -209,6 +253,7 @@ class Game extends React.Component {
 
   play(){
     if(this.state.name){
+      console.log(this.state.name);
       this.socket.emit('play', {name: this.state.name});
       this.state.nameClass = styles.name;
       this.state.nameInputClass = styles.nameInput;
@@ -234,6 +279,45 @@ class Game extends React.Component {
     this.setState({name: event.target.value});
   }
 
+  setName() {
+    if(this.state.name && this.state.playFab){
+      window.PlayFabClientSDK.UpdateUserTitleDisplayName({
+        DisplayName: this.state.name
+      }, () => this.setState({playFab: {DisplayName: this.state.name}}));
+    }
+  }
+
+  onSignIn(){
+    // Retrieve access token
+    var user = window.gapi.auth2.getAuthInstance().currentUser.get();
+    this.setState({accessToken: user.getAuthResponse(true).access_token});
+    
+    window.PlayFabClientSDK.LoginWithGoogleAccount({
+        AccessToken: this.state.accessToken,
+        CreateAccount : true,
+        TitleId: "B15E8",
+    }, this.onPlayFabResponse);
+  }
+
+  onPlayFabResponse(response, error) {
+    if (response)
+      window.PlayFabClientSDK.GetPlayerProfile({
+        ProfileConstraints:
+        {
+          ShowDisplayName: true
+        },
+        PlayFabId: response.data.PlayFabId
+      }, (response) => {
+        if(response.data.PlayerProfile.DisplayName){
+          this.setState({name:response.data.PlayerProfile.DisplayName });
+        }
+        this.setState({playFab: response.data.PlayerProfile});
+      });
+      
+    if (error)
+      console.log("Error: " + JSON.stringify(error));
+  }
+
   render() {
     const scores = 
     <div className={styles.scores}>
@@ -241,12 +325,13 @@ class Game extends React.Component {
     </div>;
     return (
       <>
-        <div className={styles.titleContainer}>
-          <img className={styles.title} src={hitbox}></img>
-        </div>
         <canvas ref="canvas" width={960} height={540} />
-        <div  className={styles.addAi}>
-          <span className={this.state.nameClass}><input onChange={this.handleChange} placeholder="Enter name" className={this.state.nameInputClass} type="text"></input></span>
+        <div className={styles.addAi}>
+          {!this.state.playFab?.DisplayName ? 
+            <span className={this.state.nameClass}><input onChange={this.handleChange} placeholder="Enter name" className={this.state.nameInputClass} type="text"></input></span> : 
+            <span className={styles.playFabName}><b>Name:</b> {this.state.playFab.DisplayName}</span>
+          }
+          {!this.state.playFab?.DisplayName ? <span onClick={this.setName} className={styles.addAiButton}>Set Name</span> : null}
           <span onClick={this.play} className={styles.addAiButton}>Play</span>
           <span onClick={this.addAi} className={styles.addAiButton}>+AI</span>
           <span onClick={this.removeAi} className={styles.addAiButton}>-AI</span>
@@ -260,11 +345,18 @@ class Game extends React.Component {
           </div> : null
         }
         {scores}
-        <div className={styles.controls}>
+        <div className={styles.text}>
           <span className={styles.control}><b>A:</b> Left (Double tap to boost)</span>
           <span className={styles.control}><b>S:</b> Duck/Pound</span>
           <span className={styles.control}><b>D:</b> Right (Double tap to boost)</span>
           <span className={styles.control}><b>Space:</b> Jump/Double jump</span>
+          <span className={styles.control}><b>Click:</b> Boost</span>
+        </div>
+        <div className={styles.loginText}>
+          <div className={styles.logInDescription}>
+            <span className={styles.logInDescriptionText}>Log in to be added to the leaderboard.</span>
+          </div>
+          <div className={styles.signInButton} id="g-signin2"></div>
         </div>
       </>
     );
