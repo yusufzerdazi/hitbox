@@ -16,6 +16,7 @@ class Game extends React.Component {
     this.toggleSound = this.toggleSound.bind(this);
     this.toggleAi = this.toggleAi.bind(this);
     this.handleChange = this.handleChange.bind(this);
+    this.onMousedown = this.onMousedown.bind(this);
     this.state = {
       nameClass: styles.name,
       nameInputClass: styles.nameInput,
@@ -35,9 +36,33 @@ class Game extends React.Component {
     return d.getTime();
   }
 
+  onMousedown(e) {
+    if (e.which === 1) {
+      if(document.pointerLockElement === this.canvas ||
+        document.mozPointerLockElement === this.canvas) {
+          this.socket.emit('boostLeft');
+      } else {
+        this.canvas.requestPointerLock();
+      }
+    } else if (e.which === 3) {
+      if(document.pointerLockElement === this.canvas ||
+        document.mozPointerLockElement === this.canvas) {
+          console.log("boostingRight");
+          this.socket.emit('boostRight');
+      }
+    }
+  }
+
   componentDidMount() {
     this.socket = io(process.env.REACT_APP_SERVER);
 
+    this.canvas = document.getElementsByTagName('canvas')[0];
+    this.canvas.requestPointerLock = this.canvas.requestPointerLock ||
+    this.canvas.mozRequestPointerLock ||
+    this.canvas.webkitRequestPointerLock;
+
+    this.canvas.addEventListener('mousedown', this.onMousedown);
+    
     this.socket.on('allPlayers', players => {
       this.setState({players: players})
     })
@@ -124,6 +149,7 @@ class Game extends React.Component {
   }
 
   drawPlayer(player){
+    if(player.alive && player.invincibility != 0 && (Math.round(this.millis() / 10)) % 2 == 0) return;
     const ctx = this.refs.canvas.getContext("2d");
     if(!player.alive) ctx.globalAlpha = 0.3;
     var currentPlayerHeight = player.ducked ? this.state.playerSize / 5 : this.state.playerSize;
@@ -135,6 +161,17 @@ class Game extends React.Component {
     ctx.rect(player.x + xOffset, player.y, currentPlayerWidth, - currentPlayerHeight);
     ctx.fill();
 
+    ctx.fillStyle = player.colour;
+    ctx.lineWidth = 6;
+    if(player.name){
+      ctx.fillText(player.name, player.x + xOffset, player.y - currentPlayerHeight - 3);
+    }
+
+    if(!player.alive){
+      ctx.globalAlpha = 1;
+      return;
+    }
+
     ctx.fillStyle = "black";
     ctx.beginPath();
     if(player.alive) ctx.rect(player.x + currentPlayerWidth / 2 + xOffset, player.y - currentPlayerHeight, currentPlayerWidth / 2, (currentPlayerHeight * (100 - player.health) / 100));
@@ -145,15 +182,11 @@ class Game extends React.Component {
     ctx.rect(player.x + xOffset, player.y, currentPlayerWidth / 2, -(currentPlayerHeight * player.boostCooldown / 100));
     ctx.fill();
     
-    ctx.fillStyle = player.colour;
-    ctx.strokeStyle = player.colour;
-    ctx.lineWidth = 6;
     ctx.beginPath();
-    if(player.name){
-      ctx.fillText(player.name, player.x + xOffset, player.y - currentPlayerHeight - 3);
-    }
+    ctx.strokeStyle = player.colour;
     ctx.rect(player.x + 3 + xOffset, player.y - 3, currentPlayerWidth - 6, - currentPlayerHeight + 6);
     ctx.stroke();
+    
     ctx.globalAlpha = 1;
   }
 
