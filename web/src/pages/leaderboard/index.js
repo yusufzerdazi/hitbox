@@ -49,7 +49,6 @@ class Leaderboard extends React.Component {
     var leaderboardsArray = [];
     for (var key in this.state.consolidatedLeaderboards) {
       var value = this.state.consolidatedLeaderboards[key];
-      value.name = key;
       leaderboardsArray.push(value);
     }
     return leaderboardsArray
@@ -62,10 +61,11 @@ class Leaderboard extends React.Component {
     }).then(l => {
         var consolidatedLeaderboards = this.state.consolidatedLeaderboards;
         l.data.Leaderboard.forEach(row => {
-          if(!consolidatedLeaderboards[row.DisplayName]){
-            consolidatedLeaderboards[row.DisplayName] = {};
+          if(!consolidatedLeaderboards[row.PlayFabId]){
+            consolidatedLeaderboards[row.PlayFabId] = {};
           }
-          consolidatedLeaderboards[row.DisplayName][name] = tranformation(row.StatValue);
+          consolidatedLeaderboards[row.PlayFabId]['name'] = row.DisplayName;
+          consolidatedLeaderboards[row.PlayFabId][name] = tranformation(row.StatValue);
         })
         this.setState({consolidatedLeaderboards: consolidatedLeaderboards})
     });
