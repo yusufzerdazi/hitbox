@@ -2,15 +2,23 @@
 import React from 'react';
 import io from 'socket.io-client';
 import { connect } from "react-redux";
+import { store } from '../../redux/store';
 import styles from './styles.module.css';
 import * as THREE from 'three';
-import { store } from '../../redux/store';
+import { USERNAME_UPDATED } from '../../constants/actionTypes';
 
 const mapStateToProps = state => {
   return {
     user: state.logIn.user
   }
 };
+
+const mapDispatchToProps = dispatch => ({
+  updateName: x => dispatch({
+    type: USERNAME_UPDATED,
+    name: x
+  })
+});
 
 class Game extends React.Component {
   constructor(props){
@@ -72,6 +80,17 @@ class Game extends React.Component {
   componentDidMount() {
     this.mounted = true;
 
+    store.subscribe(() => {
+      var state = store.getState();
+      if(this.state.user?.name != state.logIn.user.name){
+        this.setState({
+          user: {
+            name: state.logIn.user.name
+          }
+        })
+      }
+    });
+
     this.socket = io(process.env.REACT_APP_SERVER);
 
     this.canvas = document.getElementsByTagName('canvas')[0];
@@ -92,26 +111,33 @@ class Game extends React.Component {
     })
 
     this.socket.on('win', () => {
-      console.log('win');
       window.PlayFabClientSDK.ExecuteCloudScript({
         FunctionName: "playerWins",
+        GeneratePlayStreamEvent: true
+      });
+    });
+
+    this.socket.on('kill', () => {
+      console.log("player achieved kill");
+      window.PlayFabClientSDK.ExecuteCloudScript({
+        FunctionName: "playerKills",
         GeneratePlayStreamEvent: true
       });
     })
 
     this.socket.on('loss', () => {
-      console.log('loss');
       window.PlayFabClientSDK.ExecuteCloudScript({
         FunctionName: "playerLoses",
         GeneratePlayStreamEvent: true
       });
-    })
+    });
 
     setInterval(() => {
       if(this.mounted) this.draw();
     }, 1000 / 60);
 
     document.addEventListener("keydown", e => {
+      if(!(document.pointerLockElement === this.canvas || document.mozPointerLockElement === this.canvas)) return;
       var a;
       if(e.keyCode === 68){
         if(!this.state.ePressed){
@@ -134,12 +160,16 @@ class Game extends React.Component {
         }
         this.setState({aPressed: true});
         this.socket.emit('left', true)
-      };
-      e.keyCode === 32 ? this.socket.emit('space', true) :
+      }
+      if(e.keyCode === 32){
+        e.preventDefault();
+        this.socket.emit('space', true);
+      }
       e.keyCode === 83 ? this.socket.emit('down', true) : a = 1;
     });
 
     document.addEventListener("keyup", e => {
+      if(!(document.pointerLockElement === this.canvas || document.mozPointerLockElement === this.canvas)) return;
       var a;
       if(e.keyCode === 68){
         this.setState({ePressed: false});
@@ -272,7 +302,7 @@ class Game extends React.Component {
     if(this.state.name && this.props.user){
       window.PlayFabClientSDK.UpdateUserTitleDisplayName({
         DisplayName: this.state.name
-      }, () => this.setState({playFab: {DisplayName: this.state.name}}));
+      }, () => this.props.updateName(this.state.name));
     }
   }
 
@@ -288,10 +318,10 @@ class Game extends React.Component {
           <span className={this.state.nameClass}><input onChange={this.handleChange} placeholder="Enter name" className={this.state.nameInputClass} type="text"></input></span>
           {this.props.user?.name ? <span className={styles.playFabName}><b>Name:</b> {this.props.user?.name}</span> : <></> }
           <span onClick={this.setName} className={styles.addAiButton}>Set Name</span>
-          <span onClick={this.play} className={styles.addAiButton}>Play</span>
+          <span onClick={this.play} className={styles.addAiButton + ' ' + styles.playButton}>Play</span>
+          <span onClick={this.quit} className={styles.addAiButton + ' ' + styles.quitButton}>Quit</span>
           <span onClick={this.addAi} className={styles.addAiButton}>+AI</span>
           <span onClick={this.removeAi} className={styles.addAiButton}>-AI</span>
-          <span onClick={this.quit} className={styles.addAiButton}>Quit</span>
           <span onClick={this.toggleSound} className={styles.addAiButton}>Toggle Sound</span>
           <span onClick={this.toggleAi} className={styles.addAiButton}>Toggle AI</span>
         </div>
@@ -313,4 +343,4 @@ class Game extends React.Component {
   }
 }
 
-export default connect(mapStateToProps, () => ({}))(Game);
+export default connect(mapStateToProps, mapDispatchToProps)(Game);

@@ -21,19 +21,61 @@ const columns = [
     name: 'Wins',
     selector: 'wins',
     sortable: true,
-    right: true
+    right: true,
+    sortFunction: (rowA, rowB) => {
+      if(rowA.wins == undefined || rowB.wins != undefined){
+        return -1;
+      }
+      return rowA.wins - rowB.wins
+    }
+  },
+  {
+    name: 'Kills',
+    selector: 'kills',
+    sortable: true,
+    right: true,
+    sortFunction: (rowA, rowB) => {
+      if(rowA.kills == undefined || rowB.kills != undefined){
+        return -1;
+      }
+      return rowA.kills - rowB.kills
+    }
   },
   {
     name: 'Losses',
     selector: 'losses',
     sortable: true,
-    right: true
+    right: true,
+    sortFunction: (rowA, rowB) => {
+      if(rowA.losses == undefined || rowB.losses != undefined){
+        return -1;
+      }
+      return rowA.losses - rowB.losses;
+    }
   },
   {
     name: 'Win/Loss',
     selector: 'winloss',
     sortable: true,
-    right: true
+    right: true,
+    sortFunction: (rowA, rowB) => {
+      if(rowA.winloss == undefined || rowB.winloss != undefined){
+        return -1;
+      }
+      return rowA.winloss - rowB.winloss;
+    }
+  },
+  {
+    name: 'Kill/Death',
+    selector: 'killdeath',
+    sortable: true,
+    right: true,
+    sortFunction: (rowA, rowB) => {
+      if(rowA.killdeath == undefined || rowB.killdeath != undefined){
+        return -1;
+      }
+      return rowA.killdeath - rowB.killdeath;
+    }
   }
 ];
 
@@ -49,6 +91,7 @@ class Leaderboard extends React.Component {
     var leaderboardsArray = [];
     for (var key in this.state.consolidatedLeaderboards) {
       var value = this.state.consolidatedLeaderboards[key];
+      value.killdeath = value.losses && value.kills ? value.kills / value.losses : undefined;
       leaderboardsArray.push(value);
     }
     return leaderboardsArray
@@ -64,7 +107,7 @@ class Leaderboard extends React.Component {
           if(!consolidatedLeaderboards[row.PlayFabId]){
             consolidatedLeaderboards[row.PlayFabId] = {};
           }
-          consolidatedLeaderboards[row.PlayFabId]['name'] = row.DisplayName;
+          consolidatedLeaderboards[row.PlayFabId]['name'] = row.DisplayName ? row.DisplayName : row.PlayFabId;
           consolidatedLeaderboards[row.PlayFabId][name] = tranformation(row.StatValue);
         })
         this.setState({consolidatedLeaderboards: consolidatedLeaderboards})
@@ -76,6 +119,7 @@ class Leaderboard extends React.Component {
     if(state.logIn.user?.loggedIn){
       var p1 = this.getLeaderboard('wins');
       var p2 = this.getLeaderboard('losses');
+      var p2 = this.getLeaderboard('kills');
       var p3 = this.getLeaderboard('winloss', (x) => x / 1000);
       Promise.all([p1, p2, p3]).then(() => {
         this.setState({leaderboardsArray:this.convertLeaderboardsToArray()});
@@ -94,7 +138,8 @@ class Leaderboard extends React.Component {
     return (
       <div className={styles.tableContainer}>
         {this.state.leaderboardsArray ? <DataTable
-          title="Leaderboard"
+          theme="dark"
+          noHeader={true}
           columns={columns}
           data={this.state.leaderboardsArray}
         /> : null}

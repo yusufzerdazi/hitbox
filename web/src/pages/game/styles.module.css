@@ -28,6 +28,14 @@
     margin: 5px;
 }
 
+.playButton {
+    background-color: lightgreen;
+}
+
+.quitButton {
+    background-color: red;
+}
+
 .winnerContainer {
     padding-top: 10px;
 }

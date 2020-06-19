@@ -1,4 +1,4 @@
-import { LOG_IN } from '../../constants/actionTypes';
+import { LOG_IN, USERNAME_UPDATED } from '../../constants/actionTypes';
   
 export default (state = {}, action) => {
     switch (action.type) {
@@ -8,6 +8,14 @@ export default (state = {}, action) => {
                 user: {
                     loggedIn: true,
                     name: action.payload.DisplayName
+                }
+            };
+        case USERNAME_UPDATED:
+            return {
+                ...state,
+                user: {
+                    loggedIn: true,
+                    name: action.name
                 }
             };
         default:
