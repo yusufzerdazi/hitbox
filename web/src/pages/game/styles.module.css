@@ -11,11 +11,6 @@
     color: white;
 }
 
-.loginText {
-    font-size: large;
-    color: white;
-}
-
 .control {
     margin: 5px 10px;
 }
@@ -69,20 +64,4 @@
     outline: none;
     border: none;
     
-}
-
-.googleLogin {
-    text-align: center;
-}
-
-.signInButton {
-    width: 100%
-}
-
-.signInButton > div{
-    margin: 0 auto;
-}
-
-.logInDescription {
-    margin: 5px 0px 10px 0px;
 }

@@ -1,20 +1,24 @@
+import { Provider } from 'react-redux';
+import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
+
 import React from 'react';
 import Game from './pages/game';
 import Leaderboard from './pages/leaderboard';
 import Header from './components/header';
+import Login from './components/login';
+import { store } from './redux/store';
 
 import './App.css';
-import {
-  BrowserRouter as Router,
-  Switch,
-  Route
-} from "react-router-dom";
 
 class App extends React.Component {
+  constructor(props){
+    super(props);
+  }
+
   render() {
     return (
-      <Router>
-        <div>
+      <Provider store={store}>
+        <Router>
           <Header/>
           <Switch>
             <Route exact path="/">
@@ -24,8 +28,9 @@ class App extends React.Component {
               <Leaderboard />
             </Route>
           </Switch>
-        </div>
-      </Router>
+          <Login afterSignIn={this.afterSignIn}/>
+        </Router>
+      </Provider>
     );
   }
 }

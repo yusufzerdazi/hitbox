@@ -1,8 +1,16 @@
 
 import React from 'react';
 import io from 'socket.io-client';
+import { connect } from "react-redux";
 import styles from './styles.module.css';
 import * as THREE from 'three';
+import { store } from '../../redux/store';
+
+const mapStateToProps = state => {
+  return {
+    user: state.logIn.user
+  }
+};
 
 class Game extends React.Component {
   constructor(props){
@@ -17,8 +25,6 @@ class Game extends React.Component {
     this.toggleAi = this.toggleAi.bind(this);
     this.handleChange = this.handleChange.bind(this);
     this.onMousedown = this.onMousedown.bind(this);
-    this.onPlayFabResponse = this.onPlayFabResponse.bind(this);
-    this.onSignIn = this.onSignIn.bind(this);
     this.setName = this.setName.bind(this);
 
     this.state = {
@@ -33,6 +39,8 @@ class Game extends React.Component {
       aPressed: false,
       lastWinner: null
     };
+
+    this.canvasRef = React.createRef();
   }
 
   millis(){
@@ -56,32 +64,13 @@ class Game extends React.Component {
     }
   }
 
-  componentWillMount() {
-    this.mounted = true;
-  }
-
   componentWillUnmount() {
+    this.socket.emit('quit');
     this.mounted = false;
-    clearInterval(this.interval);
   }
 
   componentDidMount() {
-    var $this = this;
-    setTimeout(function(){ 
-      window.gapi.signin2.render('g-signin2', {
-        'scope': 'profile email',
-        'theme': 'dark',
-        'onsuccess': this.onSignIn
-      });
-      window.gapi.load('auth2', async () => {
-        var authInstance = await window.gapi.auth2.getAuthInstance();
-        var signedIn = authInstance.isSignedIn.get()
-        if (signedIn) {
-          $this.onSignIn();
-        }
-     })
-    }, 500)
-    
+    this.mounted = true;
 
     this.socket = io(process.env.REACT_APP_SERVER);
 
@@ -93,7 +82,7 @@ class Game extends React.Component {
     this.canvas.addEventListener('mousedown', this.onMousedown);
     
     this.socket.on('allPlayers', players => {
-      this.setState({players: players})
+      if(this.mounted) this.setState({players: players})
     })
 
     this.socket.on('collision', () => this.state.soundEnabled ? this.playSound('click.mp3') : () => {});
@@ -176,12 +165,12 @@ class Game extends React.Component {
   }
 
   clearCanvas(){
-    const ctx = this.refs.canvas.getContext("2d");
+    const ctx = this.canvasRef.current.getContext("2d");
     ctx.clearRect(0, 0, 960, 540);
   }
 
   drawBackground(){
-    const ctx = this.refs.canvas.getContext("2d");
+    const ctx = this.canvasRef.current.getContext("2d");
     ctx.fillStyle = "white";
     ctx.beginPath();
     ctx.rect(0, 0, 960, 540);
@@ -194,7 +183,7 @@ class Game extends React.Component {
 
   drawPlayer(player){
     if(player.alive && player.invincibility != 0 && (Math.round(this.millis() / 10)) % 2 == 0) return;
-    const ctx = this.refs.canvas.getContext("2d");
+    const ctx = this.canvasRef.current.getContext("2d");
     if(!player.alive) ctx.globalAlpha = 0.3;
     var currentPlayerHeight = player.ducked ? this.state.playerSize / 5 : this.state.playerSize;
     var currentPlayerWidth = player.ducked ? this.state.playerSize * 1.5 : this.state.playerSize;
@@ -252,9 +241,9 @@ class Game extends React.Component {
   }
 
   play(){
-    if(this.state.name){
-      console.log(this.state.name);
-      this.socket.emit('play', {name: this.state.name});
+    var name = this.props.user?.name || this.state.name;
+    if(name){
+      this.socket.emit('play', {name: name});
       this.state.nameClass = styles.name;
       this.state.nameInputClass = styles.nameInput;
     } else {
@@ -287,37 +276,6 @@ class Game extends React.Component {
     }
   }
 
-  onSignIn(){
-    // Retrieve access token
-    var user = window.gapi.auth2.getAuthInstance().currentUser.get();
-    this.setState({accessToken: user.getAuthResponse(true).access_token});
-    
-    window.PlayFabClientSDK.LoginWithGoogleAccount({
-        AccessToken: this.state.accessToken,
-        CreateAccount : true,
-        TitleId: "B15E8",
-    }, this.onPlayFabResponse);
-  }
-
-  onPlayFabResponse(response, error) {
-    if (response)
-      window.PlayFabClientSDK.GetPlayerProfile({
-        ProfileConstraints:
-        {
-          ShowDisplayName: true
-        },
-        PlayFabId: response.data.PlayFabId
-      }, (response) => {
-        if(response.data.PlayerProfile.DisplayName){
-          this.setState({name:response.data.PlayerProfile.DisplayName });
-        }
-        this.setState({playFab: response.data.PlayerProfile});
-      });
-      
-    if (error)
-      console.log("Error: " + JSON.stringify(error));
-  }
-
   render() {
     const scores = 
     <div className={styles.scores}>
@@ -325,13 +283,13 @@ class Game extends React.Component {
     </div>;
     return (
       <>
-        <canvas ref="canvas" width={960} height={540} />
+        <canvas ref={this.canvasRef} width={960} height={540} />
         <div className={styles.addAi}>
-          {!this.state.playFab?.DisplayName ? 
+          {!this.props.user ? 
             <span className={this.state.nameClass}><input onChange={this.handleChange} placeholder="Enter name" className={this.state.nameInputClass} type="text"></input></span> : 
-            <span className={styles.playFabName}><b>Name:</b> {this.state.playFab.DisplayName}</span>
+            <span className={styles.playFabName}><b>Name:</b> {this.props.user.name}</span>
           }
-          {!this.state.playFab?.DisplayName ? <span onClick={this.setName} className={styles.addAiButton}>Set Name</span> : null}
+          {!this.props.user ? <span onClick={this.setName} className={styles.addAiButton}>Set Name</span> : null}
           <span onClick={this.play} className={styles.addAiButton}>Play</span>
           <span onClick={this.addAi} className={styles.addAiButton}>+AI</span>
           <span onClick={this.removeAi} className={styles.addAiButton}>-AI</span>
@@ -352,15 +310,9 @@ class Game extends React.Component {
           <span className={styles.control}><b>Space:</b> Jump/Double jump</span>
           <span className={styles.control}><b>Click:</b> Boost</span>
         </div>
-        <div className={styles.loginText}>
-          <div className={styles.logInDescription}>
-            <span className={styles.logInDescriptionText}>Log in to be added to the leaderboard.</span>
-          </div>
-          <div className={styles.signInButton} id="g-signin2"></div>
-        </div>
       </>
     );
   }
 }
 
-export default Game;
+export default connect(mapStateToProps, () => ({}))(Game);

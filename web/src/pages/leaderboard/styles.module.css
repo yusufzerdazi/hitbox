@@ -1,0 +1,16 @@
+table {
+    border-collapse: collapse;
+    color: white;
+    width: 100%;
+    margin: 0 auto;
+}
+
+table, th, td {
+    border: 1px solid white;
+}
+
+.tableContainer {
+    max-width: 600px;
+    text-align: center;
+    margin: 0 auto;
+}
