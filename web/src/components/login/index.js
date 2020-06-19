@@ -66,12 +66,16 @@ class Login extends React.Component {
 
   render() {
     return (
-      <div className={styles.loginText}>
-        <div className={styles.logInDescription}>
-          <span className={styles.logInDescriptionText}>{!this.props.user ? 'Log in to be added to the leaderboard.' : ''}</span>
+      <>
+      {!this.props.user ? 
+        <div className={styles.loginText}>
+          <div className={styles.logInDescription}>
+            <span className={styles.logInDescriptionText}>Log in to be added to the leaderboard</span>
+          </div>
+          <div className={styles.signInButton} id="g-signin2"></div>
         </div>
-        <div className={styles.signInButton} id="g-signin2"></div>
-      </div>
+        : <></>}
+      </>
     );
   }
 }
