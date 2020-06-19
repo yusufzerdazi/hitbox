@@ -238,6 +238,9 @@ calculateCollision = () => {
 
                 if(clientSpeed < otherClientSpeed){
                     client.player.health = Math.max(client.player.health - otherClientSpeed, 0);
+                    if(client.player.health == 0){
+                        otherClient.emit("kill");
+                    }
                     client.player.invincibility = 100;
                 } else if(speedDifference == 0){
                     client.player.health = Math.max(client.player.health - 0.5 * otherClientSpeed, 0);
