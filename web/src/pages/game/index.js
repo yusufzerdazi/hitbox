@@ -269,7 +269,7 @@ class Game extends React.Component {
   }
 
   setName() {
-    if(this.state.name && this.state.playFab){
+    if(this.state.name && this.props.user){
       window.PlayFabClientSDK.UpdateUserTitleDisplayName({
         DisplayName: this.state.name
       }, () => this.setState({playFab: {DisplayName: this.state.name}}));
@@ -285,11 +285,9 @@ class Game extends React.Component {
       <>
         <canvas ref={this.canvasRef} width={960} height={540} />
         <div className={styles.addAi}>
-          {!this.props.user ? 
-            <span className={this.state.nameClass}><input onChange={this.handleChange} placeholder="Enter name" className={this.state.nameInputClass} type="text"></input></span> : 
-            <span className={styles.playFabName}><b>Name:</b> {this.props.user.name}</span>
-          }
-          {!this.props.user ? <span onClick={this.setName} className={styles.addAiButton}>Set Name</span> : null}
+          <span className={this.state.nameClass}><input onChange={this.handleChange} placeholder="Enter name" className={this.state.nameInputClass} type="text"></input></span>
+          {this.props.user?.name ? <span className={styles.playFabName}><b>Name:</b> {this.props.user?.name}</span> : <></> }
+          <span onClick={this.setName} className={styles.addAiButton}>Set Name</span>
           <span onClick={this.play} className={styles.addAiButton}>Play</span>
           <span onClick={this.addAi} className={styles.addAiButton}>+AI</span>
           <span onClick={this.removeAi} className={styles.addAiButton}>-AI</span>
