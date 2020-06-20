@@ -11,6 +11,12 @@ const mapStateToProps = state => {
   }
 };
 
+const sortFunction = (rowA, rowB, selector) => {
+  if(rowA[selector] == undefined || rowB[selector] == undefined){
+    return -1;
+  }
+  return rowA[selector] - rowB[selector];
+}
 const columns = [
   {
     name: 'Name',
@@ -22,60 +28,35 @@ const columns = [
     selector: 'wins',
     sortable: true,
     right: true,
-    sortFunction: (rowA, rowB) => {
-      if(rowA.wins == undefined || rowB.wins != undefined){
-        return -1;
-      }
-      return rowA.wins - rowB.wins
-    }
+    sortFunction: (rowA, rowB) => sortFunction(rowA, rowB, 'wins')
   },
   {
     name: 'Kills',
     selector: 'kills',
     sortable: true,
     right: true,
-    sortFunction: (rowA, rowB) => {
-      if(rowA.kills == undefined || rowB.kills != undefined){
-        return -1;
-      }
-      return rowA.kills - rowB.kills
-    }
+    sortFunction: (rowA, rowB) => sortFunction(rowA, rowB, 'kills')
+  },
+  {
+    name: 'Players beaten',
+    selector: 'beaten',
+    sortable: true,
+    right: true,
+    sortFunction: (rowA, rowB) => sortFunction(rowA, rowB, 'beaten')
   },
   {
     name: 'Losses',
     selector: 'losses',
     sortable: true,
     right: true,
-    sortFunction: (rowA, rowB) => {
-      if(rowA.losses == undefined || rowB.losses != undefined){
-        return -1;
-      }
-      return rowA.losses - rowB.losses;
-    }
+    sortFunction: (rowA, rowB) => sortFunction(rowA, rowB, 'losses')
   },
   {
-    name: 'Win/Loss',
-    selector: 'winloss',
-    sortable: true,
-    right: true,
-    sortFunction: (rowA, rowB) => {
-      if(rowA.winloss == undefined || rowB.winloss != undefined){
-        return -1;
-      }
-      return rowA.winloss - rowB.winloss;
-    }
-  },
-  {
-    name: 'Kill/Death',
+    name: 'Players beaten/Losses',
     selector: 'killdeath',
     sortable: true,
     right: true,
-    sortFunction: (rowA, rowB) => {
-      if(rowA.killdeath == undefined || rowB.killdeath != undefined){
-        return -1;
-      }
-      return rowA.killdeath - rowB.killdeath;
-    }
+    sortFunction: (rowA, rowB) => sortFunction(rowA, rowB, 'killdeath')
   }
 ];
 
@@ -91,7 +72,8 @@ class Leaderboard extends React.Component {
     var leaderboardsArray = [];
     for (var key in this.state.consolidatedLeaderboards) {
       var value = this.state.consolidatedLeaderboards[key];
-      value.killdeath = value.losses && value.kills ? value.kills / value.losses : undefined;
+      console.log(value);
+      value.killdeath = value.losses && value.beaten ? (value.beaten / value.losses).toFixed(3) : undefined;
       leaderboardsArray.push(value);
     }
     return leaderboardsArray
@@ -119,9 +101,9 @@ class Leaderboard extends React.Component {
     if(state.logIn.user?.loggedIn){
       var p1 = this.getLeaderboard('wins');
       var p2 = this.getLeaderboard('losses');
-      var p2 = this.getLeaderboard('kills');
-      var p3 = this.getLeaderboard('winloss', (x) => x / 1000);
-      Promise.all([p1, p2, p3]).then(() => {
+      var p3 = this.getLeaderboard('kills');
+      var p4 = this.getLeaderboard('beaten');
+      Promise.all([p1, p2, p3, p4]).then(() => {
         this.setState({leaderboardsArray:this.convertLeaderboardsToArray()});
       })
     }

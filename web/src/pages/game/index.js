@@ -6,6 +6,8 @@ import { store } from '../../redux/store';
 import styles from './styles.module.css';
 import * as THREE from 'three';
 import { USERNAME_UPDATED } from '../../constants/actionTypes';
+import hit from '../../assets/sounds/hit.mp3';
+import wall from '../../assets/sounds/wall.mp3';
 
 const mapStateToProps = state => {
   return {
@@ -40,7 +42,7 @@ class Game extends React.Component {
       nameInputClass: styles.nameInput,
       playerSize: 50,
       players: [],
-      soundEnabled: false,
+      soundEnabled: true,
       eMillis: 0,
       ePressed: false,
       aMillis: 0,
@@ -105,7 +107,16 @@ class Game extends React.Component {
       if(this.mounted) this.setState({players: players})
     })
 
-    this.socket.on('collision', () => this.state.soundEnabled ? this.playSound('click.mp3') : () => {});
+    this.socket.on('collision', () => {
+      if(this.state.soundEnabled){
+        this.playSound(hit)
+      }
+    });
+    this.socket.on('hitWall', () => {
+      if(this.state.soundEnabled){
+        this.playSound(wall)
+      }
+    });
 
     this.socket.on('winner', (winner) => {
       this.setState({lastWinner: winner});
@@ -118,6 +129,14 @@ class Game extends React.Component {
     this.socket.on('win', () => {
       window.PlayFabClientSDK.ExecuteCloudScript({
         FunctionName: "playerWins",
+        GeneratePlayStreamEvent: true
+      });
+    });
+    
+    this.socket.on('beaten', beaten => {
+      window.PlayFabClientSDK.ExecuteCloudScript({
+        FunctionName: "playerBeaten",
+        FunctionParameter: beaten,
         GeneratePlayStreamEvent: true
       });
     });
@@ -197,6 +216,7 @@ class Game extends React.Component {
 
   draw = () => {
     this.drawBackground();
+    this.drawWalls();
     this.state.players.filter(p => p.y > 400).forEach(player => this.drawPlayer(player));
     this.drawPlatform();
     var players = this.state.players.concat();
@@ -219,14 +239,20 @@ class Game extends React.Component {
     var xVanishingPoint = 960 / 2;
     var yVanishingPoint = -500;
     
-    this.draw3DSection(0, 600, 0, 0, 480, 410, xVanishingPoint, yVanishingPoint, "grey", false);
-    this.draw3DSection(960, 600, 960, 0, 480, 410, xVanishingPoint, yVanishingPoint, "grey", false);
     this.draw3DSection(100, 400, 860, 400, 480, 410, xVanishingPoint, yVanishingPoint, "grey", false);
     
     this.ctx.beginPath();
     this.ctx.fillStyle = "black";
     this.ctx.rect(100, 400, 760, 540);
     this.ctx.fill();
+  }
+
+  drawWalls(){
+    var xVanishingPoint = 960 / 2;
+    var yVanishingPoint = -500;
+    
+    this.draw3DSection(0, 600, 0, 0, 480, 410, xVanishingPoint, yVanishingPoint, "grey", false);
+    this.draw3DSection(960, 600, 960, 0, 480, 410, xVanishingPoint, yVanishingPoint, "grey", false);
   }
 
   drawBackground(){
@@ -283,20 +309,30 @@ class Game extends React.Component {
   }
 
   drawPlayerOutline(player, width, height, xOffset){
+    this.ctx.save();
+    this.ctx.lineWidth = 6;
     this.ctx.beginPath();
     this.ctx.strokeStyle = player.colour;
     this.ctx.rect(player.x + 3 + xOffset, player.y - 3, width - 6, - height + 6);
     this.ctx.stroke();
+    this.ctx.restore();
   }
 
   drawPlayerName(player, height, xOffset){
+    this.ctx.save();
     this.ctx.fillStyle = 'white';
     this.ctx.font = "10px Consolas";
     this.ctx.textAlign = "center";
-    this.ctx.lineWidth = 6;
+    
+    this.ctx.shadowColor = "black";
+    this.ctx.shadowOffsetX = 1;
+    this.ctx.shadowOffsetY = 1;
+    this.ctx.shadowBlur = 1;
     if(player.name){
       this.ctx.fillText(player.name, player.x + xOffset + this.state.playerSize / 2, player.y - height - 1);
     }
+    this.ctx.shadowColor = "";
+    this.ctx.restore();
   }
 
   drawPlayerHealth(player, width, height, xOffset){
@@ -344,7 +380,13 @@ class Game extends React.Component {
     this.ctx.fillStyle = 'black';
     this.ctx.font = "50px Consolas";
     this.ctx.textAlign = "center";
-    this.ctx.fillText(this.state.countdown, 480, 270);
+    var timerText = Math.round(this.state.countdown / 20);
+    if(timerText == 0 && this.state.countdown){
+      timerText = "Go!"
+    } else if(this.state.countdown == 0){
+      timerText = ""
+    }
+    this.ctx.fillText(timerText, 480, 270);
   }
 
   playSound(soundFile){
