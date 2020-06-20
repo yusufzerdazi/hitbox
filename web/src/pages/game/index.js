@@ -340,7 +340,7 @@ class Game extends React.Component {
     this.ctx.shadowOffsetY = 1;
     this.ctx.shadowBlur = 1;
     if(player.name){
-      this.ctx.fillText(player.name, player.x + xOffset + this.state.playerSize / 2, player.y - height - 1);
+      this.ctx.fillText(player.name, player.x + this.state.playerSize / 2, player.y - height - 1);
     }
     this.ctx.shadowColor = "";
     this.ctx.restore();
