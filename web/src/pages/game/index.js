@@ -39,6 +39,7 @@ class Game extends React.Component {
     this.setName = this.setName.bind(this);
     this.editName = this.editName.bind(this);
     this.cancelNameChange = this.cancelNameChange.bind(this);
+    this.getUsername = this.getUsername.bind(this);
 
     this.state = {
       nameClass: styles.name,
@@ -84,19 +85,24 @@ class Game extends React.Component {
     this.mounted = false;
   }
 
+  getUsername(){
+    var state = store.getState();
+    if(state.logIn.user?.name && this.state.user?.name != state.logIn.user.name){
+      this.setState({
+        user: {
+          name: state.logIn.user.name
+        },
+        editingUsername: false
+      })
+    }
+  }
+
   componentDidMount() {
     this.mounted = true;
     this.ctx = this.canvasRef.current.getContext("2d");
+    this.getUsername();
     store.subscribe(() => {
-      var state = store.getState();
-      if(this.state.user?.name != state.logIn.user.name){
-        this.setState({
-          user: {
-            name: state.logIn.user.name
-          },
-          editingUsername: false
-        })
-      }
+      this.getUsername();
     });
 
     this.socket = io(process.env.REACT_APP_SERVER);
