@@ -9,7 +9,7 @@ trigger:
 variables:
 
   # Azure Resource Manager connection created during pipeline creation
-  azureSubscription: '16d83a92-9978-447c-9214-e33dc81096c8'
+  azureSubscription: 'dea82fc1-4da3-49f9-bc95-ccefa3033624'
   
   # Web app name
   webAppName: 'hitboxbackend'

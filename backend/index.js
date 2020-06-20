@@ -33,6 +33,7 @@ var allClients = [];
 io.on('connection', (socket) => {
     console.log('Got connect.')
     socket.on('play', (player) => {
+        if(allClients.filter(c => c.player).length == 10) return;
         if(!socket.player || socket.player.disconnected){
             allClients.push(socket);
             socket.player = {
@@ -76,6 +77,7 @@ io.on('connection', (socket) => {
     })
 
     socket.on('addAi', () =>{
+        if(allClients.filter(c => c.player).length == 10) return;
         var colour = randomColor();
         allClients.push({player: {
             colour: colour,
@@ -199,28 +201,40 @@ calculateSpeed = () => {
 calculateMovement = () => {
     movingPlayers().forEach(client => {
         client.player.x += client.player.xVelocity;
-        client.player.y = (client.player.y >= PLATFORMHEIGHT) ? client.player.y + client.player.yVelocity : Math.min(client.player.y + client.player.yVelocity, PLATFORMHEIGHT);
+        if(client.player.y >= PLATFORMHEIGHT){
+            client.player.y = client.player.y + client.player.yVelocity
+        } else {
+            client.player.y = Math.min(client.player.y + client.player.yVelocity, PLATFORMHEIGHT);
+            if(client.player.y == PLATFORMHEIGHT){
+                io.emit('hitWall');
+            }
+        }
     });
     movingPlayers().forEach(client => {
         if(client.player.x < 0) {
             client.player.x = 0;
             client.player.xVelocity = -client.player.xVelocity * WALLDAMPING;
+            io.emit('hitWall');
         }
         if(client.player.x > (WIDTH - PLAYERSIZE)) {
             client.player.x = WIDTH - PLAYERSIZE;
             client.player.xVelocity = -client.player.xVelocity * WALLDAMPING;;
+            io.emit('hitWall');
         }
         if(client.player.y < PLAYERSIZE) {
             client.player.y = PLAYERSIZE;
             client.player.yVelocity = 0;
+            io.emit('hitWall');
         }
         if(client.player.x < 480 && client.player.x + PLAYERSIZE > 100 && client.player.y > PLATFORMHEIGHT){
             client.player.x = 100 - PLAYERSIZE;
-            client.player.xVelocity = -client.player.xVelocity * WALLDAMPING;;
+            client.player.xVelocity = -client.player.xVelocity * WALLDAMPING;
+            io.emit('hitWall');
         }
         if(client.player.x > 480 && client.player.x < 860 && client.player.y > PLATFORMHEIGHT){
             client.player.x = 860;
-            client.player.xVelocity = -client.player.xVelocity * WALLDAMPING;;
+            client.player.xVelocity = -client.player.xVelocity * WALLDAMPING;
+            io.emit('hitWall');
         }
     });
 }
@@ -314,7 +328,8 @@ calculateEnd = () => {
         allClients.forEach(client => {
             if(client == alivePlayers[0]){
                 client.emit('win');
-            } else {
+                client.emit('beaten', allClients.filter(c => c.player).length - 1);
+            } else if(allClients.filter(c => c.player).length >= 2){
                 client.emit('loss');
             }
         })
@@ -324,12 +339,27 @@ calculateEnd = () => {
 }
 
 reset = () => {
+    var positions = [];
     allClients.forEach((client, i)=> {
+        var newPosition = {x: 100 + getRandomInt(WIDTH - 200 - PLAYERSIZE), y: PLAYERSIZE + getRandomInt(PLATFORMHEIGHT - PLAYERSIZE)};
+        var anyCollision = true
+        while(anyCollision){
+            anyCollision = false;
+            newPosition = {x: 100 + getRandomInt(WIDTH - 200 - PLAYERSIZE), y: PLAYERSIZE + getRandomInt(PLATFORMHEIGHT - PLAYERSIZE)};
+            positions.forEach(p => {
+                xCollision = Math.abs((newPosition.x) - (p.x)) <= PLAYERSIZE + 20;
+                yCollision = Math.abs((newPosition.y) - (p.y)) <= PLAYERSIZE + 20;
+                if(xCollision && yCollision){
+                    anyCollision = true;
+                }
+            });
+        }
+        positions.push(newPosition);
         client.player = {
             name: client.player.name,
             colour: client.player.colour,
-            x: 100 + getRandomInt(WIDTH - 200 - PLAYERSIZE),
-            y: PLAYERSIZE + getRandomInt(PLATFORMHEIGHT - PLAYERSIZE),
+            x: newPosition.x,
+            y: newPosition.y,
             xVelocity: 0,
             yVelocity: 0,
             health: 100,
