@@ -23,7 +23,10 @@ const BOOSTSPEED = 35;
 const DUCKEDHEIGHT = 1/5;
 const SIMPLEX = new SimplexNoise();
 
+var GAMESTARTING = false;
+var GAMESTARTED = false;
 var TICKS = 0;
+var STARTINGTICKS = 0;
 var AIALIVE = true;
 
 var allClients = [];
@@ -35,8 +38,8 @@ io.on('connection', (socket) => {
             socket.player = {
                 name: player.name,
                 colour: randomColor(),
-                x: 100 + 100 * allClients.length,
-                y: PLATFORMHEIGHT,
+                x: getRandomInt(WIDTH - PLAYERSIZE),
+                y: PLAYERSIZE + getRandomInt(PLATFORMHEIGHT - PLAYERSIZE),
                 xVelocity: 0,
                 yVelocity: 0,
                 health: 100,
@@ -44,31 +47,32 @@ io.on('connection', (socket) => {
                 alive: true,
                 invincibility: 0,
                 boostCooldown: 0,
-                ducked: false
+                ducked: false,
+                boostCooldown: 100
             }
         }
     });
 
     socket.on('right', pressed => {
-        socket.player ? socket.player.right = pressed : null;
+        if(socket.player) socket.player.right = pressed;
     });
     socket.on('boostRight', pressed => {
-        socket.player ? socket.player.boostRight = true : null;
+        if(GAMESTARTED && socket.player) socket.player.boostRight = true;
     });
     socket.on('boostLeft', pressed => {
-        socket.player ? socket.player.boostLeft = true : null;
+        if(GAMESTARTED && socket.player) socket.player.boostLeft = true;
     });
     socket.on('down', pressed => {
-        socket.player ? socket.player.down = pressed : null;
+        if(socket.player) socket.player.down = pressed;
     });
     socket.on('left', pressed => {
-        socket.player ? socket.player.left = pressed : null;
+        if(socket.player) socket.player.left = pressed;
     });
     socket.on('space', pressed => {
-        socket.player ? socket.player.space = pressed : null;
+        if(socket.player) socket.player.space = pressed;
     });
     socket.on('click', () => {
-        socket.player ? socket.player.clicked = true : null;
+        if(GAMESTARTED && socket.player) socket.player.clicked = true;
     })
 
     socket.on('addAi', () =>{
@@ -77,7 +81,7 @@ io.on('connection', (socket) => {
             colour: colour,
             name: colour,
             x: getRandomInt(WIDTH - PLAYERSIZE),
-            y: PLATFORMHEIGHT,
+            y: PLAYERSIZE + getRandomInt(PLATFORMHEIGHT - PLAYERSIZE),
             xVelocity: 0,
             yVelocity: 0,
             health: 100,
@@ -86,7 +90,8 @@ io.on('connection', (socket) => {
             alive: true,
             invincibility: 0,
             boostCooldown: 0,
-            ducked: false
+            ducked: false,
+            boostCooldown: 100
         }})
     })
 
@@ -141,7 +146,7 @@ calculateSpeed = () => {
             client.player.boostCooldown = 100;
         }
 
-        if(client.player.down && client.player.y == PLATFORMHEIGHT && client.player.yVelocity >= 0){
+        if(client.player.down && client.player.y == PLATFORMHEIGHT && client.player.yVelocity >= 0 && client.player.x + PLAYERSIZE > 100 && client.player.x < 860){
             client.player.ducked = true;
             client.player.boostCooldown = Math.max(client.player.boostCooldown, 20);
         } else {
@@ -183,7 +188,7 @@ calculateSpeed = () => {
             var newMagnitude = Math.max(0, magnitude - ACCELERATION);
             client.player.xVelocity = newMagnitude * velSign;
         }
-        if(client.player.y != PLATFORMHEIGHT || client.player.yVelocity < 0) {
+        if(client.player.y != PLATFORMHEIGHT || client.player.x + PLAYERSIZE < 100 || client.player.x > 860 || client.player.yVelocity < 0) {
             client.player.yVelocity += VERTICALACCELERATION;
         } else {
             client.player.yVelocity = 0;
@@ -194,7 +199,7 @@ calculateSpeed = () => {
 calculateMovement = () => {
     movingPlayers().forEach(client => {
         client.player.x += client.player.xVelocity;
-        client.player.y = Math.min(client.player.y + client.player.yVelocity, PLATFORMHEIGHT);
+        client.player.y = (client.player.y >= PLATFORMHEIGHT) ? client.player.y + client.player.yVelocity : Math.min(client.player.y + client.player.yVelocity, PLATFORMHEIGHT);
     });
     movingPlayers().forEach(client => {
         if(client.player.x < 0) {
@@ -208,6 +213,14 @@ calculateMovement = () => {
         if(client.player.y < PLAYERSIZE) {
             client.player.y = PLAYERSIZE;
             client.player.yVelocity = 0;
+        }
+        if(client.player.x < 480 && client.player.x + PLAYERSIZE > 100 && client.player.y > PLATFORMHEIGHT){
+            client.player.x = 100 - PLAYERSIZE;
+            client.player.xVelocity = -client.player.xVelocity * WALLDAMPING;;
+        }
+        if(client.player.x > 480 && client.player.x < 860 && client.player.y > PLATFORMHEIGHT){
+            client.player.x = 860;
+            client.player.xVelocity = -client.player.xVelocity * WALLDAMPING;;
         }
     });
 }
@@ -275,6 +288,9 @@ calculateCollision = () => {
             client.player.yVelocity = client.player.newYVelocity;
             client.player.newYVelocity = null;
         }
+        if(client.player.y >= HEIGHT + PLAYERSIZE){
+            client.player.health = 0;
+        }
     })
     invulnerablePlayers().forEach((client, i) => {
         client.player.invincibility -= 20;
@@ -286,7 +302,9 @@ calculateEnd = () => {
     alivePlayers = livingPlayers();
     alive = alivePlayers.length;
     if(alive > 1 || allClients.length < 2){
-        return;
+        if(!(allClients.length == 1 && alive == 0)){
+            return;
+        }
     }
     if(alive == 1){
         alivePlayers[0].player.score += 1;
@@ -301,6 +319,7 @@ calculateEnd = () => {
             }
         })
     }
+    GAMESTARTED = false;
     reset();
 }
 
@@ -310,7 +329,7 @@ reset = () => {
             name: client.player.name,
             colour: client.player.colour,
             x: getRandomInt(WIDTH - PLAYERSIZE),
-            y: PLATFORMHEIGHT,
+            y: PLAYERSIZE + getRandomInt(PLATFORMHEIGHT - PLAYERSIZE),
             xVelocity: 0,
             yVelocity: 0,
             health: 100,
@@ -318,10 +337,12 @@ reset = () => {
             ai: client.player.ai,
             alive: true,
             invincibility: 0,
-            left: client.player.left,
-            right: client.player.right,
+            left: false,
+            right: false,
+            down: false,
             boostCooldown: 0,
-            ducked: false
+            ducked: false,
+            boostCooldown: 100
         }
     });
 }
@@ -387,17 +408,35 @@ calculateDeadPlayers = () => {
     });
 }
 
+calculateStartGame = () => {
+    if(GAMESTARTING) {
+        if(TICKS - STARTINGTICKS > 60){
+            GAMESTARTED = true;
+            GAMESTARTING = false;
+        } else {
+            io.emit("starting", 60 - (TICKS - STARTINGTICKS))
+        }
+    } else {
+        GAMESTARTING = true
+        STARTINGTICKS = TICKS;
+    }
+}
+
 setInterval(() => {
     removeDisconnectedPlayers();
-    calculateSpeed();
-    calculateMovement();
-    wasCollision = calculateCollision();
-    if(wasCollision){
-        io.emit("collision");
+    if(GAMESTARTED){
+        calculateSpeed();
+        calculateMovement();
+        wasCollision = calculateCollision();
+        if(wasCollision){
+            io.emit("collision");
+        }
+        AIALIVE ? moveAi() : null;
+        calculateDeadPlayers();
+        calculateEnd();
+    } else {
+        calculateStartGame();
     }
-    AIALIVE ? moveAi() : null;
-    calculateDeadPlayers();
-    calculateEnd();
     io.emit("allPlayers", allClients.map(socket => socket.player));
     TICKS++;
 }, 1000 / 60);
