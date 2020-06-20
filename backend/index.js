@@ -29,6 +29,18 @@ var TICKS = 0;
 var STARTINGTICKS = 0;
 var AIALIVE = true;
 
+Object.defineProperty(String.prototype, 'hashCode', {
+    value: function() {
+      var hash = 0, i, chr;
+      for (i = 0; i < this.length; i++) {
+        chr   = this.charCodeAt(i);
+        hash  = ((hash << 5) - hash) + chr;
+        hash |= 0; // Convert to 32bit integer
+      }
+      return hash;
+    }
+});  
+
 var allClients = [];
 io.on('connection', (socket) => {
     console.log('Got connect.')
@@ -383,7 +395,7 @@ removeDisconnectedPlayers = () => {
 
 moveAi = () => {
     livingPlayers().filter(client => client.player.ai).forEach((client, i) => {
-        playerId = parseInt('0x'+client.player.colour.substr(1));
+        playerId = client.player.name.hashCode();
         playersOnLeft = 0;
         playersOnRight = 0;
         playersAbove = 0;
@@ -397,16 +409,16 @@ moveAi = () => {
             }
         });
         if(playersOnLeft > playersOnRight){
-            client.player.left = SIMPLEX.noise2D(2 * playerId, TICKS * 0.01) < 0.8;
+            client.player.left = SIMPLEX.noise2D(2 * playerId, TICKS * 0.01) < 0.6;
             client.player.right = SIMPLEX.noise2D(2 * playerId, TICKS * 0.01) > 0.8;
             client.player.boostLeft = Math.random() < 0.01;
         } else if(playersOnLeft < playersOnRight){
             client.player.left = SIMPLEX.noise2D(2 * playerId, TICKS * 0.01) > 0.8;
-            client.player.right = SIMPLEX.noise2D(2 * playerId, TICKS * 0.01) < 0.8;
+            client.player.right = SIMPLEX.noise2D(2 * playerId, TICKS * 0.01) < 0.6;
             client.player.boostRight = Math.random() > 0.99;
         } else {
-            client.player.left = SIMPLEX.noise2D(2 * playerId, TICKS * 0.01) > 0;
-            client.player.right = SIMPLEX.noise2D(2 * playerId, TICKS * 0.01) < 0;
+            client.player.left = SIMPLEX.noise2D(2 * playerId, TICKS * 0.01) > 0.33;
+            client.player.right = SIMPLEX.noise2D(2 * playerId, TICKS * 0.01) < -0.33;
             client.player.boostRight = Math.random() > 0.995;
             client.player.boostLeft = Math.random() > 0.995;
         }
