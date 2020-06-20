@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 import React from 'react';
 import Game from './pages/game';
 import Leaderboard from './pages/leaderboard';
+import Instructions from './pages/instructions';
 import Header from './components/header';
 import Login from './components/login';
 import { store } from './redux/store';
@@ -26,6 +27,9 @@ class App extends React.Component {
             </Route>
             <Route exact path="/leaderboard">
               <Leaderboard />
+            </Route>
+            <Route exact path="/instructions">
+              <Instructions />
             </Route>
           </Switch>
           <Login afterSignIn={this.afterSignIn}/>

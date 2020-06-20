@@ -489,14 +489,6 @@ class Game extends React.Component {
           </div> : null
         }
         {scores}
-        <div className={styles.text}>
-          <span className={styles.control}><b>A:</b> Left (Double tap to boost)</span>
-          <span className={styles.control}><b>S:</b> Duck/Pound</span>
-          <span className={styles.control}><b>D:</b> Right (Double tap to boost)</span>
-          <span className={styles.control}><b>Space:</b> Jump/Double jump</span>
-          <span className={styles.control}><b>Click:</b> Boost</span>
-          <span className={styles.control}><b>P:</b> Toggle Fullscreen</span>
-        </div>
         <ReactTooltip />
       </>
     );

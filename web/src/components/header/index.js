@@ -14,6 +14,7 @@ class Header extends React.Component {
         <div className={styles.navigation}>
           <NavLink exact={true} activeClassName={styles.isActive} to='/'><span className={styles.navigationButton}>Game</span></NavLink>
           <NavLink activeClassName={styles.isActive} to='/leaderboard'><span className={styles.navigationButton}>Leaderboard</span></NavLink>
+          <NavLink activeClassName={styles.isActive} to='/instructions'><span className={styles.navigationButton}>Instructions</span></NavLink>
         </div>
       </div>
     );

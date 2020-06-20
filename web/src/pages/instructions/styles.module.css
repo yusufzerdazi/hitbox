@@ -1,0 +1,23 @@
+.controlsContainer {
+    max-width: 960px;
+    left: 0;
+    right: 0;
+    margin: auto;
+    margin-bottom: 40px;
+}
+
+.infoImage {
+    max-width: 500px;
+}
+
+.controlsImage {
+    max-width: 650px;
+}
+
+h1 {
+    color: white;
+}
+
+p {
+    color: white;
+}
