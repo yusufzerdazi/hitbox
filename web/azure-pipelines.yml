@@ -9,7 +9,7 @@ trigger:
 variables:
 
   # Azure Resource Manager connection created during pipeline creation
-  azureSubscription: 'dea82fc1-4da3-49f9-bc95-ccefa3033624'
+  serviceConnection: 'Visual Studio Enterprise'
 
   # Web app name
   webAppName: 'hitbox'
@@ -59,7 +59,7 @@ stages:
           - task: AzureRmWebAppDeployment@4
             displayName: 'Azure App Service Deploy: hitbox'
             inputs:
-              azureSubscription: $(azureSubscription)
+              azureServiceConnection: : $(serviceConnection)
               appType: webAppLinux
               WebAppName: $(webAppName)
               packageForLinux: '$(Pipeline.Workspace)/drop/$(Build.BuildId).zip'
