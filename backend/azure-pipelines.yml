@@ -10,6 +10,7 @@ variables:
 
   # Azure Resource Manager connection created during pipeline creation
   serviceConnection: 'Visual Studio Enterprise'
+  azureSubscription: '0a0887f8-cba8-4398-bfb5-bc47378aea1e'
   
   # Web app name
   webAppName: 'hitboxbackend'
@@ -70,6 +71,7 @@ stages:
             displayName: 'Azure Web App Deploy: hitboxbackend'
             inputs:
               azureServiceConnection: 'Visual Studio Enterprise'
+              azureSubscription: $(azureSubscription)
               appType: webAppLinux
               appName: $(webAppName)
               runtimeStack: 'NODE|10.10'
