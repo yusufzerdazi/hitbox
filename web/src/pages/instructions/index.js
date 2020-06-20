@@ -13,7 +13,7 @@ class Instructions extends React.Component {
           <p>
             The aim of the game, as usual, is to kill each other. Damage is dealt when players collide, the quicker player hurting the slower player.
             Quicker collisions deal more damage. Players can boost to quickly increase their speed, but must wait for their boost cooldown to
-            deplete before boosting again.
+            deplete before boosting again. Crouching makes players invulnerable to horizontal damage, but they can't move and can still be hit from above.
           </p>
         </div>
         <div className={styles.info}>
