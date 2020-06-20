@@ -1,6 +1,7 @@
 
 import React from 'react';
 import io from 'socket.io-client';
+import ReactTooltip from "react-tooltip";
 import { connect } from "react-redux";
 import { store } from '../../redux/store';
 import styles from './styles.module.css';
@@ -36,6 +37,8 @@ class Game extends React.Component {
     this.handleChange = this.handleChange.bind(this);
     this.onMousedown = this.onMousedown.bind(this);
     this.setName = this.setName.bind(this);
+    this.editName = this.editName.bind(this);
+    this.cancelNameChange = this.cancelNameChange.bind(this);
 
     this.state = {
       nameClass: styles.name,
@@ -48,7 +51,8 @@ class Game extends React.Component {
       aMillis: 0,
       aPressed: false,
       lastWinner: null,
-      countdown: ""
+      countdown: "",
+      editingUsername: true
     };
 
     this.canvasRef = React.createRef();
@@ -89,7 +93,8 @@ class Game extends React.Component {
         this.setState({
           user: {
             name: state.logIn.user.name
-          }
+          },
+          editingUsername: false
         })
       }
     });
@@ -108,33 +113,33 @@ class Game extends React.Component {
     })
 
     this.socket.on('collision', () => {
-      if(this.state.soundEnabled){
-        this.playSound(hit)
+      if(this.state.soundEnabled && this.mounted){
+        this.playSound(hit);
       }
     });
     this.socket.on('hitWall', () => {
-      if(this.state.soundEnabled){
-        this.playSound(wall)
+      if(this.state.soundEnabled && this.mounted){
+        this.playSound(wall);
       }
     });
 
     this.socket.on('winner', (winner) => {
-      this.setState({lastWinner: winner});
+      if(this.mounted) this.setState({lastWinner: winner});
     });
 
     this.socket.on('starting', (timer) => {
-      this.setState({countdown: timer ? timer : ""});
+      if(this.mounted) this.setState({countdown: timer ? timer : ""});
     })
 
     this.socket.on('win', () => {
-      window.PlayFabClientSDK.ExecuteCloudScript({
+      if(this.mounted) window.PlayFabClientSDK.ExecuteCloudScript({
         FunctionName: "playerWins",
         GeneratePlayStreamEvent: true
       });
     });
     
     this.socket.on('beaten', beaten => {
-      window.PlayFabClientSDK.ExecuteCloudScript({
+      if(this.mounted) window.PlayFabClientSDK.ExecuteCloudScript({
         FunctionName: "playerBeaten",
         FunctionParameter: beaten,
         GeneratePlayStreamEvent: true
@@ -142,14 +147,14 @@ class Game extends React.Component {
     });
 
     this.socket.on('kill', () => {
-      window.PlayFabClientSDK.ExecuteCloudScript({
+      if(this.mounted) window.PlayFabClientSDK.ExecuteCloudScript({
         FunctionName: "playerKills",
         GeneratePlayStreamEvent: true
       });
     })
 
     this.socket.on('loss', () => {
-      window.PlayFabClientSDK.ExecuteCloudScript({
+      if(this.mounted) window.PlayFabClientSDK.ExecuteCloudScript({
         FunctionName: "playerLoses",
         GeneratePlayStreamEvent: true
       });
@@ -434,11 +439,25 @@ class Game extends React.Component {
     this.setState({name: event.target.value});
   }
 
+  editName() {
+    this.setState({editingUsername: true});
+  }
+
+  cancelNameChange() {
+    this.setState({
+      name: "",
+      editingUsername: false
+    });
+  }
+
   setName() {
     if(this.state.name && this.props.user){
       window.PlayFabClientSDK.UpdateUserTitleDisplayName({
         DisplayName: this.state.name
-      }, () => this.props.updateName(this.state.name));
+      }, () => {
+        this.setState({editingUsername: false});
+        this.props.updateName(this.state.name);
+      });
     }
   }
 
@@ -451,15 +470,18 @@ class Game extends React.Component {
       <>
         <canvas className={this.state.fullScreen} ref={this.canvasRef} width={960} height={540} />
         <div className={styles.addAi}>
-          <span className={this.state.nameClass}><input onChange={this.handleChange} placeholder="Enter name" className={this.state.nameInputClass} type="text"></input></span>
-          {this.props.user?.name ? <span className={styles.playFabName}><b>Name:</b> {this.props.user?.name}</span> : <></> }
-          {this.props.user ? <span onClick={this.setName} className={styles.addAiButton}>Update Username</span> : <></> }
-          <span onClick={this.play} className={styles.addAiButton + ' ' + styles.playButton}>Play</span>
-          <span onClick={this.quit} className={styles.addAiButton + ' ' + styles.quitButton}>Quit</span>
-          <span onClick={this.addAi} className={styles.addAiButton}>+AI</span>
-          <span onClick={this.removeAi} className={styles.addAiButton}>-AI</span>
-          <span onClick={this.toggleSound} className={styles.addAiButton}>Toggle Sound</span>
-          <span onClick={this.toggleAi} className={styles.addAiButton}>Toggle AI</span>
+          <span style={{display: this.props.user?.name ? 'inline-block' : 'none'}} className={styles.playFabName}><b>Name:</b> {this.props.user?.name}</span>
+          <span style={{display: this.state.editingUsername ? 'inline-block' : 'none'}} className={this.state.nameClass}><input onChange={this.handleChange} placeholder="Enter name" className={this.state.nameInputClass} type="text"></input></span>
+          <span data-tip="Edit username" style={{display: this.props.user && !this.state.editingUsername ? 'inline-block' : 'none'}} onClick={this.editName} className={styles.addAiButton}><i className="fas fa-pencil"></i></span>
+          <span data-tip="Confirm username" style={{display: this.props.user && this.state.editingUsername ? 'inline-block' : 'none'}} onClick={this.setName} className={styles.addAiButton}><i className="fas fa-check"></i></span>
+          <span data-tip="Cancel name change" style={{display: this.props.user && this.state.editingUsername ? 'inline-block' : 'none'}} onClick={this.cancelNameChange} className={styles.addAiButton}><i className="fas fa-times"></i></span>
+          <span data-tip="Join game" onClick={this.play} className={styles.addAiButton}><i className="fas fa-gamepad-alt"></i></span>
+          <span data-tip="Quit game" onClick={this.quit} className={styles.addAiButton}><i style={{color: 'red'}} className="fas fa-ban"></i></span>
+          <span style={{display: this.state.soundEnabled ? 'inline-block' : 'none'}} data-tip="Mute audio" onClick={this.toggleSound} className={styles.addAiButton}><i className="fas fa-volume-mute"></i></span>
+          <span style={{display: !this.state.soundEnabled ? 'inline-block' : 'none'}} data-tip="Enable audio" onClick={this.toggleSound} className={styles.addAiButton}><i className="fas fa-volume"></i></span>
+          <span data-tip="Add AI" onClick={this.addAi} className={styles.addAiButton}><i className="fas fa-robot"></i></span>
+          <span data-tip="Delete AI" onClick={this.removeAi} className={styles.addAiButton}><i style={{color: 'red'}} className="fas fa-robot"></i></span>
+          <span data-tip="Toggle Artificial Intelligence" onClick={this.toggleAi} className={styles.addAiButton}><i className="fas fa-head-side-brain"></i></span>
         </div>
         {this.state.lastWinner ?
           <div className={styles.winnerContainer}>
@@ -475,6 +497,7 @@ class Game extends React.Component {
           <span className={styles.control}><b>Click:</b> Boost</span>
           <span className={styles.control}><b>P:</b> Toggle Fullscreen</span>
         </div>
+        <ReactTooltip />
       </>
     );
   }

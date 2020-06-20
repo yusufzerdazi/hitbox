@@ -3,16 +3,17 @@ import React from 'react';
 import styles from './styles.module.css';
 import hitbox from '../../assets/hitbox.svg';
 import {
-  Link
+  NavLink
 } from "react-router-dom";
 
 class Header extends React.Component {
   render() {
     return (
       <div className={styles.titleContainer}>
-        <Link to="/"><img className={styles.title} src={hitbox}></img></Link>
+        <img className={styles.title} src={hitbox}></img>
         <div className={styles.navigation}>
-          <Link to="/leaderboard"><span className={styles.navigationButton}>Leaderboard</span></Link>
+          <NavLink exact={true} activeClassName={styles.isActive} to='/'><span className={styles.navigationButton}>Game</span></NavLink>
+          <NavLink activeClassName={styles.isActive} to='/leaderboard'><span className={styles.navigationButton}>Leaderboard</span></NavLink>
         </div>
       </div>
     );

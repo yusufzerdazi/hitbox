@@ -24,7 +24,7 @@ class App extends React.Component {
             <Route exact path="/">
               <Game/>
             </Route>
-            <Route path="/leaderboard">
+            <Route exact path="/leaderboard">
               <Leaderboard />
             </Route>
           </Switch>

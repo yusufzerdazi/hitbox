@@ -72,7 +72,6 @@ class Leaderboard extends React.Component {
     var leaderboardsArray = [];
     for (var key in this.state.consolidatedLeaderboards) {
       var value = this.state.consolidatedLeaderboards[key];
-      console.log(value);
       value.killdeath = value.losses && value.beaten ? (value.beaten / value.losses).toFixed(3) : undefined;
       leaderboardsArray.push(value);
     }
