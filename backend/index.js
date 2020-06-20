@@ -38,7 +38,7 @@ io.on('connection', (socket) => {
             socket.player = {
                 name: player.name,
                 colour: randomColor(),
-                x: getRandomInt(WIDTH - PLAYERSIZE),
+                x: 100 + getRandomInt(WIDTH - 200 - PLAYERSIZE),
                 y: PLAYERSIZE + getRandomInt(PLATFORMHEIGHT - PLAYERSIZE),
                 xVelocity: 0,
                 yVelocity: 0,
@@ -80,7 +80,7 @@ io.on('connection', (socket) => {
         allClients.push({player: {
             colour: colour,
             name: colour,
-            x: getRandomInt(WIDTH - PLAYERSIZE),
+            x: 100 + getRandomInt(WIDTH - 200 - PLAYERSIZE),
             y: PLAYERSIZE + getRandomInt(PLATFORMHEIGHT - PLAYERSIZE),
             xVelocity: 0,
             yVelocity: 0,
@@ -328,7 +328,7 @@ reset = () => {
         client.player = {
             name: client.player.name,
             colour: client.player.colour,
-            x: getRandomInt(WIDTH - PLAYERSIZE),
+            x: 100 + getRandomInt(WIDTH - 200 - PLAYERSIZE),
             y: PLAYERSIZE + getRandomInt(PLATFORMHEIGHT - PLAYERSIZE),
             xVelocity: 0,
             yVelocity: 0,
