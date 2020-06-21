@@ -29,6 +29,7 @@ class Game extends React.Component {
     this.listener = new THREE.AudioListener();
 
     this.addAi = this.addAi.bind(this);
+    this.addCleverAi = this.addCleverAi.bind(this);
     this.removeAi = this.removeAi.bind(this);
     this.play = this.play.bind(this);
     this.quit = this.quit.bind(this);
@@ -40,6 +41,7 @@ class Game extends React.Component {
     this.editName = this.editName.bind(this);
     this.cancelNameChange = this.cancelNameChange.bind(this);
     this.getUsername = this.getUsername.bind(this);
+    this.goFullscreen = this.goFullscreen.bind(this);
 
     this.state = {
       nameClass: styles.name,
@@ -171,10 +173,12 @@ class Game extends React.Component {
     }, 1000 / 60);
 
     document.addEventListener("keydown", e => {
-      if(e.keyCode === 80) {
-        this.setState({fullScreen: this.state.fullScreen ? '' : styles.fullScreen});
+      if(e.keyCode === 27){
+        this.setState({fullScreen: ''})
       }
+
       if(!(document.pointerLockElement === this.canvas || document.mozPointerLockElement === this.canvas)) return;
+
       if(e.keyCode === 68){
         if(!this.state.ePressed){
           const currentMillis = this.millis();
@@ -440,6 +444,10 @@ class Game extends React.Component {
   toggleAi(){
     this.socket.emit('toggleAi');
   }
+  
+  addCleverAi(){
+    this.socket.emit('addCleverAi');
+  }
 
   handleChange(event) {
     this.setState({name: event.target.value});
@@ -467,6 +475,10 @@ class Game extends React.Component {
     }
   }
 
+  goFullscreen(){
+    this.setState({fullScreen: styles.fullScreen});
+  }
+
   render() {
     const scores = 
     <div className={styles.scores}>
@@ -486,8 +498,9 @@ class Game extends React.Component {
           <span style={{display: this.state.soundEnabled ? 'inline-block' : 'none'}} data-tip="Mute audio" onClick={this.toggleSound} className={styles.addAiButton}><i className="fas fa-volume-mute"></i></span>
           <span style={{display: !this.state.soundEnabled ? 'inline-block' : 'none'}} data-tip="Enable audio" onClick={this.toggleSound} className={styles.addAiButton}><i className="fas fa-volume"></i></span>
           <span data-tip="Add AI" onClick={this.addAi} className={styles.addAiButton}><i className="fas fa-robot"></i></span>
+          <span data-tip="Add Clever AI" onClick={this.addCleverAi} className={styles.addAiButton}><i className="fas fa-head-side-brain"></i></span>
           <span data-tip="Delete AI" onClick={this.removeAi} className={styles.addAiButton}><i style={{color: 'red'}} className="fas fa-robot"></i></span>
-          <span data-tip="Toggle Artificial Intelligence" onClick={this.toggleAi} className={styles.addAiButton}><i className="fas fa-head-side-brain"></i></span>
+          <span data-tip="Fullscreen" onClick={this.goFullscreen} className={styles.addAiButton}><i className="fas fa-expand"></i></span>
         </div>
         {this.state.lastWinner ?
           <div className={styles.winnerContainer}>
