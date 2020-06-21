@@ -9,8 +9,8 @@ class CleverAi extends Player {
     constructor(colour, name, x, y){
         var playerId = name.hashCode();
         super(colour, "<CLEVER"+Math.abs(playerId) % 1000+">", x, y, true);
-        this.xBoostDistanceThreshold = 100;
-        this.yBoostDistanceThreshold = 50;
+        this.xBoostDistanceThreshold = 120;
+        this.yBoostDistanceThreshold = 100;
         this.duckingCooldown = 0;
     }
 
@@ -28,6 +28,14 @@ class CleverAi extends Player {
                 this.duckingCooldown -= 1;
             } else {
                 this.down = false;
+            }
+        });
+    }
+
+    jumpDuckingPlayers(players){
+        players.forEach(p => {
+            if(p.ducked && this.y == PLATFORMHEIGHT){
+                this.space = true;
             }
         });
     }
@@ -63,7 +71,7 @@ class CleverAi extends Player {
             this.right = true;
         }
 
-        if(players[0] && players[0].y < this.y && this.y == PLATFORMHEIGHT){
+        if(players[0] && players[0].y <= this.y && this.y == PLATFORMHEIGHT){
             this.space = true;
         }
     }
@@ -76,6 +84,7 @@ class CleverAi extends Player {
 
     move(players, ticks){
         this.duckBoostingPlayers(players);
+        this.jumpDuckingPlayers(players);
         this.poundPlayersBelow(players);
         this.followFirstPlayer(players);
         this.dontFallToDeath();
