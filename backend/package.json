@@ -10,6 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@tensorflow/tfjs": "^2.0.1",
     "express": "^4.17.1",
     "playfab-sdk": "^2.49.200615",
     "simplex-noise": "^2.4.0",

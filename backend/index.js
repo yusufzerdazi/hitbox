@@ -2,6 +2,7 @@ var app = require('express')();
 var http = require('http').createServer(app);
 var io = require('socket.io')(http);
 var SimplexNoise = require('simplex-noise');
+var Player = require('./player');
 
 var PlayFab = require("./node_modules/playfab-sdk/Scripts/PlayFab/PlayFab");
 var PlayFabClient = require("./node_modules/playfab-sdk/Scripts/PlayFab/PlayFabClient");
@@ -48,21 +49,8 @@ io.on('connection', (socket) => {
         if(allClients.filter(c => c.player).length == 10) return;
         if(!socket.player || socket.player.disconnected){
             allClients.push(socket);
-            socket.player = {
-                name: player.name,
-                colour: randomColor(),
-                x: 100 + getRandomInt(WIDTH - 200 - PLAYERSIZE),
-                y: PLAYERSIZE + getRandomInt(PLATFORMHEIGHT - PLAYERSIZE),
-                xVelocity: 0,
-                yVelocity: 0,
-                health: 100,
-                score: 0,
-                alive: true,
-                invincibility: 0,
-                boostCooldown: 0,
-                ducked: false,
-                boostCooldown: 100
-            }
+            socket.player = new Player(randomColor(), player.name, 100 + getRandomInt(WIDTH - 200 - PLAYERSIZE), 
+                PLAYERSIZE + getRandomInt(PLATFORMHEIGHT - PLAYERSIZE));
         }
     });
 
@@ -91,22 +79,8 @@ io.on('connection', (socket) => {
     socket.on('addAi', () =>{
         if(allClients.filter(c => c.player).length == 10) return;
         var colour = randomColor();
-        allClients.push({player: {
-            colour: colour,
-            name: generateName(),
-            x: 100 + getRandomInt(WIDTH - 200 - PLAYERSIZE),
-            y: PLAYERSIZE + getRandomInt(PLATFORMHEIGHT - PLAYERSIZE),
-            xVelocity: 0,
-            yVelocity: 0,
-            health: 100,
-            score: 0,
-            ai: true,
-            alive: true,
-            invincibility: 0,
-            boostCooldown: 0,
-            ducked: false,
-            boostCooldown: 100
-        }})
+        allClients.push({player: new Player(colour, generateName(), 100 + getRandomInt(WIDTH - 200 - PLAYERSIZE), 
+            PLAYERSIZE + getRandomInt(PLATFORMHEIGHT - PLAYERSIZE), true)});
     })
 
     socket.on('removeAi', () =>{
@@ -367,25 +341,7 @@ reset = () => {
             });
         }
         positions.push(newPosition);
-        client.player = {
-            name: client.player.name,
-            colour: client.player.colour,
-            x: newPosition.x,
-            y: newPosition.y,
-            xVelocity: 0,
-            yVelocity: 0,
-            health: 100,
-            score: client.player.score,
-            ai: client.player.ai,
-            alive: true,
-            invincibility: 0,
-            left: false,
-            right: false,
-            down: false,
-            boostCooldown: 0,
-            ducked: false,
-            boostCooldown: 100
-        }
+        client.player.reset(newPosition.x, newPosition.y);
     });
 }
 
