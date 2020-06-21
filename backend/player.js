@@ -22,6 +22,8 @@ class Player {
     reset(x, y){
         this.x = x;
         this.y = y;
+        this.xVelocity = 0;
+        this.yVelocity = 0;
         this.ducked = false;
         this.left = false;
         this.right = false;
