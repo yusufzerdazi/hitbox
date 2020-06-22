@@ -1,17 +1,19 @@
 var Player = require('./player');
-// var SimplexNoise = require('simplex-noise');
-
-// const SIMPLEX = new SimplexNoise();
+var SimplexNoise = require('simplex-noise');
 
 const PLATFORMHEIGHT = 400;
+const SIMPLEX = new SimplexNoise();
 
 class CleverAi extends Player {
     constructor(colour, name, x, y){
         var playerId = name.hashCode();
         super(colour, "<CLEVER"+Math.abs(playerId) % 1000+">", x, y, true);
+        this.playerId = playerId;
         this.xBoostDistanceThreshold = 120;
         this.yBoostDistanceThreshold = 100;
         this.duckingCooldown = 0;
+        this.ticksScaling = 0.01;
+        this.alwaysHigher = this.playerId % 2 == 0;
     }
 
     duckBoostingPlayers(players){
@@ -54,7 +56,7 @@ class CleverAi extends Player {
         });
     }
 
-    followFirstPlayer(players){
+    followFirstPlayer(players, ticks){
         if(players[0] && players[0].x < this.x){
             var playerCloseToMeVertically = Math.abs(players[0].y - this.y) < this.yBoostDistanceThreshold;
             if(playerCloseToMeVertically || (this.y > players[0].y && this.x > 480)){
@@ -71,8 +73,14 @@ class CleverAi extends Player {
             this.right = true;
         }
 
-        if(players[0] && players[0].y <= this.y && this.y == PLATFORMHEIGHT){
-            this.space = true;
+        if(players[0] && players[0].y <= this.y){
+            if(this.y == PLATFORMHEIGHT){
+                this.space = true
+            } else if(this.alwaysHigher) {
+                this.space = true;
+            }
+        } else {
+            this.space = false;
         }
     }
 
@@ -86,7 +94,7 @@ class CleverAi extends Player {
         this.duckBoostingPlayers(players);
         this.jumpDuckingPlayers(players);
         this.poundPlayersBelow(players);
-        this.followFirstPlayer(players);
+        this.followFirstPlayer(players, ticks);
         this.dontFallToDeath();
     }
 }
