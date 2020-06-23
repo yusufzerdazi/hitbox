@@ -177,8 +177,6 @@ class Game extends React.Component {
         this.setState({fullScreen: ''})
       }
 
-      if(!(document.pointerLockElement === this.canvas || document.mozPointerLockElement === this.canvas)) return;
-
       if(e.keyCode === 68){
         if(!this.state.ePressed){
           const currentMillis = this.millis();
@@ -209,7 +207,6 @@ class Game extends React.Component {
     });
 
     document.addEventListener("keyup", e => {
-      if(!(document.pointerLockElement === this.canvas || document.mozPointerLockElement === this.canvas)) return;
       var a;
       if(e.keyCode === 68){
         this.setState({ePressed: false});
