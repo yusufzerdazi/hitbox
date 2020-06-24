@@ -199,7 +199,7 @@ class Game extends React.Component {
         this.setState({aPressed: true});
         this.socket.emit('left', true)
       }
-      if(e.keyCode === 32){
+      if(e.keyCode === 32 || e.keyCode == 87){
         e.preventDefault();
         this.socket.emit('space', true);
       }
