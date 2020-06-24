@@ -216,7 +216,7 @@ class Game extends React.Component {
         this.setState({aPressed: false});
         this.socket.emit('left', false)
       }
-      e.keyCode === 32 ? this.socket.emit('space', false) :
+      e.keyCode === 32 || e.keyCode == 87 ? this.socket.emit('space', false) :
       e.keyCode === 83 ? this.socket.emit('down', false) :
       e.keyCode === 69 ? this.socket.emit('boostRight', false) : a = 1;
     });
