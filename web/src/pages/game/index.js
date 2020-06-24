@@ -419,6 +419,15 @@ class Game extends React.Component {
   }
 
   play(){
+    if(this.state.name && !this.props.user?.name){
+      window.PlayFabClientSDK.LoginWithCustomID({
+        CreateAccount : true,
+        TitleId: "B15E8",
+        CustomId: this.state.name
+      }, () => {
+        this.setName();
+      });
+    }
     var name = this.props.user?.name || this.state.name;
     if(name){
       this.socket.emit('play', {name: name});
@@ -462,7 +471,7 @@ class Game extends React.Component {
   }
 
   setName() {
-    if(this.state.name && this.props.user){
+    if(this.state.name){
       window.PlayFabClientSDK.UpdateUserTitleDisplayName({
         DisplayName: this.state.name
       }, () => {
