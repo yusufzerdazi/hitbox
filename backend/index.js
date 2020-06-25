@@ -77,6 +77,10 @@ io.on('connection', (socket) => {
                 PLAYERSIZE + utils.getRandomInt(PLATFORMHEIGHT - PLAYERSIZE))});
     });
 
+    socket.on('nameChange', (name) => {
+        if(socket.player) socket.player.name = name;
+    });
+
     socket.on('addCleverAi', () =>{
         if(allClients.filter(c => c.player).length == 10) return;
         var colour = utils.randomColor();
