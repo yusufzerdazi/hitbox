@@ -49,6 +49,7 @@ class Game extends React.Component {
     this.cancelNameChange = this.cancelNameChange.bind(this);
     this.getUsername = this.getUsername.bind(this);
     this.goFullscreen = this.goFullscreen.bind(this);
+    this.customIdLogin = this.customIdLogin.bind(this);
 
     this.state = {
       nameClass: styles.name,
@@ -103,6 +104,33 @@ class Game extends React.Component {
         },
         editingUsername: false
       })
+    } else {
+      var customId = localStorage.getItem("customId");
+      if(customId){
+        window.PlayFabClientSDK.LoginWithCustomID({
+          CreateAccount : true,
+          TitleId: "B15E8",
+          CustomId: customId
+        }, (response) => {
+          window.PlayFabClientSDK.GetPlayerProfile({
+            ProfileConstraints:
+            {
+              ShowDisplayName: true
+            },
+            PlayFabId: response.data.PlayFabId
+          }, (response) => {
+            if(response?.data?.PlayerProfile?.DisplayName){
+              this.props.updateName(response.data.PlayerProfile.DisplayName);
+              this.setState({
+                user: {
+                  name: response.data.PlayerProfile.DisplayName
+                },
+                editingUsername: false
+              });
+            }
+          });
+        });
+      }
     }
   }
 
@@ -427,11 +455,12 @@ class Game extends React.Component {
     this.socket.emit('removeAi');
   }
 
-  play(){
+  customIdLogin(){
     if(this.state.name && !this.props.user?.name){
       var customId = localStorage.getItem("customId");
       if(!customId){
         customId = uuidv4();
+        localStorage.setItem("customId", customId);
       }
       window.PlayFabClientSDK.LoginWithCustomID({
         CreateAccount : true,
@@ -441,6 +470,10 @@ class Game extends React.Component {
         this.setName();
       });
     }
+  }
+
+  play(){
+    this.customIdLogin();
     var name = this.props.user?.name || this.state.name;
     if(name){
       this.socket.emit('play', {name: name});
@@ -490,6 +523,7 @@ class Game extends React.Component {
       }, () => {
         this.setState({editingUsername: false});
         this.props.updateName(this.state.name);
+        this.socket.emit("nameChange", this.state.name);
       });
     }
   }
