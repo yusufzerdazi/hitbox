@@ -84,18 +84,10 @@ class Game extends React.Component {
   }
 
   onMousedown(e) {
-    var mouseLocked = document.pointerLockElement === this.canvas ||
-      document.mozPointerLockElement === this.canvas;
     if (e.which === 1) {
-      if(mouseLocked) {
-          this.socket.emit('click');
-      } else {
-        this.canvas.requestPointerLock();
-      }
+      this.socket.emit('click');
     } else if (e.which === 3) {
-      if(mouseLocked) {
-          // right click
-      }
+      // right click
     }
   }
 
@@ -154,9 +146,6 @@ class Game extends React.Component {
     this.socket = io(process.env.REACT_APP_SERVER);
 
     this.canvas = document.getElementsByTagName('canvas')[0];
-    this.canvas.requestPointerLock = this.canvas.requestPointerLock ||
-    this.canvas.mozRequestPointerLock ||
-    this.canvas.webkitRequestPointerLock;
 
     this.canvas.addEventListener('mousedown', this.onMousedown);
     
