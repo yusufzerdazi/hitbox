@@ -152,10 +152,12 @@ calculateSpeed = () => {
         }
         else if(Math.abs(client.player.xVelocity) <= TERMINAL){
             if(client.player.right){
-                client.player.xVelocity = Math.min(client.player.xVelocity + ACCELERATION, TERMINAL);
+                var rightMultiplier = client.player.right == true ? 1 : (1/0.75) * client.player.right;
+                client.player.xVelocity = rightMultiplier * Math.min(client.player.xVelocity + ACCELERATION, TERMINAL);
             }
             if(client.player.left){
-                client.player.xVelocity = Math.max(client.player.xVelocity - ACCELERATION, -TERMINAL);
+                var leftMultiplier = client.player.left == true ? 1 : (1/0.75) * client.player.left;
+                client.player.xVelocity = leftMultiplier * Math.max(client.player.xVelocity - ACCELERATION, -TERMINAL);
             }
         } else {
             client.player.xVelocity = client.player.xVelocity * FRICTION;
