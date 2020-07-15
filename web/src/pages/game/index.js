@@ -2,6 +2,7 @@
 import React from 'react';
 import io from 'socket.io-client';
 import ReactTooltip from "react-tooltip";
+import Gamepad from 'react-gamepad'
 import { connect } from "react-redux";
 import { store } from '../../redux/store';
 import styles from './styles.module.css';
@@ -50,6 +51,14 @@ class Game extends React.Component {
     this.getUsername = this.getUsername.bind(this);
     this.goFullscreen = this.goFullscreen.bind(this);
     this.customIdLogin = this.customIdLogin.bind(this);
+    this.jump = this.jump.bind(this);
+    this.buttonUp = this.buttonUp.bind(this);
+    this.boostRight = this.boostRight.bind(this);
+    this.boostLeft = this.boostLeft.bind(this);
+    this.moveRight = this.moveRight.bind(this);
+    this.moveLeft = this.moveLeft.bind(this);
+    this.crouch = this.crouch.bind(this);
+    this.axisChange = this.axisChange.bind(this);
 
     this.state = {
       nameClass: styles.name,
@@ -532,6 +541,84 @@ class Game extends React.Component {
     this.setState({fullScreen: styles.fullScreen});
   }
 
+  jump(enabled = true) {
+    this.socket.emit('space', enabled);
+  }
+
+  boostRight(enabled = true){
+    this.socket.emit('boostRight', enabled);
+  }
+
+  boostLeft(enabled = true){
+    console.log('boost left');
+    this.socket.emit('boostLeft', enabled);
+  }
+
+  moveRight(enabled = true){
+    this.socket.emit('right', enabled);
+  }
+
+  moveLeft(enabled = true){
+    this.socket.emit('left', enabled);
+  }
+
+  crouch(enabled = true){
+    this.socket.emit('down', enabled);
+  }
+
+  buttonUp(buttonName){
+    console.log(buttonName);
+    switch(buttonName){
+      case 'A':
+        this.jump(false);
+        break;
+      case 'RT':
+      case 'RB':
+        this.boostRight(false);
+        break;
+      case 'LT':
+      case 'LB':
+        this.boostLeft(false);
+        break;
+      case 'X':
+        this.crouch(false);
+        break;
+      default:
+        break;
+    }
+  }
+
+  axisChange(axisName, value, previousValue){
+    switch(axisName){
+      case('LeftStickX'):
+        if (value >= 0.75){
+          this.moveRight();
+          this.moveLeft(false);
+        }
+        else if(value > 0.1){
+          this.moveRight(value);
+          this.moveLeft(false);
+        }
+        else if(value >= -0.1){
+          this.moveRight(false);
+          this.moveLeft(false);
+        }
+        else if(value > -0.75){
+          this.moveLeft(-value);
+          this.moveRight(false);
+        }
+        else {
+          this.moveLeft();
+          this.moveRight(false);
+        }
+      case('LeftStickY'):{
+        if(value > -0.75 && previousValue <= -0.75){
+          this.crouch(false);
+        }
+      }
+    }
+  }
+
   render() {
     const scores = 
     <div className={styles.scores}>
@@ -561,6 +648,17 @@ class Game extends React.Component {
           </div> : null
         }
         {scores}
+        <Gamepad 
+          onA={this.jump}
+          onRT={this.boostRight}
+          onLT={this.boostLeft}
+          onRB={this.boostRight}
+          onLB={this.boostLeft}
+          onX={this.crouch}
+          onButtonUp={this.buttonUp}
+          onAxisChange={this.axisChange}>
+          <p></p>
+        </Gamepad>
         <ReactTooltip />
       </>
     );
