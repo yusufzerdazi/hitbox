@@ -18,11 +18,11 @@ class Instructions extends React.Component {
         </div>
         <div className={styles.info}>
           <h1>Player Stats</h1>
-          <img className={styles.infoImage} src={info}></img>
+          <img alt="Info" className={styles.infoImage} src={info}></img>
         </div>
         <div className={styles.controls}>
           <h1>Controls</h1>
-          <img className={styles.controlsImage} src={controls}></img>
+          <img alt="Controls" className={styles.controlsImage} src={controls}></img>
         </div>
       </div>
     );

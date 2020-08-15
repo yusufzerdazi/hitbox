@@ -10,7 +10,7 @@ class Header extends React.Component {
   render() {
     return (
       <div className={styles.titleContainer}>
-        <img className={styles.title} src={hitbox}></img>
+        <img alt="Hitbox" className={styles.title} src={hitbox}></img>
         <div className={styles.navigation}>
           <NavLink exact={true} activeClassName={styles.isActive} to='/'><span className={styles.navigationButton}>Game</span></NavLink>
           <NavLink activeClassName={styles.isActive} to='/leaderboard'><span className={styles.navigationButton}>Leaderboard</span></NavLink>

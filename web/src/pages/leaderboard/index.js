@@ -12,7 +12,7 @@ const mapStateToProps = state => {
 };
 
 const sortFunction = (rowA, rowB, selector) => {
-  if(rowA[selector] == undefined || rowB[selector] == undefined){
+  if(rowA[selector] === undefined || rowB[selector] === undefined){
     return -1;
   }
   return rowA[selector] - rowB[selector];
