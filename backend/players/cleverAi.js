@@ -1,8 +1,5 @@
 var Player = require('./player');
-var SimplexNoise = require('simplex-noise');
-
-const PLATFORMHEIGHT = 400;
-const SIMPLEX = new SimplexNoise();
+var Constants = require('../constants');
 
 class CleverAi extends Player {
     constructor(colour, name, x, y){
@@ -36,7 +33,7 @@ class CleverAi extends Player {
 
     jumpDuckingPlayers(players){
         players.forEach(p => {
-            if(p.ducked && this.y == PLATFORMHEIGHT){
+            if(p.ducked && this.y == Constants.PLATFORMHEIGHT){
                 this.space = true;
             }
         });
@@ -74,7 +71,7 @@ class CleverAi extends Player {
         }
 
         if(players[0] && players[0].y <= this.y){
-            if(this.y == PLATFORMHEIGHT){
+            if(this.y == Constants.PLATFORMHEIGHT){
                 this.space = true
             } else if(this.alwaysHigher) {
                 this.space = true;
@@ -85,7 +82,7 @@ class CleverAi extends Player {
     }
 
     dontFallToDeath(){
-        if(this.y > PLATFORMHEIGHT) {
+        if(this.y > Constants.PLATFORMHEIGHT) {
             this.space = true;
         }
     }

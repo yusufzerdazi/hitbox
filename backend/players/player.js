@@ -1,3 +1,5 @@
+var Constants = require('../constants');
+
 class Player {
     constructor(colour, name, x, y, ai = false){
         this.colour = colour;
@@ -31,6 +33,19 @@ class Player {
         this.alive = true;
         this.invincibility = 0;
         this.boostCooldown = 100;
+    }
+
+    isCollision(player) {
+        var xCollision = Math.abs((this.x + this.xVelocity) - (player.x + player.xVelocity)) <= Constants.PLAYERSIZE;
+        var yCollision = Math.abs((this.y + this.yVelocity) - (player.y + player.yVelocity)) <= Constants.PLAYERSIZE - 10;
+        var duckedYCollision = (Math.abs((this.y + this.yVelocity) - (player.y + player.yVelocity)) <= Constants.PLAYERSIZE * Constants.DUCKEDHEIGHT) ||
+            player.y + player.yVelocity > Constants.PLATFORMHEIGHT;
+    
+        return (!this.ducked && xCollision && yCollision) || (this.ducked && xCollision && duckedYCollision);
+    }
+
+    speed(){
+        return Math.sqrt(Math.pow(this.xVelocity, 2) + Math.pow(this.yVelocity, 2));
     }
 }
 
