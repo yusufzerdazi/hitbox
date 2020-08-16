@@ -115,8 +115,8 @@ class Game extends React.Component {
             .onWin(winner => this.setState({lastWinner: winner}));
 
         setInterval(() => {
-            if (this.mounted){
-                this.canvasRef.current.draw(this.gameService.players);
+            if (this.mounted && this.gameService.level){
+                this.canvasRef.current.draw(this.gameService.players, this.gameService.level, this.gameService.socket.player);
             }
         }, 1000 / 60);
 

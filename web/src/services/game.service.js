@@ -31,6 +31,10 @@ class GameService {
     }
 
     addListeners(){
+        this.socket.on('level', level => {
+            this.level = level;
+        })
+
         this.socket.on('allPlayers', players => {
             if(this.mounted){
                 this.players = players;
