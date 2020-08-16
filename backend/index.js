@@ -9,9 +9,10 @@ game.gameLoop();
 
 io.on('connection', (socket) => {
     console.log('Player connected.')
+    game.addSpectator(socket);
     socket.on('play', (player) => {
         if(!socket.player || socket.player.disconnected){
-            game.addClient(socket);
+            game.addClient(player, socket);
         }
     });
 });

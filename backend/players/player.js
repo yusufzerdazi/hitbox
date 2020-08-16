@@ -10,6 +10,7 @@ class Player {
         this.ducked = false;
         this.left = false;
         this.right = false;
+        this.onSurface = [];
 
         this.xVelocity = 0;
         this.yVelocity = 0;
@@ -33,6 +34,7 @@ class Player {
         this.alive = true;
         this.invincibility = 0;
         this.boostCooldown = 100;
+        this.onSurface = [];
     }
 
     isCollision(player) {

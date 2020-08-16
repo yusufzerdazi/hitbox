@@ -2,6 +2,7 @@ var Player = require('./players/player');
 var SimpleAi = require('./players/simpleAi');
 var CleverAi = require('./players/cleverAi');
 var Utils = require('./utils');
+var Square = require('./square');
 var Constants = require('./constants');
 
 const state = {
@@ -12,10 +13,20 @@ const state = {
 class Game {
     constructor(){
         this.clients = [];
-        this.level = [];
+        this.spectators = [];
+        this.level = [
+            new Square(-1000, -Constants.HEIGHT / 2, 500, Constants.HEIGHT * 4),
+            new Square(Constants.WIDTH + 500, -Constants.HEIGHT / 2, 500, Constants.HEIGHT * 4),
+            new Square(-200, Constants.HEIGHT / 2, Constants.WIDTH + 400, 2000),
+            new Square(-150, -250, 400, 200),
+            new Square(600, -175, 500, 100),
+            new Square(-2000, -1500, 500, 3000, true),
+            new Square(1500 + Constants.WIDTH, -1500, 500, 3000, true),
+            new Square(-2000, -1500, 4000 + Constants.WIDTH, 500, true)
+        ];
         this.state = state.STARTING;
         this.aiEnabled = true;
-        this.maxPlayers = 10;
+        this.maxPlayers = 100;
         this.startingTicks = 0;
         this.ticks = 0;
 
@@ -27,14 +38,21 @@ class Game {
         this.invulnerablePlayers = () => { return this.livingPlayers().filter(c => c.player.invincibility > 0); }
     }
 
-    addClient(client){
+    addSpectator(client){
+        this.spectators.push(client);
+        client.emit("level", this.level);
+        this.addClientListeners(client);
+    }
+
+    addClient(player, client){
         client.player = new Player(
             Utils.randomColor(),
-            client.player.name,
+            player.name,
             100 + Utils.getRandomInt(Constants.WIDTH - 200 - Constants.PLAYERSIZE), 
-            Constants.PLAYERSIZE + Utils.getRandomInt(Constants.PLATFORMHEIGHT - Constants.PLAYERSIZE)
+            Constants.PLAYERSIZE + Utils.getRandomInt(Constants.HEIGHT / 2 - Constants.PLAYERSIZE)
         );
         this.clients.push(client);
+        client.emit("level", this.level);
         this.addClientListeners(client);
     }
 
@@ -82,26 +100,26 @@ class Game {
         
         // Game actions
         client.on('addAi', () =>{
-            if(this.clients.filter(c => c.player).length == 10) {
+            if(this.clients.filter(c => c.player).length == this.maxPlayers) {
                 return;
             }
             this.clients.push({
                 player: new SimpleAi(Utils.randomColor(),
                     Utils.generateName(),
                     100 + Utils.getRandomInt(Constants.WIDTH - 200 - Constants.PLAYERSIZE), 
-                    Constants.PLAYERSIZE + Utils.getRandomInt(Constants.PLATFORMHEIGHT - Constants.PLAYERSIZE))
+                    Constants.PLAYERSIZE + Utils.getRandomInt(Constants.HEIGHT / 2 - Constants.PLAYERSIZE))
             });
         });
     
         client.on('addCleverAi', () =>{
-            if(this.clients.filter(c => c.player).length == 10) {
+            if(this.clients.filter(c => c.player).length == this.maxPlayers) {
                 return;
             }
             this.clients.push({
                 player: new CleverAi(Utils.randomColor(),
                     Utils.generateName(),
                     100 + Utils.getRandomInt(Constants.WIDTH - 200 - Constants.PLAYERSIZE), 
-                    Constants.PLAYERSIZE + Utils.getRandomInt(Constants.PLATFORMHEIGHT - Constants.PLAYERSIZE))
+                    Constants.PLAYERSIZE + Utils.getRandomInt(Constants.HEIGHT / 2 - Constants.PLAYERSIZE))
             });
         });
     
@@ -118,7 +136,8 @@ class Game {
     }
 
     emitToAllClients(event, eventData){
-        this.humanPlayers().forEach(client => {
+        var clients = this.humanPlayers().concat(this.spectators);
+        clients.forEach(client => {
             client.emit(event, eventData);
         });
     }
@@ -137,8 +156,8 @@ class Game {
                 client.player.xVelocity = Constants.BOOSTSPEED * Math.sign(client.player.xVelocity);
                 client.player.boostCooldown = 100;
             }
-    
-            if(client.player.down && client.player.y == Constants.PLATFORMHEIGHT && client.player.yVelocity >= 0 && client.player.x + Constants.PLAYERSIZE > 100 && client.player.x < 860){
+
+            if(client.player.down && client.player.onSurface.includes(true) && client.player.yVelocity >= 0){
                 client.player.ducked = true;
                 client.player.boostCooldown = Math.max(client.player.boostCooldown, 20);
             } else {
@@ -168,11 +187,11 @@ class Game {
             client.player.boostDown = false;
             client.player.clicked = false;
     
-            if(client.player.space && client.player.y == Constants.PLATFORMHEIGHT){
+            if(client.player.space && client.player.onSurface.includes(true)){
                 client.player.yVelocity = -Constants.JUMPSPEED;
                 client.player.space = false;
             }
-            if(client.player.space && client.player.y != Constants.PLATFORMHEIGHT && client.player.boostCooldown < 40){
+            if(client.player.space && client.player.y != Constants.PLATFORMHEIGHT && client.player.boostCooldown <= 40){
                 client.player.yVelocity = -Constants.JUMPSPEED;
                 client.player.boostCooldown = Math.min(100, client.player.boostCooldown + 60);
             }
@@ -192,42 +211,47 @@ class Game {
     
     calculateMovement() {
         this.movingPlayers().forEach(client => {
-            client.player.x += client.player.xVelocity;
-            if(client.player.y >= Constants.PLATFORMHEIGHT){
-                client.player.y = client.player.y + client.player.yVelocity
-            } else {
-                client.player.y = Math.min(client.player.y + client.player.yVelocity, Constants.PLATFORMHEIGHT);
-                if(client.player.y == Constants.PLATFORMHEIGHT){
+            client.player.onSurface = [];
+            this.level.forEach(level => {
+                if(client.player.x >= level.rightX() &&
+                        client.player.x + client.player.xVelocity < level.rightX() && 
+                        client.player.y + client.player.yVelocity > level.topY() && 
+                        client.player.y + client.player.yVelocity < (level.bottomY() + Constants.PLAYERSIZE)) {
+                    client.player.x = level.rightX();
+                    client.player.xVelocity = -client.player.xVelocity * Constants.WALLDAMPING;
                     this.emitToAllClients('hitWall');
                 }
-            }
+
+                if(client.player.x <= (level.leftX() - Constants.PLAYERSIZE) &&
+                        client.player.x + client.player.xVelocity > (level.leftX() - Constants.PLAYERSIZE) && 
+                        client.player.y + client.player.yVelocity > level.topY() && 
+                        client.player.y + client.player.yVelocity < (level.bottomY() + Constants.PLAYERSIZE)) {
+                    client.player.x = level.leftX() - Constants.PLAYERSIZE;
+                    client.player.xVelocity = -client.player.xVelocity * Constants.WALLDAMPING;;
+                    this.emitToAllClients('hitWall');
+                }
+                if(client.player.y >= (level.bottomY() + Constants.PLAYERSIZE) && // Currently above platform
+                        client.player.y + client.player.yVelocity <= (level.bottomY() + Constants.PLAYERSIZE) && // Will be below on next time step
+                        client.player.x + client.player.xVelocity <= level.rightX() &&
+                        client.player.x + client.player.xVelocity >= (level.leftX() - Constants.PLAYERSIZE)) {
+                    client.player.y = (level.bottomY() + Constants.PLAYERSIZE);
+                    client.player.yVelocity = 0;
+                }
+                if(client.player.y <= level.topY() && // Currently above platform
+                        client.player.y + client.player.yVelocity >= level.topY() && // Will be below on next time step
+                        client.player.x + client.player.xVelocity <= level.rightX() &&
+                        client.player.x + client.player.xVelocity >= (level.leftX() - Constants.PLAYERSIZE)) {
+                    client.player.y = level.topY();
+                    client.player.yVelocity = 0;
+                    client.player.onSurface.push(true);
+                } else {
+                    client.player.onSurface.push(false);
+                }
+            })
         });
         this.movingPlayers().forEach(client => {
-            if(client.player.x < 0) {
-                client.player.x = 0;
-                client.player.xVelocity = -client.player.xVelocity * Constants.WALLDAMPING;
-                this.emitToAllClients('hitWall');
-            }
-            if(client.player.x > (Constants.WIDTH - Constants.PLAYERSIZE)) {
-                client.player.x = Constants.WIDTH - Constants.PLAYERSIZE;
-                client.player.xVelocity = -client.player.xVelocity * Constants.WALLDAMPING;;
-                this.emitToAllClients('hitWall');
-            }
-            if(client.player.y < Constants.PLAYERSIZE) {
-                client.player.y = Constants.PLAYERSIZE;
-                client.player.yVelocity = 0;
-                this.emitToAllClients('hitWall');
-            }
-            if(client.player.x < 480 && client.player.x + Constants.PLAYERSIZE > 100 && client.player.y > Constants.PLATFORMHEIGHT){
-                client.player.x = 100 - Constants.PLAYERSIZE;
-                client.player.xVelocity = -client.player.xVelocity * Constants.WALLDAMPING;
-                this.emitToAllClients('hitWall');
-            }
-            if(client.player.x > 480 && client.player.x < 860 && client.player.y > Constants.PLATFORMHEIGHT){
-                client.player.x = 860;
-                client.player.xVelocity = -client.player.xVelocity * Constants.WALLDAMPING;
-                this.emitToAllClients('hitWall');
-            }
+            client.player.x += client.player.xVelocity;
+            client.player.y = client.player.y+client.player.yVelocity
         });
     }
     
@@ -325,28 +349,34 @@ class Game {
     reset() {
         var positions = [];
         this.clients.forEach((client, i)=> {
-            var newPosition = {
-                x: 100 + Utils.getRandomInt(Constants.WIDTH - 200 - Constants.PLAYERSIZE),
-                y: Constants.PLAYERSIZE + Utils.getRandomInt(Constants.PLATFORMHEIGHT - Constants.PLAYERSIZE)
-            };
-
+            var newPosition;
             var anyCollision = true
 
             while(anyCollision){
                 anyCollision = false;
 
                 newPosition = {
-                    x: 100 + Utils.getRandomInt(Constants.WIDTH - 200 - Constants.PLAYERSIZE),
-                    y: Constants.PLAYERSIZE + Utils.getRandomInt(Constants.PLATFORMHEIGHT - Constants.PLAYERSIZE)
+                    x: -1000 + Utils.getRandomInt(2000 + Constants.WIDTH - Constants.PLAYERSIZE),
+                    y: -1000 + Constants.PLAYERSIZE + Utils.getRandomInt(1000 + Constants.PLATFORMHEIGHT - Constants.PLAYERSIZE)
                 };
 
-                positions.forEach(p => {
-                    var xCollision = Math.abs((newPosition.x) - (p.x)) <= Constants.PLAYERSIZE + 20;
-                    var yCollision = Math.abs((newPosition.y) - (p.y)) <= Constants.PLAYERSIZE + 20;
+                for(var i = 0; i < positions.length; i++){
+                    var xCollision = Math.abs((newPosition.x) - (positions[i].x)) <= Constants.PLAYERSIZE + 20;
+                    var yCollision = Math.abs((newPosition.y) - (positions[i].y)) <= Constants.PLAYERSIZE + 20;
                     if(xCollision && yCollision){
                         anyCollision = true;
+                        break;
                     }
-                });
+                };
+
+                for(var i = 0; i < this.level.length; i++){
+                    var xCollision = newPosition.x <= this.level[i].rightX() + 20 && newPosition.x >= (this.level[i].leftX() - Constants.PLAYERSIZE) - 20;
+                    var yCollision = newPosition.y >= this.level[i].topY() - 20 && newPosition.y <= (this.level[i].bottomY() + Constants.PLAYERSIZE) + 20;
+                    if(xCollision && yCollision){
+                        anyCollision = true;
+                        break;
+                    }
+                };
             }
             positions.push(newPosition);
             client.player.reset(newPosition.x, newPosition.y);
