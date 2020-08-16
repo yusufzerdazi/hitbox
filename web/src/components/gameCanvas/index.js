@@ -67,7 +67,7 @@ class GameCanvas extends React.Component {
         this.canvasRef.current.addEventListener('wheel', function (event) {
             event.preventDefault();
             $this.setState({
-                scale: Math.max(0.2, $this.state.scale - event.deltaY * 0.0005)
+                scale: Math.min(Math.max(0.2, $this.state.scale - event.deltaY * 0.0005), 1.5)
             });
             $this.ctx.setTransform($this.state.scale, 0, 0, $this.state.scale, $this.ctx.canvas.width / 2, $this.ctx.canvas.height / 2);
         }, false);
