@@ -122,7 +122,7 @@ class Game extends React.Component {
 
         setInterval(() => {
             if (this.mounted && this.gameService.level){
-                this.canvasRef.current.draw(this.gameService.players, this.gameService.level, this.props.user?.name || this.state.name);
+                this.canvasRef.current.draw(this.gameService.players, this.gameService.level, this.props.user?.name || this.state.name, this.state.lastWinner);
             }
         }, 1000 / 60);
 
@@ -281,14 +281,6 @@ class Game extends React.Component {
     }
 
     render() {
-        const scores =
-            <div className={styles.scores}>
-                <p className={styles.scoresContainer}>
-                    {this.gameService?.players.map((d, i) => 
-                        <span className={styles.score} style={{ color: d.colour }} key={i}>{d.name + ':\u00A0' + d.score}</span>
-                    )}
-                </p>
-            </div>;
         return (
             <>
                 <GameCanvas ref={this.canvasRef} />
@@ -338,14 +330,6 @@ class Game extends React.Component {
                         <i className="fas fa-expand"></i>
                     </span>
                 </div>
-                {this.state.lastWinner ?
-                    <div className={styles.winnerContainer}>
-                        <span style={{ color: this.state.lastWinner.colour }} className={styles.winner}>
-                            {this.state.lastWinner.name + ' won the last game.'}
-                        </span>
-                    </div> : null
-                }
-                {scores}
                 <Gamepad
                     onA={this.jump}
                     onRT={this.boostRight}

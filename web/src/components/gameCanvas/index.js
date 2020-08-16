@@ -73,7 +73,7 @@ class GameCanvas extends React.Component {
         }, false);
     }
 
-    draw(players, level, name) {
+    draw(players, level, name, lastWinner) {
         if(this.state.cameraType == cameraType.FOLLOWING){
             var you = players.filter(p => p.name === name && p.alive);
             if(you.length == 0){
@@ -115,6 +115,7 @@ class GameCanvas extends React.Component {
         players.filter(p => p.y <= 400).forEach(player => this.drawPlayer(player));
         level.forEach(l => this.drawLevelPlatform(l));
         this.drawStartingTimer();
+        this.drawScores(players, lastWinner);
     }
 
     drawLevel(level){
@@ -213,6 +214,13 @@ class GameCanvas extends React.Component {
         );
     }
 
+    drawLine(x1, y1, xLength, yLength){
+        this.ctx.beginPath();
+        this.ctx.moveTo(x1 - this.state.camera.x, y1 - this.state.camera.y);
+        this.ctx.lineTo(x1 + xLength - this.state.camera.x, y1 + yLength - this.state.camera.y);
+        this.ctx.stroke();
+    }
+
     drawPlayerOutline(player, width, height, xOffset) {
         this.ctx.save();
         this.ctx.lineWidth = 6;
@@ -249,30 +257,102 @@ class GameCanvas extends React.Component {
         this.ctx.restore();
     }
 
-    drawPlayerHealth(player, width, height, xOffset) {
-        this.ctx.fillStyle = "black";
-        this.ctx.beginPath();
-        if (player.alive) {
-            this.drawRectangle(
-                player.x + width / 2 + xOffset,
-                player.y - height, 
-                width / 2,
-                (height * (100 - player.health) / 100)
-            );
+    drawPlayerHealth(player, width, height, xOffset, heightMultiplier) {
+        this.ctx.strokeStyle = "black";
+        this.ctx.lineCap = "round";
+        if(player.health < 90){
+            this.drawLine(player.x + xOffset, player.y - height, 6, 10 * heightMultiplier);
+            this.drawLine(player.x + xOffset + 6, player.y - height + 10 * heightMultiplier, 8, 2 * heightMultiplier);
+            this.drawLine(player.x + xOffset + 6, player.y - height + 10 * heightMultiplier, 2, 5 * heightMultiplier);
         }
-        this.ctx.fill();
+        if(player.health < 80){
+            this.drawLine(player.x + xOffset, player.y, 12, -8 * heightMultiplier);
+            this.drawLine(player.x + xOffset + 12, player.y -8 * heightMultiplier, 7, 2 * heightMultiplier);
+            this.drawLine(player.x + xOffset + 12, player.y -8 * heightMultiplier, 2, -5 * heightMultiplier);
+        }
+        if(player.health < 70){
+            this.drawLine(player.x + xOffset + width, player.y - height, -7, 4 * heightMultiplier);
+            this.drawLine(player.x + xOffset + width -7, player.y - height + 4 * heightMultiplier, -1, 5 * heightMultiplier);
+        }
+        if(player.health < 60){
+            this.drawLine(player.x + xOffset + width, player.y, -5, -10 * heightMultiplier);
+            this.drawLine(player.x + xOffset + width-5, player.y-10 * heightMultiplier, -3, 5 * heightMultiplier);
+            this.drawLine(player.x + xOffset + width-5, player.y-10 * heightMultiplier, -4, -5 * heightMultiplier);
+        }
+        if(player.health < 50){
+            this.drawLine(player.x + xOffset + width -7, player.y - height + 4 * heightMultiplier, -10, 2 * heightMultiplier);
+            this.drawLine(player.x + xOffset + width -17, player.y - height + 6 * heightMultiplier, -5, 3 * heightMultiplier);
+        }
+        if(player.health < 40){
+            this.drawLine(player.x + xOffset + 14, player.y -13 * heightMultiplier, 10, -5 * heightMultiplier);
+            this.drawLine(player.x + xOffset + 14, player.y -13 * heightMultiplier, -4, -8 * heightMultiplier);
+        }
+        if(player.health < 30){
+            this.drawLine(player.x + xOffset + width -8, player.y - height + 9 * heightMultiplier, -12, 6 * heightMultiplier);
+            this.drawLine(player.x + xOffset + width -8, player.y - height + 9 * heightMultiplier, 2, 7 * heightMultiplier);
+        }
+        if(player.health < 20){
+            this.drawLine(player.x + xOffset + 14, player.y - height + 12 * heightMultiplier, 1, 9 * heightMultiplier);
+            this.drawLine(player.x + xOffset + 14, player.y - height + 12 * heightMultiplier, 8, -2 * heightMultiplier);
+        }
+        if(player.health < 10){
+            this.drawLine(player.x + xOffset + width-9, player.y-15 * heightMultiplier, -13, 4 * heightMultiplier);
+            this.drawLine(player.x + xOffset + width-9, player.y-15 * heightMultiplier, -2, -12 * heightMultiplier);
+        }
     }
 
     drawPlayerStamina(player, width, height, xOffset) {
         this.ctx.beginPath();
         this.ctx.fillStyle = 'white';
+        var cooldownPercent = (100 - player.boostCooldown) / 100;
         this.drawRectangle(
-            player.x + xOffset,
-            player.y,
-            width / 2,
-            -(height * player.boostCooldown / 100)
+            player.x + xOffset + cooldownPercent * width / 2,
+            player.y - cooldownPercent * height / 2,
+            width - cooldownPercent * width,
+            -height + cooldownPercent * height
         );
         this.ctx.fill();
+    }
+
+    drawScores(players, lastWinner){
+        this.ctx.save();
+        this.ctx.fillStyle = 'white';
+        this.ctx.font = Math.max(15,(15*(1/this.state.scale))) + "px Consolas";
+        this.ctx.textAlign = "left";
+
+        this.ctx.shadowColor = "black";
+        this.ctx.shadowOffsetX = 1;
+        this.ctx.shadowOffsetY = 1;
+        this.ctx.shadowBlur = 1;
+
+        var scores = [];
+
+        players.forEach(p => {
+            scores.push({
+                name: p.name, 
+                colour: p.colour, 
+                score: p.score,
+                alive: p.alive
+            });
+        });
+        scores.sort((score1, score2) => {
+            if(score1.score > score2.score){
+                return -1;
+            }
+            else if(score1.score === score2.score && score1.name < score2.name){
+                return -1;
+            }
+            return 1;
+        })
+        scores.forEach((s, i) => {
+            this.ctx.fillStyle = s.colour;
+            this.ctx.fillText(
+                (!s.alive ? "☠ " : "") + s.name + ": " + s.score + (lastWinner?.name == s.name ? " [WINNER]" : ""), 
+                (-this.ctx.canvas.width / 2 + 10) / this.state.scale, 
+                (-this.ctx.canvas.height / 2 + 20 * (1+i)) / this.state.scale
+            );
+        })
+        this.ctx.restore();
     }
 
     drawPlayer(player) {
@@ -296,9 +376,9 @@ class GameCanvas extends React.Component {
             return;
         }
 
-        this.drawPlayerHealth(player, currentPlayerWidth, currentPlayerHeight, xOffset);
         this.drawPlayerStamina(player, currentPlayerWidth, currentPlayerHeight, xOffset);
         this.drawPlayerOutline(player, currentPlayerWidth, currentPlayerHeight, xOffset);
+        this.drawPlayerHealth(player, currentPlayerWidth, currentPlayerHeight, xOffset, currentPlayerHeight / this.state.playerSize);
         this.ctx.globalAlpha = 1;
     }
 
