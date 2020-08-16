@@ -184,8 +184,12 @@ class GameService {
         this.socket.emit('removeAi');
     }
 
-    play(name) {
-        this.socket.emit('play', { name: name });
+    play(name, room) {
+        this.socket.emit('play', { name: name, room: room });
+    }
+
+    spectate(room){
+        this.socket.emit('spectate', room);
     }
 
     quit() {

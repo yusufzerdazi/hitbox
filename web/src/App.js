@@ -19,7 +19,7 @@ class App extends React.Component {
         <Router>
           <Header/>
           <Switch>
-            <Route exact path="/">
+            <Route path="/">
               <Game/>
             </Route>
             <Route exact path="/leaderboard">

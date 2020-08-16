@@ -28,12 +28,16 @@ class Game extends React.Component {
     constructor(props) {
         super(props);
         this.bindFunctions();
+        let search = window.location.search;
+        let params = new URLSearchParams(search);
+        let room = params.get('room');
         this.state = {
             nameClass: styles.name,
             nameInputClass: styles.nameInput,
             lastWinner: null,
             editingUsername: true,
-            soundEnabled: true
+            soundEnabled: true,
+            room: room
         };
         this.canvasRef = React.createRef();
         this.gameService = new GameService(this.canvasRef);
@@ -113,10 +117,12 @@ class Game extends React.Component {
             .setCanvas(this.canvasRef)
             .setMounted(true)
             .onWin(winner => this.setState({lastWinner: winner}));
+        
+        this.gameService.spectate(this.state.room);
 
         setInterval(() => {
             if (this.mounted && this.gameService.level){
-                this.canvasRef.current.draw(this.gameService.players, this.gameService.level, this.gameService.socket.player);
+                this.canvasRef.current.draw(this.gameService.players, this.gameService.level, this.props.user?.name || this.state.name);
             }
         }, 1000 / 60);
 
@@ -133,7 +139,7 @@ class Game extends React.Component {
         this.customIdLogin();
         var name = this.props.user?.name || this.state.name;
         if (name) {
-            this.gameService.play(name);
+            this.gameService.play(name, this.state.room);
             this.setState({nameClass: styles.name});
             this.setState({nameInputClass: styles.nameInput});
         } else {
@@ -197,51 +203,75 @@ class Game extends React.Component {
     buttonUp(buttonName) {
         switch (buttonName) {
             case 'A':
-                this.jump(false);
+                this.gameService.jump(false);
                 break;
             case 'RT':
             case 'RB':
-                this.boostRight(false);
+                this.gameService.boostRight(false);
                 break;
             case 'LT':
             case 'LB':
-                this.boostLeft(false);
+                this.gameService.boostLeft(false);
                 break;
             case 'X':
-                this.crouch(false);
+                this.gameService.crouch(false);
                 break;
             default:
                 break;
         }
     }
 
+    jump(enabled){
+        this.gameService.jump(enabled);
+    }
+
+    boostRight(enabled){
+        this.gameService.boostRight(enabled);
+    }
+
+    boostLeft(enabled){
+        this.gameService.boostLeft(enabled);
+    }
+
+    boostRight(enabled){
+        this.gameService.boostRight(enabled);
+    }
+
+    boostLeft(enabled){
+        this.gameService.boostLeft(enabled);
+    }
+
+    crouch(enabled){
+        this.gameService.crouch(enabled);
+    }
+
     axisChange(axisName, value, previousValue) {
         switch (axisName) {
             case ('LeftStickX'):
                 if (value >= 0.75) {
-                    this.moveRight();
-                    this.moveLeft(false);
+                    this.gameService.moveRight();
+                    this.gameService.moveLeft(false);
                 }
                 else if (value > 0.1) {
-                    this.moveRight(value);
-                    this.moveLeft(false);
+                    this.gameService.moveRight(value);
+                    this.gameService.moveLeft(false);
                 }
                 else if (value >= -0.1) {
-                    this.moveRight(false);
-                    this.moveLeft(false);
+                    this.gameService.moveRight(false);
+                    this.gameService.moveLeft(false);
                 }
                 else if (value > -0.75) {
-                    this.moveLeft(-value);
-                    this.moveRight(false);
+                    this.gameService.moveLeft(-value);
+                    this.gameService.moveRight(false);
                 }
                 else {
-                    this.moveLeft();
-                    this.moveRight(false);
+                    this.gameService.moveLeft();
+                    this.gameService.moveRight(false);
                 }
                 break;
             case ('LeftStickY'): {
                 if (value > -0.75 && previousValue <= -0.75) {
-                    this.crouch(false);
+                    this.gameService.crouch(false);
                 }
                 break;
             }
@@ -348,6 +378,12 @@ class Game extends React.Component {
         this.customIdLogin = this.customIdLogin.bind(this);
         this.buttonUp = this.buttonUp.bind(this);
         this.axisChange = this.axisChange.bind(this);
+        this.jump = this.jump.bind(this);
+        this.boostRight = this.boostRight.bind(this);
+        this.boostLeft = this.boostLeft.bind(this);
+        this.boostRight = this.boostRight.bind(this);
+        this.boostLeft = this.boostLeft.bind(this);
+        this.crouch = this.crouch.bind(this);
     }
 }
 

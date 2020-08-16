@@ -19,8 +19,10 @@ class GameCanvas extends React.Component {
             playerSize: 50,
             countdown: "",
             camera: {
-                x: WIDTH / 2,
-                y: HEIGHT / 2
+                x: (WIDTH / 2),
+                y: (HEIGHT / 2),
+                xEased: 0,
+                yEased: 0
             },
             scale: 1,
             cameraType: cameraType.FOLLOWING
@@ -34,6 +36,13 @@ class GameCanvas extends React.Component {
         this.ctx.setTransform(this.state.scale, 0, 0, this.state.scale, this.ctx.canvas.width / 2, this.ctx.canvas.height / 2);
 
         var $this = this;
+
+        window.addEventListener('resize', ()  => {
+            if($this.state.fullScreen){
+                $this.fullScreen();
+            }
+        });
+
         this.canvasRef.current.addEventListener('mousedown', function (event) {
             $this.setState({mouseDown: true});
         }, false);
@@ -44,6 +53,8 @@ class GameCanvas extends React.Component {
                     camera:{
                         x: $this.state.camera.x - (event.movementX / $this.state.scale),
                         y: $this.state.camera.y - (event.movementY / $this.state.scale),
+                        xEased: $this.state.camera.xEased,
+                        yEased: $this.state.camera.yEased
                     }
                 });
             }
@@ -62,24 +73,38 @@ class GameCanvas extends React.Component {
         }, false);
     }
 
-    draw(players, level) {
+    draw(players, level, name) {
+        if(this.state.cameraType == cameraType.FOLLOWING){
+            var you = players.filter(p => p.name === name && p.alive);
+            if(you.length == 0){
+                you = players.filter(p => p.alive);
+            }
+            if(you.length > 0){
+                var xDelta = you[0].xVelocity * 5;
+                var yDelta = you[0].yVelocity * 5;
+                var xEased = 0.1 * xDelta + 0.9 * this.state.camera.xEased;
+                var yEased = 0.1 * yDelta + 0.9 * this.state.camera.yEased;
+                this.setState(
+                    {camera:{
+                        x: you[0].x + xEased,
+                        y: you[0].y + yEased - 100,
+                        xEased: xEased,
+                        yEased: yEased
+                    }}
+                );
+            }
+        }
         this.drawBackground();
         level.forEach(l => {
             if(!l.border){
                 this.drawLevel(l);
             }
         });
-        this.drawLevelPlatform({x: -5000, y:HEIGHT, width:10000+WIDTH, height: 1000}, "red")
-        this.draw3DSection(-5000, HEIGHT, 5000+WIDTH, HEIGHT, 480, 410, WIDTH / 2, -900, "grey")
+        this.drawLevelPlatform({x: -2000, y:HEIGHT, width:4000 + WIDTH, height: 1000 + HEIGHT / 2}, "red")
+        this.draw3DSection(-2000, HEIGHT, 2000 + WIDTH, HEIGHT, 480, 410, WIDTH / 2, -900, "grey")
         players
             .filter(p => p.y > 400)
             .forEach(player => this.drawPlayer(player));
-        if(players[0]){
-            if(this.state.cameraType == cameraType.FOLLOWING){
-                this.updateCamera((players[0].x + players[0].xVelocity * 5) * 0.3 + this.state.camera.x * 0.7,  
-                    (players[0].y + players[0].yVelocity * 5 - 100) * 0.3 + this.state.camera.y * 0.7);
-            }
-        }
         players = players.concat();
         players.sort((player1, player2) => {
             if (Math.abs(player2.y - player1.y) > this.state.playerSize) {
@@ -111,13 +136,14 @@ class GameCanvas extends React.Component {
 
     clearCanvas() {
         const ctx = this.canvasRef.current.getContext("2d");
-        ctx.clearRect(0, 0, WIDTH, HEIGHT);
+        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     }
 
     drawBackground() {
         this.ctx.fillStyle = "white";
         this.ctx.beginPath();
-        this.ctx.rect(-WIDTH/this.state.scale, -HEIGHT/this.state.scale, 2*WIDTH/this.state.scale, 2*HEIGHT/this.state.scale);
+        this.ctx.rect(-this.ctx.canvas.width/this.state.scale, -this.ctx.canvas.height/this.state.scale, 
+            2*this.ctx.canvas.width/this.state.scale, 2*this.ctx.canvas.height/this.state.scale);
         this.ctx.fill();
     }
 
@@ -205,7 +231,7 @@ class GameCanvas extends React.Component {
     drawPlayerName(player, height, xOffset) {
         this.ctx.save();
         this.ctx.fillStyle = 'white';
-        this.ctx.font = "10px Consolas";
+        this.ctx.font = Math.max(13,(13*(1/this.state.scale))) + "px Consolas";
         this.ctx.textAlign = "center";
 
         this.ctx.shadowColor = "black";
@@ -276,19 +302,14 @@ class GameCanvas extends React.Component {
         this.ctx.globalAlpha = 1;
     }
 
-    updateCamera(x, y){
-        // x = Math.max(WIDTH / 2 - 100, x);
-        // x = Math.min(WIDTH / 2 + 100, x);
-        // y = Math.max(HEIGHT / 2, y);
-        // y = Math.min(HEIGHT / 2, y);
-        this.setState(
-            {camera:{x:x,y:y}}
-        );
-    }
-
     drawStartingTimer() {
+        this.ctx.save()
         this.ctx.fillStyle = 'black';
-        this.ctx.font = "50px Consolas";
+        this.ctx.font = (50/this.state.scale)+"px Consolas";
+        this.ctx.shadowColor = "white";
+        this.ctx.shadowOffsetX = 1;
+        this.ctx.shadowOffsetY = 1;
+        this.ctx.shadowBlur = 1;
         this.ctx.textAlign = "center";
         var timerText = Math.round(this.state.countdown / 20);
         if (timerText === 0 && this.state.countdown) {
@@ -296,7 +317,8 @@ class GameCanvas extends React.Component {
         } else if (!this.state.countdown) {
             timerText = ""
         }
-        this.ctx.fillText(timerText, 480, 270);
+        this.ctx.fillText(timerText, 0, 0);
+        this.ctx.restore()
     }
 
     countdown(timer) {
@@ -304,7 +326,14 @@ class GameCanvas extends React.Component {
     }
 
     fullScreen(fullScreen) {
-        this.setState({ fullScreen: fullScreen ? styles.fullScreen : '' })
+        if(fullScreen != undefined){
+            this.setState({ 
+                fullScreen: fullScreen ? styles.fullScreen : ''
+            })
+        }
+        this.ctx.canvas.width = fullScreen || this.state.fullScreen ? window.innerWidth : WIDTH;
+        this.ctx.canvas.height = fullScreen || this.state.fullScreen ? window.innerHeight : HEIGHT;
+        this.ctx.setTransform(this.state.scale, 0, 0, this.state.scale, this.ctx.canvas.width / 2, this.ctx.canvas.height / 2);
     }
 
     render() {
@@ -313,5 +342,4 @@ class GameCanvas extends React.Component {
         );
     }
 }
-
 export default GameCanvas;
