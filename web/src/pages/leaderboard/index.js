@@ -52,7 +52,7 @@ const columns = [
     sortFunction: (rowA, rowB) => sortFunction(rowA, rowB, 'losses')
   },
   {
-    name: 'Players beaten/Losses',
+    name: 'Score (beaten - losses)',
     selector: 'killdeath',
     sortable: true,
     right: true,
@@ -72,7 +72,7 @@ class Leaderboard extends React.Component {
     var leaderboardsArray = [];
     for (var key in this.state.consolidatedLeaderboards) {
       var value = this.state.consolidatedLeaderboards[key];
-      value.killdeath = value.losses && value.beaten ? (value.beaten / value.losses).toFixed(3) : undefined;
+      value.killdeath = value.losses && value.beaten ? (value.beaten - value.losses) : undefined;
       leaderboardsArray.push(value);
     }
     return leaderboardsArray
