@@ -159,15 +159,15 @@ class Game {
         this.clients.forEach(client => {
             if(client.player.boostRight && client.player.boostLeft){
                 // do nothing
-            } else if(client.player.boostRight && client.player.boostCooldown == 0){
+            } else if(client.player.boostRight && client.player.boostCooldown + Constants.BOOSTCOST <= 100){
                 client.player.xVelocity = Constants.BOOSTSPEED;
-                client.player.boostCooldown = 100;
-            } else if(client.player.boostLeft && client.player.boostCooldown == 0){
+                client.player.boostCooldown += Constants.BOOSTCOST;
+            } else if(client.player.boostLeft && client.player.boostCooldown + Constants.BOOSTCOST <= 100){
                 client.player.xVelocity = -Constants.BOOSTSPEED;
-                client.player.boostCooldown = 100;
-            } else if(client.player.clicked && client.player.boostRight == 0 && client.player.xVelocity != 0 && client.player.boostCooldown == 0){
+                client.player.boostCooldown += Constants.BOOSTCOST;
+            } else if(client.player.clicked && client.player.boostRight == 0 && client.player.xVelocity != 0 && client.player.boostCooldown + Constants.BOOSTCOST <= 100){
                 client.player.xVelocity = Constants.BOOSTSPEED * Math.sign(client.player.xVelocity);
-                client.player.boostCooldown = 100;
+                client.player.boostCooldown += Constants.BOOSTCOST;
             }
 
             if(client.player.down && client.player.onSurface.includes(true) && client.player.yVelocity >= 0){
@@ -178,9 +178,9 @@ class Game {
                 client.player.ducked = false;
             }
     
-            if(client.player.down && client.player.boostCooldown == 0 && client.player.y != Constants.PLATFORMHEIGHT){
+            if(client.player.down && client.player.boostCooldown + Constants.BOOSTCOST <= 100 && !client.player.onSurface.includes(true)){
                 client.player.yVelocity = Constants.BOOSTSPEED;
-                client.player.boostCooldown = 100;
+                client.player.boostCooldown += Constants.BOOSTCOST;
             }
             else if(Math.abs(client.player.xVelocity) <= Constants.TERMINAL){
                 if(client.player.right){
@@ -205,9 +205,9 @@ class Game {
                 client.player.yVelocity = -Constants.JUMPSPEED;
                 client.player.space = false;
             }
-            if(client.player.space && client.player.y != Constants.PLATFORMHEIGHT && client.player.boostCooldown <= 40){
+            if(client.player.space && client.player.y != Constants.PLATFORMHEIGHT && client.player.boostCooldown + Constants.BOOSTCOST <= 100){
                 client.player.yVelocity = -Constants.JUMPSPEED;
-                client.player.boostCooldown = Math.min(100, client.player.boostCooldown + 60);
+                client.player.boostCooldown += Constants.BOOSTCOST;
             }
             if(!client.player.right && !client.player.left){
                 var velSign = Math.sign(client.player.xVelocity);

@@ -13,5 +13,6 @@ module.exports = Object.freeze({
     FRICTION: 0.96,
     BOOSTSPEED: 35,
     DUCKEDHEIGHT: 1/5,
-    MAXPLAYERS: 10
+    MAXPLAYERS: 10,
+    BOOSTCOST: 60
 });
