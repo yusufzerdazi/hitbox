@@ -36,6 +36,7 @@ class Game {
     }
 
     removeSpectator(client){
+        this.removeClientListeners(client);
         this.spectators = this.spectators.filter(c => c != client);
     }
 
@@ -49,6 +50,23 @@ class Game {
         this.clients.push(client);
         client.emit("level", this.level);
         this.addClientListeners(client);
+    }
+
+    removeClientListeners(client){
+        client.removeAllListeners('right');
+        client.removeAllListeners('boostRight');
+        client.removeAllListeners('boostLeft');
+        client.removeAllListeners('down');
+        client.removeAllListeners('left');
+        client.removeAllListeners('space');
+        client.removeAllListeners('click');
+        client.removeAllListeners('nameChange');
+        client.removeAllListeners('quit');
+        client.removeAllListeners('disconnect');
+        client.removeAllListeners('addAi');
+        client.removeAllListeners('addCleverAi');
+        client.removeAllListeners('removeAi');
+        client.removeAllListeners('toggleAi');
     }
 
     addClientListeners(client){    
@@ -385,7 +403,9 @@ class Game {
     }
     
     removeDisconnectedPlayers() {
+        var disconnectedHumans = this.humanPlayers().filter(client => client.player.disconnected);
         this.clients = this.clients.filter(client => !client.player.disconnected);
+        this.spectators = this.spectators.concat(disconnectedHumans);
     }
     
     moveAi() {

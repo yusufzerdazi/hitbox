@@ -13,9 +13,9 @@ Object.defineProperty(String.prototype, 'hashCode', {
 class Utils {
     static randomColor() {
         return 'rgb(' + 
-            (Math.floor(Math.random()*150)+50) + ', ' +
-            (Math.floor(Math.random()*150)+50) + ', ' +
-            (Math.floor(Math.random()*150)+50) +
+            (Math.floor(Math.random()*150)+90) + ', ' +
+            (Math.floor(Math.random()*150)+90) + ', ' +
+            (Math.floor(Math.random()*150)+90) +
         ')';
     }
     
