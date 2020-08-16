@@ -1,6 +1,7 @@
 import React from 'react';
 import Utils from '../../utils';
 import styles from './styles.module.css';
+import actualise from '../../assets/images/actualise.png';
 
 const HEIGHT = 540;
 const WIDTH = 960;
@@ -203,6 +204,13 @@ class GameCanvas extends React.Component {
         this.ctx.fillStyle = player.colour;
         this.drawRectangle(player.x + xOffset, player.y, width, - height);
         this.ctx.fill();
+        if(!player.crouched && (player.name === "yusuf" || player.name === "intrinsion")){
+            var img = new Image();
+            img.src = actualise;
+            this.ctx.globalAlpha = 0.5;
+            this.ctx.drawImage(img, player.x + xOffset - this.state.camera.x, player.y - height - this.state.camera.y, width, height);
+            this.ctx.globalAlpha = 1.0;
+        }
     }
 
     drawRectangle(x, y, width, height){
