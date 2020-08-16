@@ -10,8 +10,8 @@ module.exports = {
         new Square(-1000, -Constants.HEIGHT / 2 - 500, 2000 + Constants.WIDTH, 500, true)
     ],
     'complex': [
-        new Square(-1000, -Constants.HEIGHT / 2, 500, 3 * Constants.HEIGHT / 2),
-        new Square(Constants.WIDTH + 500, -Constants.HEIGHT / 2, 500, 3 * Constants.HEIGHT / 2),
+        new Square(-1000, -Constants.HEIGHT / 2, 500, 500),
+        new Square(Constants.WIDTH + 500, -Constants.HEIGHT / 2, 500, 500),
         new Square(-200, Constants.HEIGHT / 2, Constants.WIDTH + 400, Constants.HEIGHT / 2),
         new Square(-150, -600, 700, 100),
         new Square(400, -175, 700, 100),
