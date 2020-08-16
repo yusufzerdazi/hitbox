@@ -33,7 +33,7 @@ class Player {
         this.health = 100;
         this.alive = true;
         this.invincibility = 0;
-        this.boostCooldown = 100;
+        this.boostCooldown = 20;
         this.onSurface = [];
     }
 

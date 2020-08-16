@@ -11,19 +11,10 @@ const state = {
 };
 
 class Game {
-    constructor(){
+    constructor(level){
         this.clients = [];
         this.spectators = [];
-        this.level = [
-            new Square(-1000, -Constants.HEIGHT / 2, 500, Constants.HEIGHT * 4),
-            new Square(Constants.WIDTH + 500, -Constants.HEIGHT / 2, 500, Constants.HEIGHT * 4),
-            new Square(-200, Constants.HEIGHT / 2, Constants.WIDTH + 400, 2000),
-            new Square(-150, -250, 400, 200),
-            new Square(600, -175, 500, 100),
-            new Square(-2000, -1500, 500, 3000, true),
-            new Square(1500 + Constants.WIDTH, -1500, 500, 3000, true),
-            new Square(-2000, -1500, 4000 + Constants.WIDTH, 500, true)
-        ];
+        this.level = level;
         this.state = state.STARTING;
         this.aiEnabled = true;
         this.maxPlayers = 100;
@@ -42,6 +33,10 @@ class Game {
         this.spectators.push(client);
         client.emit("level", this.level);
         this.addClientListeners(client);
+    }
+
+    removeSpectator(client){
+        this.spectators = this.spectators.filter(c => c != client);
     }
 
     addClient(player, client){
@@ -159,6 +154,7 @@ class Game {
 
             if(client.player.down && client.player.onSurface.includes(true) && client.player.yVelocity >= 0){
                 client.player.ducked = true;
+                client.player.yVelocity = 0;
                 client.player.boostCooldown = Math.max(client.player.boostCooldown, 20);
             } else {
                 client.player.ducked = false;
@@ -351,8 +347,9 @@ class Game {
         this.clients.forEach((client, i)=> {
             var newPosition;
             var anyCollision = true
+            var onLand = false;
 
-            while(anyCollision){
+            while(anyCollision || !onLand){
                 anyCollision = false;
 
                 newPosition = {
@@ -369,12 +366,16 @@ class Game {
                     }
                 };
 
+                onLand = false;
                 for(var i = 0; i < this.level.length; i++){
                     var xCollision = newPosition.x <= this.level[i].rightX() + 20 && newPosition.x >= (this.level[i].leftX() - Constants.PLAYERSIZE) - 20;
                     var yCollision = newPosition.y >= this.level[i].topY() - 20 && newPosition.y <= (this.level[i].bottomY() + Constants.PLAYERSIZE) + 20;
-                    if(xCollision && yCollision){
+                    if((xCollision && yCollision) || this.level[i].border && newPosition.y <= this.level[i].topY()){
                         anyCollision = true;
                         break;
+                    }
+                    if(xCollision && newPosition.y <= this.level[i].topY()){
+                        onLand = true;
                     }
                 };
             }

@@ -1,8 +1,8 @@
 module.exports = Object.freeze({
     ACCELERATION: 2,
     VERTICALACCELERATION: 0.4,
-    TERMINAL: 15,
-    JUMPSPEED: 15,
+    TERMINAL: 20,
+    JUMPSPEED: 20,
     PLATFORMHEIGHT: 400,
     PLAYERSIZE: 50,
     SHUNTSPEED: 5,
