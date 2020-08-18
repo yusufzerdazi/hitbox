@@ -3,7 +3,30 @@ import Utils from '../../utils';
 import styles from './styles.module.css';
 import actualise from '../../assets/images/actualise.png';
 
-import Animations from './animations';
+import running1 from '../../assets/images/running/1.png';
+import running2 from '../../assets/images/running/2.png';
+import running3 from '../../assets/images/running/3.png';
+import running4 from '../../assets/images/running/4.png';
+import running5 from '../../assets/images/running/5.png';
+import running6 from '../../assets/images/running/6.png';
+import running7 from '../../assets/images/running/7.png';
+import running8 from '../../assets/images/running/8.png';
+import running9 from '../../assets/images/running/9.png';
+
+import running1r from '../../assets/images/running/1r.png';
+import running2r from '../../assets/images/running/2r.png';
+import running3r from '../../assets/images/running/3r.png';
+import running4r from '../../assets/images/running/4r.png';
+import running5r from '../../assets/images/running/5r.png';
+import running6r from '../../assets/images/running/6r.png';
+import running7r from '../../assets/images/running/7r.png';
+import running8r from '../../assets/images/running/8r.png';
+import running9r from '../../assets/images/running/9r.png';
+
+import runnings from '../../assets/images/running/s.png'
+
+const runningFrames = [running1, running2, running3, running4, running5, running6, running7, running8, running9,
+    running1r, running2r, running3r, running4r, running5r, running6r, running7r, running8r, running9r, runnings];
 
 const HEIGHT = 540;
 const WIDTH = 960;
@@ -37,13 +60,12 @@ class GameCanvas extends React.Component {
     componentDidMount() {
         this.ctx = this.canvasRef.current.getContext("2d");
         this.ctx.setTransform(this.state.scale, 0, 0, this.state.scale, this.ctx.canvas.width / 2, this.ctx.canvas.height / 2);
+        this.fullScreen();
 
         var $this = this;
 
         window.addEventListener('resize', ()  => {
-            if($this.state.fullScreen){
-                $this.fullScreen();
-            }
+            $this.fullScreen();
         });
 
         this.canvasRef.current.addEventListener('mousedown', function (event) {
@@ -103,7 +125,7 @@ class GameCanvas extends React.Component {
                 this.drawLevel(l);
             }
         });
-        this.drawLevelPlatform({x: -2000, y:HEIGHT, width:4000 + WIDTH, height: 1000 + HEIGHT / 2}, "red")
+        this.drawLevelPlatform({x: -2000, y:HEIGHT, width:4000 + WIDTH, height: 1000 + HEIGHT / 2}, "#C63838")
         this.draw3DSection(-2000, HEIGHT, 2000 + WIDTH, HEIGHT, 480, 410, WIDTH / 2, -900, "grey")
         players
             .filter(p => p.y > 400)
@@ -379,43 +401,16 @@ class GameCanvas extends React.Component {
     }
 
     drawPlayerLegs(player){
-        // var animation = Animations.legs;
-        // var frame = parseInt(Utils.millis() / 50) % animation.length;
-        // var animationFrame = animation[frame];
+        var frame = Math.round((Utils.millis() / 50) % 9);
+        var direction = Math.sign(player.xVelocity);
+        var frameSrc = runningFrames[direction == 0 ? 18 : (frame + (direction < 0 ? 9 : 0))];
         var xOffset = 25;
         var yOffset = -30;
-        var legLength = 30 / (1 + Math.cos(Math.PI / 4));
-        var frame = ((Utils.millis() / 5 % 60) / 60);
-        // for(var i = 0; i < animationFrame.length; i++){
-            // this.drawPath(player.x + animationFrame[i].x1 + xOffset, player.y + animationFrame[i].y1 + yOffset, 
-            //     player.x + animationFrame[i].x2 + xOffset, player.y + animationFrame[i].y2 + yOffset, 5);
-        
-        if(frame < 0.75){
-            var theta = (1.3333 * frame) * Math.PI / 2 + Math.PI / 4;
-            var kneeX = legLength * Math.cos(theta);
-            var kneeY = legLength * Math.sin(theta);
-            this.drawPath(player.x + xOffset, player.y + yOffset, player.x + xOffset + Math.sign(player.xVelocity) * kneeX, player.y + yOffset + kneeY, 5);
-        } else {
-            var theta = -4 * (frame - 0.75) * Math.PI / 2 + 3 * Math.PI / 4;
-            var kneeX = legLength * Math.cos(theta);
-            var kneeY = legLength * Math.sin(theta);
-            this.drawPath(player.x + xOffset, player.y + yOffset, player.x + xOffset + Math.sign(player.xVelocity) * kneeX, player.y + yOffset + kneeY, 5);
-        }
-
-        var frame2 = (frame + 0.5) % 1;
-        if(frame2 < 0.75){
-            var theta = (1.3333 * frame2) * Math.PI / 2 + Math.PI / 4;
-            var kneeX = legLength * Math.cos(theta);
-            var kneeY = legLength * Math.sin(theta);
-            this.drawPath(player.x + xOffset, player.y + yOffset, player.x + xOffset + Math.sign(player.xVelocity) * kneeX, player.y + yOffset + kneeY, 5);
-        } else {
-            var theta = -4 * (frame2 - 0.75) * Math.PI / 2 + 3 * Math.PI / 4;
-            var kneeX = legLength * Math.cos(theta);
-            var kneeY = legLength * Math.sin(theta);
-            this.drawPath(player.x + xOffset, player.y + yOffset, player.x + xOffset + Math.sign(player.xVelocity) * kneeX, player.y + yOffset + kneeY, 5);
-        }
-            
-        // }
+        var img = new Image();
+        img.src = frameSrc;
+        img.width = 50;
+        img.height = 30;
+        this.ctx.drawImage(img, player.x - this.state.camera.x, player.y + yOffset - this.state.camera.y, 50, 30);
     }
 
     drawPlayer(player) {
@@ -431,6 +426,7 @@ class GameCanvas extends React.Component {
         var xOffset = player.ducked ? - 0.25 * this.state.playerSize : 0;
         var yOffset = player.ducked ? 0 : -30;
 
+        var rotation = player.xVelocity * 0.002 * !player.ducked;
         if(!player.ducked){
             this.drawPlayerLegs(player);
         }
@@ -472,20 +468,15 @@ class GameCanvas extends React.Component {
         this.setState({ countdown: timer });
     }
 
-    fullScreen(fullScreen) {
-        if(fullScreen != undefined){
-            this.setState({ 
-                fullScreen: fullScreen ? styles.fullScreen : ''
-            })
-        }
-        this.ctx.canvas.width = fullScreen || this.state.fullScreen ? window.innerWidth : WIDTH;
-        this.ctx.canvas.height = fullScreen || this.state.fullScreen ? window.innerHeight : HEIGHT;
+    fullScreen() {
+        this.ctx.canvas.width = window.innerWidth;
+        this.ctx.canvas.height = window.innerHeight;
         this.ctx.setTransform(this.state.scale, 0, 0, this.state.scale, this.ctx.canvas.width / 2, this.ctx.canvas.height / 2);
     }
 
     render() {
         return (
-            <canvas className={this.state.fullScreen} ref={this.canvasRef} width={WIDTH} height={HEIGHT} />
+            <canvas className={styles.fullScreen} ref={this.canvasRef} width={WIDTH} height={HEIGHT} />
         );
     }
 }

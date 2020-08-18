@@ -1,5 +1,11 @@
 .titleContainer {
     margin-bottom: 10px;
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 2000;
+    padding: 10px;
+    opacity: 0.5;
 }
 
 .title {

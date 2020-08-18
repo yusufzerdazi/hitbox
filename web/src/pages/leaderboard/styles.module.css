@@ -12,6 +12,13 @@ table, th, td {
 .tableContainer {
     text-align: center;
     margin: 0 auto;
-    padding: 5px;
-    padding-bottom: 20px;
+    margin: 50px auto;
+    opacity: 0.9;
+    max-width: 1200px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: calc(100% - 150px);
+    overflow: auto;
 }

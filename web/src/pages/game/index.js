@@ -1,9 +1,13 @@
 
 import React from 'react';
 import ReactTooltip from "react-tooltip";
-import Gamepad from 'react-gamepad'
+import Gamepad from 'react-gamepad';
+import Modal from 'react-overlays/Modal';
+import Leaderboard from '../leaderboard';
+import Instructions from '../instructions';
 import { connect } from "react-redux";
 import { store } from '../../redux/store';
+import { isMobile } from "react-device-detect";
 
 import Utils from '../../utils';
 import GameCanvas from '../../components/gameCanvas';
@@ -200,6 +204,14 @@ class Game extends React.Component {
         this.setState({soundEnabled: this.gameService.soundEnabled});
     }
 
+    openLeaderboard(open){
+        this.setState({leaderboardOpen: open == undefined ? !this.state.leaderboardOpen : open});
+    }
+
+    openInstructions(open){
+        this.setState({instructionsOpen: open == undefined ? !this.state.instructionsOpen : open});
+    }
+
     buttonUp(buttonName) {
         switch (buttonName) {
             case 'A':
@@ -284,6 +296,7 @@ class Game extends React.Component {
         return (
             <>
                 <GameCanvas ref={this.canvasRef} />
+                { !isMobile ?
                 <div className={styles.addAi}>
                     <span style={{ display: this.props.user?.name ? 'inline-block' : 'none' }} className={styles.playFabName}>
                         <b>Name:</b> {this.props.user?.name}
@@ -317,6 +330,12 @@ class Game extends React.Component {
                         onClick={this.toggleSound} className={styles.addAiButton}>
                         <i className="fas fa-volume"></i>
                     </span>
+                    <span data-tip="Leaderboard" onClick={() => this.openLeaderboard()} className={styles.addAiButton}>
+                        <i className="fas fa-bars"></i>
+                    </span>
+                    <span data-tip="Instructions" onClick={() => this.openInstructions()} className={styles.addAiButton}>
+                        <i className="fas fa-info-circle"></i>
+                    </span>
                     <span data-tip="Add AI" onClick={this.addAi} className={styles.addAiButton}>
                         <i className="fas fa-robot"></i>
                     </span>
@@ -326,10 +345,8 @@ class Game extends React.Component {
                     <span data-tip="Delete AI" onClick={this.removeAi} className={styles.addAiButton}>
                         <i style={{ color: 'red' }} className="fas fa-robot"></i>
                     </span>
-                    <span data-tip="Fullscreen" onClick={this.goFullscreen} className={styles.addAiButton}>
-                        <i className="fas fa-expand"></i>
-                    </span>
-                </div>
+                </div> : <></>
+                }
                 <Gamepad
                     onA={this.jump}
                     onRT={this.boostRight}
@@ -341,6 +358,16 @@ class Game extends React.Component {
                     onAxisChange={this.axisChange}>
                     <p></p>
                 </Gamepad>
+                <Modal show={this.state.leaderboardOpen} 
+                    onClick={() => this.openLeaderboard()}
+                    onHide={() => this.openLeaderboard(false)}>
+                    <Leaderboard />
+                </Modal>
+                <Modal show={this.state.instructionsOpen} 
+                    onClick={() => this.openInstructions()}
+                    onHide={() => this.openInstructions(false)}>
+                    <Instructions />
+                </Modal>
                 <ReactTooltip />
             </>
         );
@@ -368,6 +395,8 @@ class Game extends React.Component {
         this.boostRight = this.boostRight.bind(this);
         this.boostLeft = this.boostLeft.bind(this);
         this.crouch = this.crouch.bind(this);
+        this.openLeaderboard = this.openLeaderboard.bind(this);
+        this.openInstructions = this.openInstructions.bind(this);
     }
 }
 
