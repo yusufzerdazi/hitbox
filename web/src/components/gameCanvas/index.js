@@ -3,6 +3,8 @@ import Utils from '../../utils';
 import styles from './styles.module.css';
 import actualise from '../../assets/images/actualise.png';
 
+import Animations from './animations';
+
 const HEIGHT = 540;
 const WIDTH = 960;
 
@@ -185,16 +187,19 @@ class GameCanvas extends React.Component {
         this.ctx.fill();
     }
 
-    drawPlayerCube(player, width, height, xOffset) {
+    drawPlayerCube(player, width, height, xOffset, yOffset) {
         var xVanishingPoint = this.state.camera.x;
         var yVanishingPoint = -900 + this.state.camera.y;
 
-        var rightX = (player.x + xOffset + width);
-        var leftX = (player.x + xOffset);
-        var topY = (player.y - height);
-        var bottomY = (player.y);
-        var centerX = (player.x + xOffset + (width / 2));
-        var centerY = (player.y - (height / 2));
+        var playerX = player.x + xOffset;
+        var playerY = player.y + yOffset;
+
+        var rightX = (playerX + width);
+        var leftX = (playerX);
+        var topY = (playerY - height);
+        var bottomY = (playerY);
+        var centerX = (playerX + (width / 2));
+        var centerY = (playerY - (height / 2));
 
         this.draw3DSection(rightX, bottomY, rightX, topY, centerX, centerY, xVanishingPoint, yVanishingPoint, 'black');
         this.draw3DSection(leftX, bottomY, leftX, topY, centerX, centerY, xVanishingPoint, yVanishingPoint, 'black');
@@ -202,13 +207,13 @@ class GameCanvas extends React.Component {
 
         this.ctx.beginPath();
         this.ctx.fillStyle = player.colour;
-        this.drawRectangle(player.x + xOffset, player.y, width, - height);
+        this.drawRectangle(playerX, playerY, width, - height);
         this.ctx.fill();
         if(!player.crouched && (player.name === "yusuf" || player.name === "intrinsion")){
             var img = new Image();
             img.src = actualise;
             this.ctx.globalAlpha = 0.5;
-            this.ctx.drawImage(img, player.x + xOffset - this.state.camera.x, player.y - height - this.state.camera.y, width, height);
+            this.ctx.drawImage(img, playerX - this.state.camera.x, playerY - height - this.state.camera.y, width, height);
             this.ctx.globalAlpha = 1.0;
         }
     }
@@ -229,14 +234,24 @@ class GameCanvas extends React.Component {
         this.ctx.stroke();
     }
 
-    drawPlayerOutline(player, width, height, xOffset) {
+    drawPath(x1, y1, x2, y2, lineWidth){
+        this.ctx.save();
+        this.ctx.lineWidth = lineWidth;
+        this.ctx.beginPath();
+        this.ctx.moveTo(x1 - this.state.camera.x, y1 - this.state.camera.y);
+        this.ctx.lineTo(x2 - this.state.camera.x, y2 - this.state.camera.y);
+        this.ctx.stroke();
+        this.ctx.restore();
+    }
+
+    drawPlayerOutline(player, width, height, xOffset, yOffset) {
         this.ctx.save();
         this.ctx.lineWidth = 6;
         this.ctx.beginPath();
         this.ctx.strokeStyle = player.colour;
         this.drawRectangle(
             player.x + 3 + xOffset,
-            player.y - 3,
+            player.y - 3 + yOffset,
             width - 6,
             - height + 6
         );
@@ -244,7 +259,7 @@ class GameCanvas extends React.Component {
         this.ctx.restore();
     }
 
-    drawPlayerName(player, height, xOffset) {
+    drawPlayerName(player, height, xOffset, yOffset) {
         this.ctx.save();
         this.ctx.fillStyle = 'white';
         this.ctx.font = Math.max(13,(13*(1/this.state.scale))) + "px Consolas";
@@ -258,64 +273,64 @@ class GameCanvas extends React.Component {
             this.ctx.fillText(
                 player.name,
                 player.x + this.state.playerSize / 2 - this.state.camera.x,
-                player.y - height - 1 - this.state.camera.y
+                player.y - height - 1 - this.state.camera.y + yOffset
             );
         }
         this.ctx.shadowColor = "";
         this.ctx.restore();
     }
 
-    drawPlayerHealth(player, width, height, xOffset, heightMultiplier) {
+    drawPlayerHealth(player, width, height, xOffset, yOffset, heightMultiplier) {
         this.ctx.strokeStyle = "black";
         this.ctx.lineCap = "round";
         if(player.health < 90){
-            this.drawLine(player.x + xOffset, player.y - height, 6, 10 * heightMultiplier);
-            this.drawLine(player.x + xOffset + 6, player.y - height + 10 * heightMultiplier, 8, 2 * heightMultiplier);
-            this.drawLine(player.x + xOffset + 6, player.y - height + 10 * heightMultiplier, 2, 5 * heightMultiplier);
+            this.drawLine(player.x + xOffset, player.y + yOffset - height, 6, 10 * heightMultiplier);
+            this.drawLine(player.x + xOffset + 6, player.y + yOffset - height + 10 * heightMultiplier, 8, 2 * heightMultiplier);
+            this.drawLine(player.x + xOffset + 6, player.y + yOffset - height + 10 * heightMultiplier, 2, 5 * heightMultiplier);
         }
         if(player.health < 80){
-            this.drawLine(player.x + xOffset, player.y, 12, -8 * heightMultiplier);
-            this.drawLine(player.x + xOffset + 12, player.y -8 * heightMultiplier, 7, 2 * heightMultiplier);
-            this.drawLine(player.x + xOffset + 12, player.y -8 * heightMultiplier, 2, -5 * heightMultiplier);
+            this.drawLine(player.x + xOffset, player.y + yOffset, 12, -8 * heightMultiplier);
+            this.drawLine(player.x + xOffset + 12, player.y + yOffset -8 * heightMultiplier, 7, 2 * heightMultiplier);
+            this.drawLine(player.x + xOffset + 12, player.y + yOffset -8 * heightMultiplier, 2, -5 * heightMultiplier);
         }
         if(player.health < 70){
-            this.drawLine(player.x + xOffset + width, player.y - height, -7, 4 * heightMultiplier);
-            this.drawLine(player.x + xOffset + width -7, player.y - height + 4 * heightMultiplier, -1, 5 * heightMultiplier);
+            this.drawLine(player.x + xOffset + width, player.y + yOffset - height, -7, 4 * heightMultiplier);
+            this.drawLine(player.x + xOffset + width -7, player.y + yOffset - height + 4 * heightMultiplier, -1, 5 * heightMultiplier);
         }
         if(player.health < 60){
-            this.drawLine(player.x + xOffset + width, player.y, -5, -10 * heightMultiplier);
-            this.drawLine(player.x + xOffset + width-5, player.y-10 * heightMultiplier, -3, 5 * heightMultiplier);
-            this.drawLine(player.x + xOffset + width-5, player.y-10 * heightMultiplier, -4, -5 * heightMultiplier);
+            this.drawLine(player.x + xOffset + width, player.y + yOffset, -5, -10 * heightMultiplier);
+            this.drawLine(player.x + xOffset + width-5, player.y + yOffset-10 * heightMultiplier, -3, 5 * heightMultiplier);
+            this.drawLine(player.x + xOffset + width-5, player.y + yOffset-10 * heightMultiplier, -4, -5 * heightMultiplier);
         }
         if(player.health < 50){
-            this.drawLine(player.x + xOffset + width -7, player.y - height + 4 * heightMultiplier, -10, 2 * heightMultiplier);
-            this.drawLine(player.x + xOffset + width -17, player.y - height + 6 * heightMultiplier, -5, 3 * heightMultiplier);
+            this.drawLine(player.x + xOffset + width -7, player.y + yOffset - height + 4 * heightMultiplier, -10, 2 * heightMultiplier);
+            this.drawLine(player.x + xOffset + width -17, player.y + yOffset - height + 6 * heightMultiplier, -5, 3 * heightMultiplier);
         }
         if(player.health < 40){
-            this.drawLine(player.x + xOffset + 14, player.y -13 * heightMultiplier, 10, -5 * heightMultiplier);
-            this.drawLine(player.x + xOffset + 14, player.y -13 * heightMultiplier, -4, -8 * heightMultiplier);
+            this.drawLine(player.x + xOffset + 14, player.y + yOffset -13 * heightMultiplier, 10, -5 * heightMultiplier);
+            this.drawLine(player.x + xOffset + 14, player.y + yOffset -13 * heightMultiplier, -4, -8 * heightMultiplier);
         }
         if(player.health < 30){
-            this.drawLine(player.x + xOffset + width -8, player.y - height + 9 * heightMultiplier, -12, 6 * heightMultiplier);
-            this.drawLine(player.x + xOffset + width -8, player.y - height + 9 * heightMultiplier, 2, 7 * heightMultiplier);
+            this.drawLine(player.x + xOffset + width -8, player.y + yOffset - height + 9 * heightMultiplier, -12, 6 * heightMultiplier);
+            this.drawLine(player.x + xOffset + width -8, player.y + yOffset - height + 9 * heightMultiplier, 2, 7 * heightMultiplier);
         }
         if(player.health < 20){
-            this.drawLine(player.x + xOffset + 14, player.y - height + 12 * heightMultiplier, 1, 9 * heightMultiplier);
-            this.drawLine(player.x + xOffset + 14, player.y - height + 12 * heightMultiplier, 8, -2 * heightMultiplier);
+            this.drawLine(player.x + xOffset + 14, player.y + yOffset - height + 12 * heightMultiplier, 1, 9 * heightMultiplier);
+            this.drawLine(player.x + xOffset + 14, player.y + yOffset - height + 12 * heightMultiplier, 8, -2 * heightMultiplier);
         }
         if(player.health < 10){
-            this.drawLine(player.x + xOffset + width-9, player.y-15 * heightMultiplier, -13, 4 * heightMultiplier);
-            this.drawLine(player.x + xOffset + width-9, player.y-15 * heightMultiplier, -2, -12 * heightMultiplier);
+            this.drawLine(player.x + xOffset + width-9, player.y + yOffset-15 * heightMultiplier, -13, 4 * heightMultiplier);
+            this.drawLine(player.x + xOffset + width-9, player.y + yOffset-15 * heightMultiplier, -2, -12 * heightMultiplier);
         }
     }
 
-    drawPlayerStamina(player, width, height, xOffset) {
+    drawPlayerStamina(player, width, height, xOffset, yOffset) {
         this.ctx.beginPath();
         this.ctx.fillStyle = 'white';
         var cooldownPercent = (100 - player.boostCooldown) / 100;
         this.drawRectangle(
             player.x + xOffset + cooldownPercent * width / 2,
-            player.y - cooldownPercent * height / 2,
+            player.y + yOffset - cooldownPercent * height / 2,
             width - cooldownPercent * width,
             -height + cooldownPercent * height
         );
@@ -363,6 +378,46 @@ class GameCanvas extends React.Component {
         this.ctx.restore();
     }
 
+    drawPlayerLegs(player){
+        // var animation = Animations.legs;
+        // var frame = parseInt(Utils.millis() / 50) % animation.length;
+        // var animationFrame = animation[frame];
+        var xOffset = 25;
+        var yOffset = -30;
+        var legLength = 30 / (1 + Math.cos(Math.PI / 4));
+        var frame = ((Utils.millis() / 5 % 60) / 60);
+        // for(var i = 0; i < animationFrame.length; i++){
+            // this.drawPath(player.x + animationFrame[i].x1 + xOffset, player.y + animationFrame[i].y1 + yOffset, 
+            //     player.x + animationFrame[i].x2 + xOffset, player.y + animationFrame[i].y2 + yOffset, 5);
+        
+        if(frame < 0.75){
+            var theta = (1.3333 * frame) * Math.PI / 2 + Math.PI / 4;
+            var kneeX = legLength * Math.cos(theta);
+            var kneeY = legLength * Math.sin(theta);
+            this.drawPath(player.x + xOffset, player.y + yOffset, player.x + xOffset + Math.sign(player.xVelocity) * kneeX, player.y + yOffset + kneeY, 5);
+        } else {
+            var theta = -4 * (frame - 0.75) * Math.PI / 2 + 3 * Math.PI / 4;
+            var kneeX = legLength * Math.cos(theta);
+            var kneeY = legLength * Math.sin(theta);
+            this.drawPath(player.x + xOffset, player.y + yOffset, player.x + xOffset + Math.sign(player.xVelocity) * kneeX, player.y + yOffset + kneeY, 5);
+        }
+
+        var frame2 = (frame + 0.5) % 1;
+        if(frame2 < 0.75){
+            var theta = (1.3333 * frame2) * Math.PI / 2 + Math.PI / 4;
+            var kneeX = legLength * Math.cos(theta);
+            var kneeY = legLength * Math.sin(theta);
+            this.drawPath(player.x + xOffset, player.y + yOffset, player.x + xOffset + Math.sign(player.xVelocity) * kneeX, player.y + yOffset + kneeY, 5);
+        } else {
+            var theta = -4 * (frame2 - 0.75) * Math.PI / 2 + 3 * Math.PI / 4;
+            var kneeX = legLength * Math.cos(theta);
+            var kneeY = legLength * Math.sin(theta);
+            this.drawPath(player.x + xOffset, player.y + yOffset, player.x + xOffset + Math.sign(player.xVelocity) * kneeX, player.y + yOffset + kneeY, 5);
+        }
+            
+        // }
+    }
+
     drawPlayer(player) {
         // If player is invincible make them flash.
         if (player.alive && player.invincibility !== 0 && (Math.round(Utils.millis() / 10)) % 2 === 0) return;
@@ -374,9 +429,13 @@ class GameCanvas extends React.Component {
         var currentPlayerHeight = player.ducked ? this.state.playerSize / 5 : this.state.playerSize;
         var currentPlayerWidth = player.ducked ? this.state.playerSize * 1.5 : this.state.playerSize;
         var xOffset = player.ducked ? - 0.25 * this.state.playerSize : 0;
+        var yOffset = player.ducked ? 0 : -30;
 
-        this.drawPlayerCube(player, currentPlayerWidth, currentPlayerHeight, xOffset);
-        this.drawPlayerName(player, currentPlayerHeight, xOffset);
+        if(!player.ducked){
+            this.drawPlayerLegs(player);
+        }
+        this.drawPlayerCube(player, currentPlayerWidth, currentPlayerHeight, xOffset, yOffset);
+        this.drawPlayerName(player, currentPlayerHeight, xOffset, yOffset);
 
         // If player is dead, don't draw the rest.
         if (!player.alive) {
@@ -384,9 +443,9 @@ class GameCanvas extends React.Component {
             return;
         }
 
-        this.drawPlayerStamina(player, currentPlayerWidth, currentPlayerHeight, xOffset);
-        this.drawPlayerOutline(player, currentPlayerWidth, currentPlayerHeight, xOffset);
-        this.drawPlayerHealth(player, currentPlayerWidth, currentPlayerHeight, xOffset, currentPlayerHeight / this.state.playerSize);
+        this.drawPlayerStamina(player, currentPlayerWidth, currentPlayerHeight, xOffset, yOffset);
+        this.drawPlayerOutline(player, currentPlayerWidth, currentPlayerHeight, xOffset, yOffset);
+        this.drawPlayerHealth(player, currentPlayerWidth, currentPlayerHeight, xOffset, yOffset, currentPlayerHeight / this.state.playerSize);
         this.ctx.globalAlpha = 1;
     }
 
