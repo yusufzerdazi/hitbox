@@ -44,8 +44,8 @@ class Game {
         client.player = new Player(
             Utils.randomColor(),
             player.name,
-            100 + Utils.getRandomInt(Constants.WIDTH - 200 - Constants.PLAYERSIZE), 
-            Constants.PLAYERSIZE + Utils.getRandomInt(Constants.HEIGHT / 2 - Constants.PLAYERSIZE)
+            100 + Utils.getRandomInt(Constants.WIDTH - 200 - Constants.PLAYERWIDTH), 
+            Constants.PLAYERHEIGHT + Utils.getRandomInt(Constants.HEIGHT / 2 - Constants.PLAYERHEIGHT)
         );
         this.clients.push(client);
         client.emit("level", this.level);
@@ -119,8 +119,8 @@ class Game {
             this.clients.push({
                 player: new SimpleAi(Utils.randomColor(),
                     Utils.generateName(),
-                    100 + Utils.getRandomInt(Constants.WIDTH - 200 - Constants.PLAYERSIZE), 
-                    Constants.PLAYERSIZE + Utils.getRandomInt(Constants.HEIGHT / 2 - Constants.PLAYERSIZE))
+                    100 + Utils.getRandomInt(Constants.WIDTH - 200 - Constants.PLAYERWIDTH), 
+                    Constants.PLAYERHEIGHT + Utils.getRandomInt(Constants.HEIGHT / 2 - Constants.PLAYERHEIGHT))
             });
         });
     
@@ -131,8 +131,8 @@ class Game {
             this.clients.push({
                 player: new CleverAi(Utils.randomColor(),
                     Utils.generateName(),
-                    100 + Utils.getRandomInt(Constants.WIDTH - 200 - Constants.PLAYERSIZE), 
-                    Constants.PLAYERSIZE + Utils.getRandomInt(Constants.HEIGHT / 2 - Constants.PLAYERSIZE))
+                    100 + Utils.getRandomInt(Constants.WIDTH - 200 - Constants.PLAYERWIDTH), 
+                    Constants.PLAYERHEIGHT + Utils.getRandomInt(Constants.HEIGHT / 2 - Constants.PLAYERHEIGHT))
             });
         });
     
@@ -215,7 +215,7 @@ class Game {
                 var newMagnitude = Math.max(0, magnitude - Constants.ACCELERATION);
                 client.player.xVelocity = newMagnitude * velSign;
             }
-            if(client.player.y != Constants.PLATFORMHEIGHT || client.player.x + Constants.PLAYERSIZE < 100 || client.player.x > 860 || client.player.yVelocity < 0) {
+            if(client.player.y != Constants.PLATFORMHEIGHT || client.player.x + Constants.PLAYERHEIGHT < 100 || client.player.x > 860 || client.player.yVelocity < 0) {
                 client.player.yVelocity += Constants.VERTICALACCELERATION;
             } else {
                 client.player.yVelocity = 0;
@@ -225,39 +225,44 @@ class Game {
     
     calculateMovement() {
         this.movingPlayers().forEach(client => {
+            var previouslyOnSurface = client.player.onSurface.includes(true);
             client.player.onSurface = [];
             this.level.forEach(level => {
                 if(client.player.x >= level.rightX() &&
                         client.player.x + client.player.xVelocity < level.rightX() && 
                         client.player.y + client.player.yVelocity > level.topY() && 
-                        client.player.y + client.player.yVelocity < (level.bottomY() + Constants.PLAYERSIZE)) {
+                        client.player.y + client.player.yVelocity < (level.bottomY() + Constants.PLAYERHEIGHT)) {
                     client.player.x = level.rightX();
                     client.player.xVelocity = -client.player.xVelocity * Constants.WALLDAMPING;
                     this.emitToAllClients('hitWall');
                 }
 
-                if(client.player.x <= (level.leftX() - Constants.PLAYERSIZE) &&
-                        client.player.x + client.player.xVelocity > (level.leftX() - Constants.PLAYERSIZE) && 
+                if(client.player.x <= (level.leftX() - Constants.PLAYERWIDTH) &&
+                        client.player.x + client.player.xVelocity > (level.leftX() - Constants.PLAYERWIDTH) && 
                         client.player.y + client.player.yVelocity > level.topY() && 
-                        client.player.y + client.player.yVelocity < (level.bottomY() + Constants.PLAYERSIZE)) {
-                    client.player.x = level.leftX() - Constants.PLAYERSIZE;
+                        client.player.y + client.player.yVelocity < (level.bottomY() + Constants.PLAYERHEIGHT)) {
+                    client.player.x = level.leftX() - Constants.PLAYERWIDTH;
                     client.player.xVelocity = -client.player.xVelocity * Constants.WALLDAMPING;;
                     this.emitToAllClients('hitWall');
                 }
-                if(client.player.y >= (level.bottomY() + Constants.PLAYERSIZE) && // Currently above platform
-                        client.player.y + client.player.yVelocity <= (level.bottomY() + Constants.PLAYERSIZE) && // Will be below on next time step
+                if(client.player.y >= (level.bottomY() + Constants.PLAYERHEIGHT) && // Currently above platform
+                        client.player.y + client.player.yVelocity <= (level.bottomY() + Constants.PLAYERHEIGHT) && // Will be below on next time step
                         client.player.x + client.player.xVelocity <= level.rightX() &&
-                        client.player.x + client.player.xVelocity >= (level.leftX() - Constants.PLAYERSIZE)) {
-                    client.player.y = (level.bottomY() + Constants.PLAYERSIZE);
+                        client.player.x + client.player.xVelocity >= (level.leftX() - Constants.PLAYERWIDTH)) {
+                    client.player.y = (level.bottomY() + Constants.PLAYERHEIGHT);
                     client.player.yVelocity = 0;
+                    this.emitToAllClients('hitWall');
                 }
                 if(client.player.y <= level.topY() && // Currently above platform
                         client.player.y + client.player.yVelocity >= level.topY() && // Will be below on next time step
                         client.player.x + client.player.xVelocity <= level.rightX() &&
-                        client.player.x + client.player.xVelocity >= (level.leftX() - Constants.PLAYERSIZE)) {
+                        client.player.x + client.player.xVelocity >= (level.leftX() - Constants.PLAYERWIDTH)) {
                     client.player.y = level.topY();
                     client.player.yVelocity = 0;
                     client.player.onSurface.push(true);
+                    if(!previouslyOnSurface){
+                        this.emitToAllClients('hitWall');
+                    }
                 } else {
                     client.player.onSurface.push(false);
                 }
@@ -323,7 +328,7 @@ class Game {
                 client.player.yVelocity = client.player.newYVelocity;
                 client.player.newYVelocity = null;
             }
-            if(client.player.y >= Constants.HEIGHT + Constants.PLAYERSIZE){
+            if(client.player.y >= Constants.HEIGHT + Constants.PLAYERHEIGHT){
                 client.player.health = 0;
             }
         })
@@ -371,13 +376,13 @@ class Game {
                 anyCollision = false;
 
                 newPosition = {
-                    x: -1000 + Utils.getRandomInt(2000 + Constants.WIDTH - Constants.PLAYERSIZE),
-                    y: -1000 + Constants.PLAYERSIZE + Utils.getRandomInt(1000 + Constants.PLATFORMHEIGHT - Constants.PLAYERSIZE)
+                    x: -1000 + Utils.getRandomInt(2000 + Constants.WIDTH - Constants.PLAYERWIDTH),
+                    y: -1000 + Constants.PLAYERHEIGHT + Utils.getRandomInt(1000 + Constants.PLATFORMHEIGHT - Constants.PLAYERHEIGHT)
                 };
 
                 for(var i = 0; i < positions.length; i++){
-                    var xCollision = Math.abs((newPosition.x) - (positions[i].x)) <= Constants.PLAYERSIZE + 20;
-                    var yCollision = Math.abs((newPosition.y) - (positions[i].y)) <= Constants.PLAYERSIZE + 20;
+                    var xCollision = Math.abs((newPosition.x) - (positions[i].x)) <= Constants.PLAYERWIDTH + 20;
+                    var yCollision = Math.abs((newPosition.y) - (positions[i].y)) <= Constants.PLAYERHEIGHT + 20;
                     if(xCollision && yCollision){
                         anyCollision = true;
                         break;
@@ -386,8 +391,8 @@ class Game {
 
                 onLand = false;
                 for(var i = 0; i < this.level.length; i++){
-                    var xCollision = newPosition.x <= this.level[i].rightX() + 20 && newPosition.x >= (this.level[i].leftX() - Constants.PLAYERSIZE) - 20;
-                    var yCollision = newPosition.y >= this.level[i].topY() - 20 && newPosition.y <= (this.level[i].bottomY() + Constants.PLAYERSIZE) + 20;
+                    var xCollision = newPosition.x <= this.level[i].rightX() + 20 && newPosition.x >= (this.level[i].leftX() - Constants.PLAYERWIDTH) - 20;
+                    var yCollision = newPosition.y >= this.level[i].topY() - 20 && newPosition.y <= (this.level[i].bottomY() + Constants.PLAYERHEIGHT) + 20;
                     if((xCollision && yCollision) || this.level[i].border && newPosition.y <= this.level[i].topY()){
                         anyCollision = true;
                         break;

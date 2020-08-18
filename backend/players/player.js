@@ -38,9 +38,9 @@ class Player {
     }
 
     isCollision(player) {
-        var xCollision = Math.abs((this.x + this.xVelocity) - (player.x + player.xVelocity)) <= Constants.PLAYERSIZE;
-        var yCollision = Math.abs((this.y + this.yVelocity) - (player.y + player.yVelocity)) <= Constants.PLAYERSIZE - 10;
-        var duckedYCollision = (Math.abs((this.y + this.yVelocity) - (player.y + player.yVelocity)) <= Constants.PLAYERSIZE * Constants.DUCKEDHEIGHT) ||
+        var xCollision = Math.abs((this.x + this.xVelocity) - (player.x + player.xVelocity)) <= Constants.PLAYERWIDTH;
+        var yCollision = Math.abs((this.y + this.yVelocity) - (player.y + player.yVelocity)) <= Constants.PLAYERHEIGHT - 10;
+        var duckedYCollision = (Math.abs((this.y + this.yVelocity) - (player.y + player.yVelocity)) <= Constants.PLAYERHEIGHT * Constants.DUCKEDHEIGHT) ||
             player.y + player.yVelocity > Constants.PLATFORMHEIGHT;
     
         return (!this.ducked && xCollision && yCollision) || (this.ducked && xCollision && duckedYCollision);

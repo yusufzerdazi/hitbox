@@ -4,7 +4,8 @@ module.exports = Object.freeze({
     TERMINAL: 20,
     JUMPSPEED: 20,
     PLATFORMHEIGHT: 400,
-    PLAYERSIZE: 50,
+    PLAYERWIDTH: 50,
+    PLAYERHEIGHT: 80,
     SHUNTSPEED: 5,
     WIDTH: 960,
     HEIGHT: 540,
@@ -12,7 +13,7 @@ module.exports = Object.freeze({
     DAMAGETHRESHOLD: 5,
     FRICTION: 0.96,
     BOOSTSPEED: 35,
-    DUCKEDHEIGHT: 1/5,
+    DUCKEDHEIGHT: 1/8,
     MAXPLAYERS: 10,
     BOOSTCOST: 60
 });
