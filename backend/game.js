@@ -36,6 +36,10 @@ class Game {
     }
 
     removeSpectator(client){
+        var matchingSpectator = this.spectators.filter(c => c == client);
+        if(!matchingSpectator){
+            return;
+        }
         this.removeClientListeners(client);
         this.spectators = this.spectators.filter(c => c != client);
     }
@@ -116,24 +120,21 @@ class Game {
             if(this.clients.filter(c => c.player).length == this.maxPlayers) {
                 return;
             }
-            this.clients.push({
-                player: new SimpleAi(Utils.randomColor(),
-                    Utils.generateName(),
-                    100 + Utils.getRandomInt(Constants.WIDTH - 200 - Constants.PLAYERWIDTH), 
-                    Constants.PLAYERHEIGHT + Utils.getRandomInt(Constants.HEIGHT / 2 - Constants.PLAYERHEIGHT))
-            });
-        });
-    
-        client.on('addCleverAi', () =>{
-            if(this.clients.filter(c => c.player).length == this.maxPlayers) {
-                return;
+            if(Math.random() > 0.5){
+                this.clients.push({
+                    player: new SimpleAi(Utils.randomColor(),
+                        Utils.generateName(),
+                        100 + Utils.getRandomInt(Constants.WIDTH - 200 - Constants.PLAYERWIDTH), 
+                        Constants.PLAYERHEIGHT + Utils.getRandomInt(Constants.HEIGHT / 2 - Constants.PLAYERHEIGHT))
+                });
+            } else {
+                this.clients.push({
+                    player: new CleverAi(Utils.randomColor(),
+                        Utils.generateName(),
+                        100 + Utils.getRandomInt(Constants.WIDTH - 200 - Constants.PLAYERWIDTH), 
+                        Constants.PLAYERHEIGHT + Utils.getRandomInt(Constants.HEIGHT / 2 - Constants.PLAYERHEIGHT))
+                });
             }
-            this.clients.push({
-                player: new CleverAi(Utils.randomColor(),
-                    Utils.generateName(),
-                    100 + Utils.getRandomInt(Constants.WIDTH - 200 - Constants.PLAYERWIDTH), 
-                    Constants.PLAYERHEIGHT + Utils.getRandomInt(Constants.HEIGHT / 2 - Constants.PLAYERHEIGHT))
-            });
         });
     
         client.on('removeAi', () =>{

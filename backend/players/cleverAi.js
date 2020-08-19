@@ -4,7 +4,7 @@ var Constants = require('../constants');
 class CleverAi extends Player {
     constructor(colour, name, x, y){
         var playerId = name.hashCode();
-        super(colour, "<CLEVER"+Math.abs(playerId) % 1000+">", x, y, true);
+        super(colour, name, x, y, true);
         this.playerId = playerId;
         this.xBoostDistanceThreshold = 120;
         this.yBoostDistanceThreshold = 100;
