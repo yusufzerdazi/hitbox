@@ -2,31 +2,7 @@ import React from 'react';
 import Utils from '../../utils';
 import styles from './styles.module.css';
 import actualise from '../../assets/images/actualise.png';
-
-import running1 from '../../assets/images/running/1.png';
-import running2 from '../../assets/images/running/2.png';
-import running3 from '../../assets/images/running/3.png';
-import running4 from '../../assets/images/running/4.png';
-import running5 from '../../assets/images/running/5.png';
-import running6 from '../../assets/images/running/6.png';
-import running7 from '../../assets/images/running/7.png';
-import running8 from '../../assets/images/running/8.png';
-import running9 from '../../assets/images/running/9.png';
-
-import running1r from '../../assets/images/running/1r.png';
-import running2r from '../../assets/images/running/2r.png';
-import running3r from '../../assets/images/running/3r.png';
-import running4r from '../../assets/images/running/4r.png';
-import running5r from '../../assets/images/running/5r.png';
-import running6r from '../../assets/images/running/6r.png';
-import running7r from '../../assets/images/running/7r.png';
-import running8r from '../../assets/images/running/8r.png';
-import running9r from '../../assets/images/running/9r.png';
-
-import runnings from '../../assets/images/running/s.png'
-
-const runningFrames = [running1, running2, running3, running4, running5, running6, running7, running8, running9,
-    running1r, running2r, running3r, running4r, running5r, running6r, running7r, running8r, running9r, runnings];
+import { RunningForward, RunningBackward, Standing } from './animation';
 
 const HEIGHT = 540;
 const WIDTH = 960;
@@ -400,17 +376,26 @@ class GameCanvas extends React.Component {
         this.ctx.restore();
     }
 
-    drawPlayerLegs(player){
-        var frame = Math.round((Utils.millis() / 50) % 9);
-        var direction = Math.sign(player.xVelocity);
-        var frameSrc = runningFrames[direction == 0 ? 18 : (frame + (direction < 0 ? 9 : 0))];
+    drawPlayerLegs(player, breathingOffset){
         var xOffset = 25;
         var yOffset = -30;
-        var img = new Image();
-        img.src = frameSrc;
-        img.width = 50;
-        img.height = 30;
-        this.ctx.drawImage(img, player.x - this.state.camera.x, player.y + yOffset - this.state.camera.y, 50, 30);
+        if(player.xVelocity !== 0){
+            var frame = 0.02 * Utils.millis() % 8;
+            frame = (frame * Math.max(1, Math.abs(player.xVelocity) * 0.1)) % 8;
+            frame = Math.floor(frame);
+            var direction = Math.sign(player.xVelocity);
+            var img = direction > 0 ? RunningBackward[frame] : RunningForward[frame];
+            this.ctx.drawImage(img, player.x - this.state.camera.x, player.y + yOffset - this.state.camera.y, 50, 30);
+        }
+        else {
+            var frame = 0.005 * Utils.millis() % 3;
+            if(Math.abs(player.health) < 30){
+                frame = (frame * 2) % 3;
+            }
+            frame = Math.floor(frame);
+            var img = Standing[frame];
+            this.ctx.drawImage(img, player.x - this.state.camera.x, player.y + yOffset + breathingOffset - this.state.camera.y, 50, 30 - breathingOffset);
+        }
     }
 
     drawPlayer(player) {
@@ -424,11 +409,12 @@ class GameCanvas extends React.Component {
         var currentPlayerHeight = player.ducked ? this.state.playerSize / 5 : this.state.playerSize;
         var currentPlayerWidth = player.ducked ? this.state.playerSize * 1.5 : this.state.playerSize;
         var xOffset = player.ducked ? - 0.25 * this.state.playerSize : 0;
-        var yOffset = player.ducked ? 0 : -30;
+        var breathingOffset = (player.xVelocity ==- 0 && player.yVelocity === 0) ? 3 * Math.sin((0.01 * Utils.millis())) : 0;
+        var yOffset = player.ducked ? 0 : -30 + breathingOffset;
 
         var rotation = player.xVelocity * 0.002 * !player.ducked;
-        if(!player.ducked){
-            this.drawPlayerLegs(player);
+        if(!player.ducked && player.alive){
+            this.drawPlayerLegs(player, breathingOffset);
         }
         this.drawPlayerCube(player, currentPlayerWidth, currentPlayerHeight, xOffset, yOffset);
         this.drawPlayerName(player, currentPlayerHeight, xOffset, yOffset);

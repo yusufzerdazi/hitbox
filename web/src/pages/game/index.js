@@ -160,10 +160,6 @@ class Game extends React.Component {
         this.gameService.addAi();
     }
 
-    addCleverAi(){
-        this.gameService.addCleverAi();
-    }
-
     removeAi(){
         this.gameService.removeAi();
     }
@@ -339,9 +335,6 @@ class Game extends React.Component {
                     <span data-tip="Add AI" onClick={this.addAi} className={styles.addAiButton}>
                         <i className="fas fa-robot"></i>
                     </span>
-                    <span data-tip="Add Clever AI" onClick={this.addCleverAi} className={styles.addAiButton}>
-                        <i className="fas fa-head-side-brain"></i>
-                    </span>
                     <span data-tip="Delete AI" onClick={this.removeAi} className={styles.addAiButton}>
                         <i style={{ color: 'red' }} className="fas fa-robot"></i>
                     </span>
@@ -377,7 +370,6 @@ class Game extends React.Component {
         this.play = this.play.bind(this);
         this.quit = this.quit.bind(this);
         this.addAi = this.addAi.bind(this);
-        this.addCleverAi = this.addCleverAi.bind(this);
         this.toggleSound = this.toggleSound.bind(this);
         this.removeAi = this.removeAi.bind(this);
         this.handleChange = this.handleChange.bind(this);

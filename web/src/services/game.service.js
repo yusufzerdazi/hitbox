@@ -199,11 +199,7 @@ class GameService {
     toggleAi() {
         this.socket.emit('toggleAi');
     }
-
-    addCleverAi() {
-        this.socket.emit('addCleverAi');
-    }
-
+    
     toggleSound() {
         this.soundEnabled = !this.soundEnabled;
     }
