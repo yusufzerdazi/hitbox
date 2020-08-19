@@ -381,7 +381,9 @@ class GameCanvas extends React.Component {
         var yOffset = -30;
         if(player.xVelocity !== 0){
             var frame = 0.02 * Utils.millis() % 8;
-            frame = (frame * Math.max(1, Math.abs(player.xVelocity) * 0.1)) % 8;
+            if(Math.abs(player.xVelocity) > 10){
+                frame = (frame * 2) % 8;
+            }
             frame = Math.floor(frame);
             var direction = Math.sign(player.xVelocity);
             var img = direction > 0 ? RunningBackward[frame] : RunningForward[frame];
