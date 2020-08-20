@@ -3,6 +3,7 @@ import Utils from '../../utils';
 import styles from './styles.module.css';
 import actualise from '../../assets/images/actualise.png';
 import { RunningForward, RunningBackward, Standing } from './animation';
+import star from '../../assets/images/star.png';
 
 const HEIGHT = 540;
 const WIDTH = 960;
@@ -27,7 +28,8 @@ class GameCanvas extends React.Component {
                 yEased: 0
             },
             scale: 1,
-            cameraType: cameraType.FOLLOWING
+            cameraType: cameraType.FOLLOWING,
+            gameMode: {title:null,subtitle:null}
         };
 
         this.canvasRef = React.createRef();
@@ -116,6 +118,7 @@ class GameCanvas extends React.Component {
         players.filter(p => p.y <= 400).forEach(player => this.drawPlayer(player));
         level.forEach(l => this.drawLevelPlatform(l));
         this.drawStartingTimer();
+        this.drawGameMode();
         this.drawScores(players, lastWinner);
     }
 
@@ -353,7 +356,8 @@ class GameCanvas extends React.Component {
                 name: p.name, 
                 colour: p.colour, 
                 score: p.score,
-                alive: p.alive
+                alive: p.alive,
+                lives: p.lives
             });
         });
         scores.sort((score1, score2) => {
@@ -367,8 +371,12 @@ class GameCanvas extends React.Component {
         })
         scores.forEach((s, i) => {
             this.ctx.fillStyle = s.colour;
+            var aliveText = (!s.alive ? "☠ " : "");
+            var lastWinnerText = (lastWinner?.name == s.name ? " [WINNER]" : "");
+            var livesText = (this.state.gameMode.title == "Free for All") ? " (" + s.lives + ")" : "";
+            var scoreText = 
             this.ctx.fillText(
-                (!s.alive ? "☠ " : "") + s.name + ": " + s.score + (lastWinner?.name == s.name ? " [WINNER]" : ""), 
+                aliveText + s.name + ": " + s.score + livesText + lastWinnerText, 
                 (-this.ctx.canvas.width / 2 + 10) / this.state.scale, 
                 (-this.ctx.canvas.height / 2 + 20 * (1+i)) / this.state.scale
             );
@@ -397,6 +405,17 @@ class GameCanvas extends React.Component {
             frame = Math.floor(frame);
             var img = Standing[frame];
             this.ctx.drawImage(img, player.x - this.state.camera.x, player.y + yOffset + breathingOffset - this.state.camera.y, 50, 30 - breathingOffset);
+        }
+    }
+
+    drawPlayerIsIt(player, width, height, yOffset){
+        var starWidth = 20;
+
+        if(player.it){
+            var img = new Image();
+            img.src = star;
+            this.ctx.drawImage(img, player.x + width / 2 - starWidth / 2 - this.state.camera.x, 
+                player.y + yOffset - height - 35 - this.state.camera.y, starWidth, starWidth)
         }
     }
 
@@ -430,6 +449,7 @@ class GameCanvas extends React.Component {
         this.drawPlayerStamina(player, currentPlayerWidth, currentPlayerHeight, xOffset, yOffset);
         this.drawPlayerOutline(player, currentPlayerWidth, currentPlayerHeight, xOffset, yOffset);
         this.drawPlayerHealth(player, currentPlayerWidth, currentPlayerHeight, xOffset, yOffset, currentPlayerHeight / this.state.playerSize);
+        this.drawPlayerIsIt(player, this.state.playerSize, currentPlayerHeight, yOffset);
         this.ctx.globalAlpha = 1;
     }
 
@@ -452,8 +472,26 @@ class GameCanvas extends React.Component {
         this.ctx.restore()
     }
 
+    drawGameMode(){
+        this.ctx.save()
+        this.ctx.fillStyle = 'black';
+        this.ctx.font = (30/this.state.scale)+"px Consolas";
+        this.ctx.shadowColor = "white";
+        this.ctx.shadowOffsetX = 1;
+        this.ctx.shadowOffsetY = 1;
+        this.ctx.shadowBlur = 1;
+        this.ctx.textAlign = "center";
+        var gameModeText = this.state.gameMode.title ? this.state.gameMode.title + ": " + this.state.gameMode.subtitle : "";
+        this.ctx.fillText(gameModeText, 0, -(this.ctx.canvas.height / 2 - 40) / this.state.scale);
+        this.ctx.restore()
+    }
+
     countdown(timer) {
         this.setState({ countdown: timer });
+    }
+
+    gameMode(gameMode){
+        this.setState({gameMode: gameMode});
     }
 
     fullScreen() {

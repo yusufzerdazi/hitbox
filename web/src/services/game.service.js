@@ -65,6 +65,12 @@ class GameService {
             }
         })
 
+        this.socket.on('gameMode', (gameMode) => {
+            if(this.mounted){
+                this.canvasRef.current.gameMode(gameMode);
+            }
+        })
+
         this.socket.on('win', () => {
             if (this.mounted) window.PlayFabClientSDK.ExecuteCloudScript({
                 FunctionName: "playerWins",
