@@ -2,8 +2,13 @@ var Player = require('./players/player');
 var SimpleAi = require('./players/simpleAi');
 var CleverAi = require('./players/cleverAi');
 var Utils = require('./utils');
+var BattleRoyale = require('./game/battleRoyale');
+var Tag = require('./game/tag');
+var FreeForAll = require('./game/freeForAll');
 var Square = require('./square');
 var Constants = require('./constants');
+
+var GameModes = [FreeForAll, BattleRoyale, Tag];
 
 const state = {
     STARTED: "started",
@@ -20,6 +25,7 @@ class Game {
         this.maxPlayers = 100;
         this.startingTicks = 0;
         this.ticks = 0;
+        this.gameMode = new GameModes[Math.floor(Math.random() * GameModes.length)](this.clients, this.level, this.ticks);
 
         this.humanPlayers = () => { return this.clients.filter(c => c.player && !c.player.ai) }
         this.aiPlayers = () => { return this.clients.filter(c => c.player.ai) }
@@ -53,7 +59,9 @@ class Game {
         );
         this.clients.push(client);
         client.emit("level", this.level);
+        client.emit("gameMode", {title:this.gameMode.title, subtitle:this.gameMode.subtitle});
         this.addClientListeners(client);
+        this.gameMode.updateClients(this.clients);
     }
 
     removeClientListeners(client){
@@ -127,6 +135,7 @@ class Game {
                         100 + Utils.getRandomInt(Constants.WIDTH - 200 - Constants.PLAYERWIDTH), 
                         Constants.PLAYERHEIGHT + Utils.getRandomInt(Constants.HEIGHT / 2 - Constants.PLAYERHEIGHT))
                 });
+                this.gameMode.updateClients(this.clients);
             } else {
                 this.clients.push({
                     player: new CleverAi(Utils.randomColor(),
@@ -134,6 +143,7 @@ class Game {
                         100 + Utils.getRandomInt(Constants.WIDTH - 200 - Constants.PLAYERWIDTH), 
                         Constants.PLAYERHEIGHT + Utils.getRandomInt(Constants.HEIGHT / 2 - Constants.PLAYERHEIGHT))
                 });
+                this.gameMode.updateClients(this.clients);
             }
         });
     
@@ -281,23 +291,24 @@ class Game {
     
     calculateCollision() {
         var wasCollision = false;
+        var collisions = [];
         this.vulnerablePlayers().forEach(client => {
-            this.movingPlayers().filter(c => c != client && c.player.invincibility == 0).forEach(otherClient => {
+            this.movingPlayers().filter(c => c != client && c.player.invincibility == 0).forEach(otherClient=> {
                 if(client.player.isCollision(otherClient.player) && this.isDamaged(client.player, otherClient.player)) {
                     wasCollision = true;
-                    
+
                     var clientSpeed = client.player.speed();
                     var otherClientSpeed = otherClient.player.speed();
                     var speedDifference = Math.abs(clientSpeed - otherClientSpeed);
-    
+                    
                     if(clientSpeed < otherClientSpeed){
-                        client.player.health = Math.max(client.player.health - otherClientSpeed, 0);
+                        if(this.gameMode.damageEnabled) client.player.health = Math.max(client.player.health - otherClientSpeed, 0);
                         if(client.player.health == 0){
                             if(!client.player.ai && !otherClient.player.ai) otherClient.emit("kill");
                         }
                         client.player.invincibility = 100;
                     } else if(speedDifference == 0){
-                        client.player.health = Math.max(client.player.health - 0.5 * otherClientSpeed, 0);
+                        if(this.gameMode.damageEnabled) client.player.health = Math.max(client.player.health - 0.5 * otherClientSpeed, 0);
                     }
     
                     if(Math.abs(client.player.xVelocity) < Math.abs(otherClient.player.xVelocity)){
@@ -317,8 +328,15 @@ class Game {
                         var flip = Math.sign(client.player.yVelocity) * Math.sign(otherClient.player.yVelocity)
                         client.player.newYVelocity = flip * client.player.yVelocity;
                     }
+
+                    if(this.clients.indexOf(client) < this.clients.indexOf(otherClient)){
+                        collisions.push([client, otherClient]);
+                    }
                 }
             })
+        });
+        collisions.forEach(c => {
+            this.gameMode.onCollision(c[0], c[1]);
         });
         this.livingPlayers().forEach(client => {
             if(client.player.newXVelocity){
@@ -340,30 +358,16 @@ class Game {
     }
     
     calculateEnd() {
-        var alivePlayers = this.livingPlayers();
-        var alive = alivePlayers.length;
-        if(alive > 1 || this.clients.length < 2){
-            if(!(this.clients.length == 1 && alive == 0)){
-                return;
+        var endStatus = this.gameMode.endCondition(this.ticks);
+        if(endStatus.end){
+            if(endStatus.winner){
+                endStatus.winner.player.score += 1;
+                this.emitToAllClients('winner', endStatus.winner.player);
             }
+            this.state = state.STARTING;
+            this.startingTicks = this.ticks;
+            this.reset();
         }
-        if(alive == 1){
-            alivePlayers[0].player.score += 1;
-            this.emitToAllClients('winner', alivePlayers[0].player);
-        }
-        if(this.clients.filter(x => x.player.ai).length == 0){
-            this.clients.forEach(client => {
-                if(client == alivePlayers[0]){
-                    client.emit('win');
-                    client.emit('beaten', this.clients.filter(c => c.player).length - 1);
-                } else if(this.clients.filter(c => c.player).length >= 2){
-                    client.emit('loss');
-                }
-            })
-        }
-        this.state = state.STARTING;
-        this.startingTicks = this.ticks;
-        this.reset();
     }
     
     reset() {
@@ -406,12 +410,14 @@ class Game {
             positions.push(newPosition);
             client.player.reset(newPosition.x, newPosition.y);
         });
+        this.gameMode = new GameModes[Math.floor(Math.random() * GameModes.length)](this.clients, this.level, this.ticks);
     }
     
     removeDisconnectedPlayers() {
         var disconnectedHumans = this.humanPlayers().filter(client => client.player.disconnected);
         this.clients = this.clients.filter(client => !client.player.disconnected);
         this.spectators = this.spectators.concat(disconnectedHumans);
+        this.gameMode.updateClients(this.clients);
     }
     
     moveAi() {
@@ -425,6 +431,7 @@ class Game {
         this.livingPlayers().forEach(client => {
             if(client.player.health == 0){
                 client.player.alive = false;
+                this.gameMode.onPlayerDeath(client);
             }
         });
     }
@@ -434,6 +441,7 @@ class Game {
             if(this.ticks - this.startingTicks > 60){
                 this.state = state.STARTED;
             } else {
+                this.emitToAllClients("gameMode", {title: this.gameMode.title, subtitle: this.gameMode.subtitle});
                 this.emitToAllClients("starting", 60 - (this.ticks - this.startingTicks))
             }
         } else {
@@ -453,7 +461,7 @@ class Game {
                     this.emitToAllClients("collision");
                 }
                 if(this.aiEnabled){
-                    this.moveAi()
+                    this.moveAi();
                 }
                 this.calculateDeadPlayers();
                 this.calculateEnd();

@@ -11,6 +11,7 @@ class Player {
         this.left = false;
         this.right = false;
         this.onSurface = [];
+        this.lives = 5;
 
         this.xVelocity = 0;
         this.yVelocity = 0;
@@ -35,6 +36,8 @@ class Player {
         this.invincibility = 0;
         this.boostCooldown = 20;
         this.onSurface = [];
+        this.it = false;
+        this.lives = 5;
     }
 
     isCollision(player) {
