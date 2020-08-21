@@ -76,6 +76,13 @@ class GameCanvas extends React.Component {
         }, false);
     }
 
+    setScale(scale){
+        if(scale){
+            this.setState({scale: scale});
+            this.ctx.setTransform(this.state.scale, 0, 0, this.state.scale, this.ctx.canvas.width / 2, this.ctx.canvas.height / 2);
+        }
+    }
+
     draw(players, level, name, lastWinner) {
         if(this.state.cameraType == cameraType.FOLLOWING){
             var you = players.filter(p => p.name === name && p.alive);
@@ -103,8 +110,9 @@ class GameCanvas extends React.Component {
                 this.drawLevel(l);
             }
         });
-        this.drawLevelPlatform({x: -2000, y:HEIGHT, width:4000 + WIDTH, height: 1000 + HEIGHT / 2}, "#C63838")
-        this.draw3DSection(-2000, HEIGHT, 2000 + WIDTH, HEIGHT, 480, 410, WIDTH / 2, -900, "grey")
+        this.drawLevelPlatform({x: -((this.ctx.canvas.width) / 2)/this.state.scale + this.state.camera.x, y:HEIGHT, width:this.ctx.canvas.width/this.state.scale, height: ((this.ctx.canvas.height) / 2)/this.state.scale + this.state.camera.y}, "#C63838")
+        this.draw3DSection(-((this.ctx.canvas.width) / 2)/this.state.scale + this.state.camera.x, HEIGHT, ((this.ctx.canvas.width) / 2)/this.state.scale + this.state.camera.x, HEIGHT, 480, 410, WIDTH / 2, -900, "grey")
+        
         players
             .filter(p => p.y > 400)
             .forEach(player => this.drawPlayer(player));
@@ -115,11 +123,23 @@ class GameCanvas extends React.Component {
             }
             return Math.abs(player2.x - 480) - Math.abs(player1.x - 480);
         })
+        this.drawDeathWall();
         players.filter(p => p.y <= 400).forEach(player => this.drawPlayer(player));
         level.forEach(l => this.drawLevelPlatform(l));
         this.drawStartingTimer();
         this.drawGameMode();
         this.drawScores(players, lastWinner);
+    }
+
+    drawDeathWall(){
+        if(this.state.deathWallX){
+            this.drawLevelPlatform({x: this.state.deathWallX, y:-(this.ctx.canvas.height / 2)/this.state.scale + this.state.camera.y, 
+                width: -(((this.ctx.canvas.width) / 2)/this.state.scale) + this.state.camera.x - this.state.deathWallX, height: this.ctx.canvas.height / this.state.scale}, "#C63838")
+        }
+    }
+
+    updateDeathWall(deathWallX){
+        this.setState({deathWallX: deathWallX});
     }
 
     drawLevel(level){
