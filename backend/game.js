@@ -53,10 +53,8 @@ class Game {
     addClient(player, client){
         client.player = new Player(
             Utils.randomColor(),
-            player.name,
-            100 + Utils.getRandomInt(Constants.WIDTH - 200 - Constants.PLAYERWIDTH), 
-            Constants.PLAYERHEIGHT + Utils.getRandomInt(Constants.HEIGHT / 2 - Constants.PLAYERHEIGHT)
-        );
+            player.name);
+        client.player.respawn(this.clients, this.gameMode.level);
         this.clients.push(client);
         client.emit("level", this.gameMode.level.platforms);
         client.emit("gameMode", {title:this.gameMode.title, subtitle:this.gameMode.subtitle});
@@ -128,23 +126,19 @@ class Game {
             if(this.clients.filter(c => c.player).length == this.maxPlayers) {
                 return;
             }
+            var ai = null;
             if(Math.random() > 0.5){
-                this.clients.push({
-                    player: new SimpleAi(Utils.randomColor(),
-                        Utils.generateName(),
-                        100 + Utils.getRandomInt(Constants.WIDTH - 200 - Constants.PLAYERWIDTH), 
-                        Constants.PLAYERHEIGHT + Utils.getRandomInt(Constants.HEIGHT / 2 - Constants.PLAYERHEIGHT))
-                });
-                this.gameMode.updateClients(this.clients);
+                ai = new SimpleAi(Utils.randomColor(),
+                    Utils.generateName())
             } else {
-                this.clients.push({
-                    player: new CleverAi(Utils.randomColor(),
-                        Utils.generateName(),
-                        100 + Utils.getRandomInt(Constants.WIDTH - 200 - Constants.PLAYERWIDTH), 
-                        Constants.PLAYERHEIGHT + Utils.getRandomInt(Constants.HEIGHT / 2 - Constants.PLAYERHEIGHT))
-                });
-                this.gameMode.updateClients(this.clients);
+                ai = new CleverAi(Utils.randomColor(),
+                    Utils.generateName());
             }
+            this.clients.push({
+                player: ai
+            });
+            ai.respawn(this.clients, this.gameMode.level);
+            this.gameMode.updateClients(this.clients);
         });
     
         client.on('removeAi', () =>{
