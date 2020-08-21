@@ -1,7 +1,6 @@
 class GameMode {
-    constructor(clients, level, damageEnabled) {
+    constructor(clients, damageEnabled) {
         this.clients = clients;
-        this.level = level;
         this.damageEnabled = damageEnabled;
     }
 
@@ -10,6 +9,14 @@ class GameMode {
     }
 
     onCollision(player1, player2){
+        
+    }
+
+    getLevel(){
+        return this.level;
+    }
+
+    onTick(){
         
     }
 }

@@ -1,8 +1,11 @@
 var GameMode = require('./gameMode');
+var Levels = require('../levels');
+var possibleLevels = [Levels.Complex, Levels.Towers];
 
 class BattleRoyale extends GameMode {
-    constructor(clients, level){
-        super(clients, level, true);
+    constructor(clients){
+        super(clients, true);
+        this.level = possibleLevels[Math.floor(possibleLevels.length * Math.random())];
         this.title = "Battle Royale";
         this.subtitle = "Be the last one standing!";
     }
@@ -42,6 +45,9 @@ class BattleRoyale extends GameMode {
     }
 
     onPlayerDeath(){
+    }
+
+    onTick(){
         
     }
 }

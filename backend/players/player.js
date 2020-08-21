@@ -1,4 +1,5 @@
 var Constants = require('../constants');
+var Utils = require('../utils');
 
 class Player {
     constructor(colour, name, x, y, ai = false){
@@ -19,7 +20,7 @@ class Player {
         this.score = 0;
         this.alive = true;
         this.invincibility = 0;
-        this.boostCooldown = 100;
+        this.boostCooldown = 20;
         this.score = 0;
     }
 
@@ -38,6 +39,43 @@ class Player {
         this.onSurface = [];
         this.it = false;
         this.lives = 5;
+    }
+
+    respawn(clients, level){
+        var newPosition;
+        var anyCollision = true
+        var onLand = false;
+        while(anyCollision || !onLand){
+            anyCollision = false;
+
+            newPosition = {
+                x: -1000 + Utils.getRandomInt(2000 + Constants.WIDTH - Constants.PLAYERWIDTH),
+                y: -1000 + Constants.PLAYERHEIGHT + Utils.getRandomInt(1000 + Constants.PLATFORMHEIGHT - Constants.PLAYERHEIGHT)
+            };
+
+            for(var i = 0; i < clients.length; i++){
+                var xCollision = Math.abs((newPosition.x) - (clients[i].player.x)) <= Constants.PLAYERWIDTH + 20;
+                var yCollision = Math.abs((newPosition.y) - (clients[i].player.y)) <= Constants.PLAYERHEIGHT + 20;
+                if(xCollision && yCollision){
+                    anyCollision = true;
+                    break;
+                }
+            };
+
+            onLand = false;
+            for(var i = 0; i < level.platforms.length; i++){
+                var xCollision = newPosition.x <= level.platforms[i].rightX() + 20 && newPosition.x >= (level.platforms[i].leftX() - Constants.PLAYERWIDTH) - 20;
+                var yCollision = newPosition.y >= level.platforms[i].topY() - 20 && newPosition.y <= (level.platforms[i].bottomY() + Constants.PLAYERHEIGHT) + 20;
+                if((xCollision && yCollision) || level.platforms[i].border && newPosition.y <= level.platforms[i].topY()){
+                    anyCollision = true;
+                    break;
+                }
+                if(xCollision && newPosition.y <= level.platforms[i].topY()){
+                    onLand = true;
+                }
+            };
+        }
+        this.reset(newPosition.x, newPosition.y);
     }
 
     isCollision(player) {

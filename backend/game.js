@@ -5,10 +5,11 @@ var Utils = require('./utils');
 var BattleRoyale = require('./game/battleRoyale');
 var Tag = require('./game/tag');
 var FreeForAll = require('./game/freeForAll');
+var DeathWall = require('./game/deathWall');
 var Square = require('./square');
 var Constants = require('./constants');
 
-var GameModes = [FreeForAll, BattleRoyale, Tag];
+var GameModes = [DeathWall, BattleRoyale, FreeForAll, Tag];
 
 const state = {
     STARTED: "started",
@@ -16,16 +17,15 @@ const state = {
 };
 
 class Game {
-    constructor(level){
+    constructor(){
         this.clients = [];
         this.spectators = [];
-        this.level = level;
         this.state = state.STARTING;
         this.aiEnabled = true;
         this.maxPlayers = 100;
         this.startingTicks = 0;
         this.ticks = 0;
-        this.gameMode = new GameModes[Math.floor(Math.random() * GameModes.length)](this.clients, this.level, this.ticks);
+        this.gameMode = new GameModes[Math.floor(Math.random() * GameModes.length)](this.clients, this.ticks);
 
         this.humanPlayers = () => { return this.clients.filter(c => c.player && !c.player.ai) }
         this.aiPlayers = () => { return this.clients.filter(c => c.player.ai) }
@@ -37,7 +37,7 @@ class Game {
 
     addSpectator(client){
         this.spectators.push(client);
-        client.emit("level", this.level);
+        client.emit("level", this.gameMode.level.platforms);
         this.addClientListeners(client);
     }
 
@@ -58,7 +58,7 @@ class Game {
             Constants.PLAYERHEIGHT + Utils.getRandomInt(Constants.HEIGHT / 2 - Constants.PLAYERHEIGHT)
         );
         this.clients.push(client);
-        client.emit("level", this.level);
+        client.emit("level", this.gameMode.level.platforms);
         client.emit("gameMode", {title:this.gameMode.title, subtitle:this.gameMode.subtitle});
         this.addClientListeners(client);
         this.gameMode.updateClients(this.clients);
@@ -205,8 +205,8 @@ class Game {
             } else {
                 client.player.xVelocity = client.player.xVelocity * Constants.FRICTION;
             }
-    
-            client.player.boostCooldown = Math.max(client.player.boostCooldown - 1, 0);
+            var inAirBoostCooldown = (!client.player.onSurface.includes(true) ? this.gameMode.level.inAirBoostCooldown || 1 : 1);
+            client.player.boostCooldown = Math.max(client.player.boostCooldown - inAirBoostCooldown, 0);
             client.player.boostRight = false;
             client.player.boostLeft = false;
             client.player.boostDown = false;
@@ -238,37 +238,37 @@ class Game {
         this.movingPlayers().forEach(client => {
             var previouslyOnSurface = client.player.onSurface.includes(true);
             client.player.onSurface = [];
-            this.level.forEach(level => {
-                if(client.player.x >= level.rightX() &&
-                        client.player.x + client.player.xVelocity < level.rightX() && 
-                        client.player.y + client.player.yVelocity > level.topY() && 
-                        client.player.y + client.player.yVelocity < (level.bottomY() + Constants.PLAYERHEIGHT)) {
-                    client.player.x = level.rightX();
+            this.gameMode.level.platforms.forEach(platform => {
+                if(client.player.x >= platform.rightX() &&
+                        client.player.x + client.player.xVelocity < platform.rightX() && 
+                        client.player.y + client.player.yVelocity > platform.topY() && 
+                        client.player.y + client.player.yVelocity < (platform.bottomY() + Constants.PLAYERHEIGHT)) {
+                    client.player.x = platform.rightX();
                     client.player.xVelocity = -client.player.xVelocity * Constants.WALLDAMPING;
                     this.emitToAllClients('hitWall');
                 }
 
-                if(client.player.x <= (level.leftX() - Constants.PLAYERWIDTH) &&
-                        client.player.x + client.player.xVelocity > (level.leftX() - Constants.PLAYERWIDTH) && 
-                        client.player.y + client.player.yVelocity > level.topY() && 
-                        client.player.y + client.player.yVelocity < (level.bottomY() + Constants.PLAYERHEIGHT)) {
-                    client.player.x = level.leftX() - Constants.PLAYERWIDTH;
+                if(client.player.x <= (platform.leftX() - Constants.PLAYERWIDTH) &&
+                        client.player.x + client.player.xVelocity > (platform.leftX() - Constants.PLAYERWIDTH) && 
+                        client.player.y + client.player.yVelocity > platform.topY() && 
+                        client.player.y + client.player.yVelocity < (platform.bottomY() + Constants.PLAYERHEIGHT)) {
+                    client.player.x = platform.leftX() - Constants.PLAYERWIDTH;
                     client.player.xVelocity = -client.player.xVelocity * Constants.WALLDAMPING;;
                     this.emitToAllClients('hitWall');
                 }
-                if(client.player.y >= (level.bottomY() + Constants.PLAYERHEIGHT) && // Currently above platform
-                        client.player.y + client.player.yVelocity <= (level.bottomY() + Constants.PLAYERHEIGHT) && // Will be below on next time step
-                        client.player.x + client.player.xVelocity <= level.rightX() &&
-                        client.player.x + client.player.xVelocity >= (level.leftX() - Constants.PLAYERWIDTH)) {
-                    client.player.y = (level.bottomY() + Constants.PLAYERHEIGHT);
+                if(client.player.y >= (platform.bottomY() + Constants.PLAYERHEIGHT) && // Currently above platform
+                        client.player.y + client.player.yVelocity <= (platform.bottomY() + Constants.PLAYERHEIGHT) && // Will be below on next time step
+                        client.player.x + client.player.xVelocity <= platform.rightX() &&
+                        client.player.x + client.player.xVelocity >= (platform.leftX() - Constants.PLAYERWIDTH)) {
+                    client.player.y = (platform.bottomY() + Constants.PLAYERHEIGHT);
                     client.player.yVelocity = 0;
                     this.emitToAllClients('hitWall');
                 }
-                if(client.player.y <= level.topY() && // Currently above platform
-                        client.player.y + client.player.yVelocity >= level.topY() && // Will be below on next time step
-                        client.player.x + client.player.xVelocity <= level.rightX() &&
-                        client.player.x + client.player.xVelocity >= (level.leftX() - Constants.PLAYERWIDTH)) {
-                    client.player.y = level.topY();
+                if(client.player.y <= platform.topY() && // Currently above platform
+                        client.player.y + client.player.yVelocity >= platform.topY() && // Will be below on next time step
+                        client.player.x + client.player.xVelocity <= platform.rightX() &&
+                        client.player.x + client.player.xVelocity >= (platform.leftX() - Constants.PLAYERWIDTH)) {
+                    client.player.y = platform.topY();
                     client.player.yVelocity = 0;
                     client.player.onSurface.push(true);
                     if(!previouslyOnSurface){
@@ -302,13 +302,13 @@ class Game {
                     var speedDifference = Math.abs(clientSpeed - otherClientSpeed);
                     
                     if(clientSpeed < otherClientSpeed){
-                        if(this.gameMode.damageEnabled) client.player.health = Math.max(client.player.health - otherClientSpeed, 0);
+                        if(this.gameMode.damageEnabled) client.player.health = Math.max(client.player.health - (this.gameMode.playerDamage ? this.gameMode.playerDamage : otherClientSpeed), 0);
                         if(client.player.health == 0){
                             if(!client.player.ai && !otherClient.player.ai) otherClient.emit("kill");
                         }
                         client.player.invincibility = 100;
                     } else if(speedDifference == 0){
-                        if(this.gameMode.damageEnabled) client.player.health = Math.max(client.player.health - 0.5 * otherClientSpeed, 0);
+                        if(this.gameMode.damageEnabled) client.player.health = Math.max(client.player.health - (this.gameMode.playerDamage ? 0 : 0.5 * otherClientSpeed), 0);
                     }
     
                     if(Math.abs(client.player.xVelocity) < Math.abs(otherClient.player.xVelocity)){
@@ -372,45 +372,11 @@ class Game {
     
     reset() {
         var positions = [];
+        this.gameMode = new GameModes[Math.floor(Math.random() * GameModes.length)](this.clients, this.ticks);
         this.clients.forEach((client, i)=> {
-            var newPosition;
-            var anyCollision = true
-            var onLand = false;
-
-            while(anyCollision || !onLand){
-                anyCollision = false;
-
-                newPosition = {
-                    x: -1000 + Utils.getRandomInt(2000 + Constants.WIDTH - Constants.PLAYERWIDTH),
-                    y: -1000 + Constants.PLAYERHEIGHT + Utils.getRandomInt(1000 + Constants.PLATFORMHEIGHT - Constants.PLAYERHEIGHT)
-                };
-
-                for(var i = 0; i < positions.length; i++){
-                    var xCollision = Math.abs((newPosition.x) - (positions[i].x)) <= Constants.PLAYERWIDTH + 20;
-                    var yCollision = Math.abs((newPosition.y) - (positions[i].y)) <= Constants.PLAYERHEIGHT + 20;
-                    if(xCollision && yCollision){
-                        anyCollision = true;
-                        break;
-                    }
-                };
-
-                onLand = false;
-                for(var i = 0; i < this.level.length; i++){
-                    var xCollision = newPosition.x <= this.level[i].rightX() + 20 && newPosition.x >= (this.level[i].leftX() - Constants.PLAYERWIDTH) - 20;
-                    var yCollision = newPosition.y >= this.level[i].topY() - 20 && newPosition.y <= (this.level[i].bottomY() + Constants.PLAYERHEIGHT) + 20;
-                    if((xCollision && yCollision) || this.level[i].border && newPosition.y <= this.level[i].topY()){
-                        anyCollision = true;
-                        break;
-                    }
-                    if(xCollision && newPosition.y <= this.level[i].topY()){
-                        onLand = true;
-                    }
-                };
-            }
-            positions.push(newPosition);
-            client.player.reset(newPosition.x, newPosition.y);
+            client.player.respawn(this.clients, this.gameMode.level);
+            positions.push({x: client.player.x, y: client.player.y});
         });
-        this.gameMode = new GameModes[Math.floor(Math.random() * GameModes.length)](this.clients, this.level, this.ticks);
     }
     
     removeDisconnectedPlayers() {
@@ -442,7 +408,9 @@ class Game {
                 this.state = state.STARTED;
             } else {
                 this.emitToAllClients("gameMode", {title: this.gameMode.title, subtitle: this.gameMode.subtitle});
-                this.emitToAllClients("starting", 60 - (this.ticks - this.startingTicks))
+                this.emitToAllClients("starting", 60 - (this.ticks - this.startingTicks));
+                this.emitToAllClients("level", this.gameMode.level.platforms);
+                this.emitToAllClients("scale", this.gameMode.level.scale);
             }
         } else {
             this.state = state.STARTING;
@@ -468,6 +436,11 @@ class Game {
             } else {
                 this.calculateStartGame();
             }
+            var redrawLevel = this.gameMode.onTick();
+            if(redrawLevel){
+                this.emitToAllClients("level", this.gameMode.level.platforms);
+            }
+            this.emitToAllClients("deathWall", this.gameMode.deathWallX);
             this.emitToAllClients("allPlayers", this.clients.map(socket => socket.player));
             this.ticks++;
         }, 1000 / 60);
