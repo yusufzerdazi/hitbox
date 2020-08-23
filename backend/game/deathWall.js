@@ -59,7 +59,12 @@ class DeathWall extends GameMode {
         var farthestRigthPlatformX = Math.max.apply(Math, this.level.platforms.map((platform) => platform.rightX()));
         var farthestRightPlayer = Math.max.apply(Math, this.clients.map(c => c.player.x));
         this.deathWallSpeed = Math.min(Constants.TERMINAL, this.deathWallSpeed * 1.001);
-        this.deathWallX += this.deathWallSpeed;
+        if(this.clients.length > 0){
+            this.deathWallX += this.deathWallSpeed;
+        } else {
+            this.deathWallX = - 1500;
+            this.deathWallSpeed = 5;
+        }
         this.level.maxDistance = Math.max(farthestRightPlayer, this.level.maxDistance);
         this.maxDistance = Math.max(farthestRightPlayer, this.maxDistance);
         this.clients.forEach(c => {
