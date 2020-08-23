@@ -287,6 +287,14 @@ class Game extends React.Component {
                 }
                 break;
             }
+            case ('RightStickY'): {
+                if(Math.abs(value) > 0.2){
+                    this.canvasRef.current.analogScale(value);
+                } else {
+                    this.canvasRef.current.analogScale(0);
+                }
+                break;
+            }
             default:
                 break;
         }

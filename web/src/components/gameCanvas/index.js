@@ -34,7 +34,7 @@ class GameCanvas extends React.Component {
             scale: 1,
             cameraType: cameraType.FOLLOWING,
             gameMode: {title:null,subtitle:null},
-            clouds: []
+            zoomRate: 1
         };
 
         this.canvasRef = React.createRef();
@@ -44,7 +44,6 @@ class GameCanvas extends React.Component {
         this.ctx = this.canvasRef.current.getContext("2d");
         this.ctx.setTransform(this.state.scale, 0, 0, this.state.scale, this.ctx.canvas.width / 2, this.ctx.canvas.height / 2);
         this.fullScreen();
-        //this.initialiseClouds();
 
         var $this = this;
 
@@ -93,9 +92,13 @@ class GameCanvas extends React.Component {
         }
     }
 
+    analogScale(axisChange){
+        this.setState({zoomRate: ((50 + axisChange)/50)});
+    }
+
     setScale(scale){
         if(scale){
-            this.setState({scale: scale});
+            this.setState({scale: Math.min(Math.max(0.2, scale), 1.5)});
             this.ctx.setTransform(this.state.scale, 0, 0, this.state.scale, this.ctx.canvas.width / 2, this.ctx.canvas.height / 2);
         }
     }
@@ -121,20 +124,14 @@ class GameCanvas extends React.Component {
                 );
             }
         }
+        this.setScale(this.state.scale * this.state.zoomRate);
         this.drawBackground();
         level.forEach(l => {
             if(!l.border){
                 this.drawLevel(l);
             }
         });
-        this.drawLevelPlatform({
-            x: -((this.ctx.canvas.width) / 2)/this.state.scale + this.state.camera.x,
-            y:HEIGHT,
-            width:this.ctx.canvas.width/this.state.scale,
-            height: ((this.ctx.canvas.height) / 2)/this.state.scale + this.state.camera.y
-        }, 
-        "#064273");
-        this.draw3DSection(-((this.ctx.canvas.width) / 2)/this.state.scale + this.state.camera.x, HEIGHT, ((this.ctx.canvas.width) / 2)/this.state.scale + this.state.camera.x, HEIGHT, 480, 410, WIDTH / 2, -900, "grey")
+        this.drawWater();
         
         players
             .filter(p => p.y > 400)
@@ -152,6 +149,26 @@ class GameCanvas extends React.Component {
         this.drawStartingTimer();
         this.drawGameMode();
         this.drawScores(players, lastWinner);
+    }
+
+    drawWater(){
+        this.drawLevelPlatform({
+            x: -((this.ctx.canvas.width) / 2)/this.state.scale + this.state.camera.x,
+            y:HEIGHT,
+            width:this.ctx.canvas.width/this.state.scale,
+            height: ((this.ctx.canvas.height) / 2)/this.state.scale + this.state.camera.y
+        }, 
+        "#064273");
+
+        this.drawLevelPlatform({
+            x: -((this.ctx.canvas.width) / 2)/this.state.scale + this.state.camera.x,
+            y:HEIGHT * 2,
+            width:this.ctx.canvas.width/this.state.scale,
+            height: ((this.ctx.canvas.height) / 2)/this.state.scale + this.state.camera.y
+        }, 
+        "#002138");
+
+        this.draw3DSection(-((this.ctx.canvas.width) / 2)/this.state.scale + this.state.camera.x, HEIGHT, ((this.ctx.canvas.width) / 2)/this.state.scale + this.state.camera.x, HEIGHT, 480, 410, WIDTH / 2, -900, "grey")
     }
 
     drawDeathWall(){
@@ -210,81 +227,98 @@ class GameCanvas extends React.Component {
     }
 
     drawBackground() {
-        this.ctx.fillStyle = "#ecf0ff";
+        this.ctx.fillStyle = "#ebf0fe";
         this.ctx.beginPath();
         this.ctx.rect(-this.ctx.canvas.width/this.state.scale, -this.ctx.canvas.height/this.state.scale, 
             2*this.ctx.canvas.width/this.state.scale, 2*this.ctx.canvas.height/this.state.scale);
         this.ctx.fill();
-        
-        //this.drawClouds();
 
-        this.ctx.fillStyle = "lightgreen";
+        this.ctx.fillStyle = "#b9d7fd";
         this.ctx.beginPath();
-        this.ctx.rect(-this.ctx.canvas.width/this.state.scale, -this.state.camera.y / 4, 
-            2*this.ctx.canvas.width/this.state.scale, this.ctx.canvas.height/this.state.scale);
+        this.ctx.rect(-this.ctx.canvas.width/this.state.scale, -1500 - this.state.camera.y / 4, 
+            2*this.ctx.canvas.width/this.state.scale, -this.ctx.canvas.height/this.state.scale);
         this.ctx.fill();
-
         
-        this.ctx.fillStyle = "#3fdf2e";
-        this.ctx.beginPath();
-        this.ctx.rect(-this.ctx.canvas.width/this.state.scale, -this.state.camera.y / 2 + 181, 
-            2 * this.ctx.canvas.width/this.state.scale, this.ctx.canvas.height/this.state.scale);
-        this.ctx.fill();
+        this.drawClouds();
+        this.drawHills();
 
-        this.ctx.fillStyle = "yellow";
+        this.ctx.fillStyle = "#fbff91";
         this.ctx.beginPath();
         this.ctx.rect(-200 - this.state.camera.x / 4, -1000 - this.state.camera.y / 4, 
             400, 400);
         this.ctx.fill();
     }
 
-    initialiseClouds(){
-        var leftVisibleX = this.state.camera.x / 4 - (this.ctx.canvas.width / 2)/this.state.scale;
-        var rightVisibleX = this.state.camera.x / 4 + (this.ctx.canvas.width / 2)/this.state.scale;
-        var topVisibleY = this.state.camera.y / 4 - (this.ctx.canvas.height / 2)/this.state.scale;
-        var bottomVisibleY = this.state.camera.y / 4 + (this.ctx.canvas.height / 2)/this.state.scale;
-        var clouds = []
-        while(clouds.length < 10){
-            clouds.push({
-                x: leftVisibleX - 1000 + Math.random() * (2000 + rightVisibleX - leftVisibleX),
-                y: topVisibleY + Math.random() * (bottomVisibleY - topVisibleY),
-                width: 100 + Math.random() * 100,
-                height: 50 + Math.random() * 50
-            });
-        }
-        this.setState({clouds: clouds});
+    drawHills(){
+        var hillRepeatDistance = 15000;
+        this.ctx.fillStyle = "#4fefb8";
+        this.ctx.beginPath();
+
+        // Background hills
+        this.ctx.rect(-this.ctx.canvas.width/this.state.scale, -this.state.camera.y / 4 + 50, 
+            2*this.ctx.canvas.width/this.state.scale, this.ctx.canvas.height/this.state.scale);
+
+        this.ctx.rect( - ((this.state.camera.x + 2 * hillRepeatDistance) / 4) % hillRepeatDistance + hillRepeatDistance / 2 - WIDTH * 2.5, -this.state.camera.y / 4, 
+            WIDTH * 5, this.ctx.canvas.height/this.state.scale);
+        this.ctx.rect( - ((this.state.camera.x + 2 * hillRepeatDistance) / 4) % hillRepeatDistance + hillRepeatDistance / 2 - WIDTH * 1.5, -this.state.camera.y / 4 - 50, 
+            WIDTH * 3, this.ctx.canvas.height/this.state.scale);
+        this.ctx.rect( - ((this.state.camera.x + 2 * hillRepeatDistance) / 4) % hillRepeatDistance + hillRepeatDistance / 2 - WIDTH / 2, -this.state.camera.y / 4 - 100, 
+            WIDTH, this.ctx.canvas.height/this.state.scale);
+
+        this.ctx.rect( - ((this.state.camera.x) / 4) % hillRepeatDistance + hillRepeatDistance / 2 - WIDTH * 2.5, -this.state.camera.y / 4, 
+            WIDTH * 5, this.ctx.canvas.height/this.state.scale);
+        this.ctx.rect( - ((this.state.camera.x) / 4) % hillRepeatDistance + hillRepeatDistance / 2 - WIDTH * 1.5, -this.state.camera.y / 4 - 50, 
+            WIDTH * 3, this.ctx.canvas.height/this.state.scale);
+        this.ctx.rect( - ((this.state.camera.x) / 4) % hillRepeatDistance + hillRepeatDistance / 2 - WIDTH / 2, -this.state.camera.y / 4 - 100, 
+            WIDTH, this.ctx.canvas.height/this.state.scale);
+
+        this.ctx.fill();
+
+        // Foreground hills
+        var foregroundHillsOffset = 181;
+        this.ctx.fillStyle = "#28c91c";
+        this.ctx.beginPath();
+
+        this.ctx.rect(-this.ctx.canvas.width/this.state.scale, -this.state.camera.y / 2 + foregroundHillsOffset + 100, 
+            2 * this.ctx.canvas.width/this.state.scale, this.ctx.canvas.height/this.state.scale);
+
+        this.ctx.rect( - ((this.state.camera.x + 2 * hillRepeatDistance) / 2) % hillRepeatDistance + hillRepeatDistance / 2 - WIDTH * 2.5, -this.state.camera.y / 2 + foregroundHillsOffset, 
+            WIDTH * 5, this.ctx.canvas.height/this.state.scale);
+        this.ctx.rect( - ((this.state.camera.x + 2 * hillRepeatDistance) / 2) % hillRepeatDistance + hillRepeatDistance / 2 - WIDTH * 1.5, -this.state.camera.y / 2 - 100 + foregroundHillsOffset, 
+            WIDTH * 3, this.ctx.canvas.height/this.state.scale);
+        this.ctx.rect( - ((this.state.camera.x + 2 * hillRepeatDistance) / 2) % hillRepeatDistance + hillRepeatDistance / 2 - WIDTH / 2, -this.state.camera.y / 2 - 200 + foregroundHillsOffset, 
+            WIDTH, this.ctx.canvas.height/this.state.scale);
+
+        this.ctx.rect( - ((this.state.camera.x) / 2) % hillRepeatDistance + hillRepeatDistance / 2 - WIDTH * 2.5, -this.state.camera.y / 2 + foregroundHillsOffset, 
+            WIDTH * 5, this.ctx.canvas.height/this.state.scale);
+        this.ctx.rect( - ((this.state.camera.x) / 2) % hillRepeatDistance + hillRepeatDistance / 2 - WIDTH * 1.5, -this.state.camera.y / 2 - 100 + foregroundHillsOffset, 
+            WIDTH * 3, this.ctx.canvas.height/this.state.scale);
+        this.ctx.rect( - ((this.state.camera.x) / 2) % hillRepeatDistance + hillRepeatDistance / 2 - WIDTH / 2, -this.state.camera.y / 2 - 200 + foregroundHillsOffset, 
+            WIDTH, this.ctx.canvas.height/this.state.scale);
+
+        this.ctx.fill();
+
     }
 
     drawClouds(){
-        var leftVisibleX = this.state.camera.x / 4 - (this.ctx.canvas.width / 2)/this.state.scale;
-        var rightVisibleX = this.state.camera.x / 4 + (this.ctx.canvas.width / 2)/this.state.scale;
-        var topVisibleY = this.state.camera.y / 4 - (this.ctx.canvas.height / 2)/this.state.scale;
-        var bottomVisibleY = this.state.camera.y / 4 + (this.ctx.canvas.height / 2)/this.state.scale;
-
-        var clouds = this.state.clouds;
-        var visibleClouds = clouds.filter(c => 
-            ((c.x < rightVisibleX + 1000 && c.x + c.width > leftVisibleX - 1000) && (c.y + c.height > topVisibleY && c.y < bottomVisibleY))// ||
-            //(c.x + c.width > leftVisibleX && (c.y + c.height > topVisibleY || c.y < bottomVisibleY))
-        );
-
-        if(visibleClouds.length < 10){
-            var newCloud = {
-                x: rightVisibleX + Math.random() * 1000,
-                y: topVisibleY + Math.random() * (bottomVisibleY - topVisibleY),
-                width: 100 + Math.random() * 100,
-                height: 50 + Math.random() * 50
-            }
-            clouds.push(newCloud);
-            this.setState({clouds: clouds});
-        }
-
-        clouds.forEach(c => {
-            this.ctx.fillStyle = "white";
-            this.ctx.beginPath();
-            this.ctx.rect(c.x - this.state.camera.x / 4, -this.state.camera.y / 4 + c.y, 
-                c.width, c.height);
-            this.ctx.fill();
-        });
+        this.ctx.fillStyle = "white";
+        this.ctx.beginPath();
+        var cloudRepeatDistance = 15000;
+        this.ctx.rect( - ((this.state.camera.x + 2 * cloudRepeatDistance) / 4) % cloudRepeatDistance + cloudRepeatDistance / 2 - WIDTH * 2.5, -this.state.camera.y / 4 - 1200, 
+            900, 400);
+        this.ctx.rect( - ((this.state.camera.x + 2 * cloudRepeatDistance) / 4) % cloudRepeatDistance + cloudRepeatDistance / 2 - WIDTH, -this.state.camera.y / 4 - 2200, 
+            900, 400);
+        this.ctx.rect( - ((this.state.camera.x + 2 * cloudRepeatDistance) / 4) % cloudRepeatDistance + cloudRepeatDistance / 2 + WIDTH + 4, -this.state.camera.y / 4 - 1200, 
+            900, 400);
+        
+        this.ctx.rect( - ((this.state.camera.x) / 4) % cloudRepeatDistance + cloudRepeatDistance / 2 - WIDTH * 2.5, -this.state.camera.y / 4 - 1200, 
+            900, 400);
+        this.ctx.rect( - ((this.state.camera.x) / 4) % cloudRepeatDistance + cloudRepeatDistance / 2 - WIDTH, -this.state.camera.y / 4 - 2200, 
+            900, 400);
+        this.ctx.rect( - ((this.state.camera.x) / 4) % cloudRepeatDistance + cloudRepeatDistance / 2 + WIDTH + 4, -this.state.camera.y / 4 - 1200, 
+            900, 400);
+            
+        this.ctx.fill();
     }
 
     draw3DSection(x1, y1, x2, y2, centerX, centerY, xVanishingPoint, yVanishingPoint, colour, useCenterPoint = true, length = 10) {
@@ -345,6 +379,8 @@ class GameCanvas extends React.Component {
 
         this.ctx.beginPath();
         this.ctx.fillStyle = player.colour;
+        this.applyRotation(player, playerX, playerY, width);
+
         this.drawRectangle(playerX, playerY, width, - height);
         this.ctx.fill();
         if(!player.ducked && (player.name === "yusuf" || player.name === "intrinsion")){
@@ -403,8 +439,14 @@ class GameCanvas extends React.Component {
     }
 
     drawPlayerHealth(player, width, height, xOffset, yOffset, heightMultiplier) {
+        this.ctx.save();
         this.ctx.strokeStyle = "black";
         this.ctx.lineCap = "round";
+        
+        var playerX = player.x + xOffset;
+        var playerY = player.y + yOffset;
+        this.applyRotation(player, playerX, playerY, width);
+
         if(player.health < 90){
             this.drawLine(player.x + xOffset, player.y + yOffset - height, 6, 10 * heightMultiplier);
             this.drawLine(player.x + xOffset + 6, player.y + yOffset - height + 10 * heightMultiplier, 8, 2 * heightMultiplier);
@@ -444,11 +486,16 @@ class GameCanvas extends React.Component {
             this.drawLine(player.x + xOffset + width-9, player.y + yOffset-15 * heightMultiplier, -13, 4 * heightMultiplier);
             this.drawLine(player.x + xOffset + width-9, player.y + yOffset-15 * heightMultiplier, -2, -12 * heightMultiplier);
         }
+        this.ctx.restore();
     }
 
     drawPlayerStamina(player, width, height, xOffset, yOffset) {
+        this.ctx.save();
         this.ctx.beginPath();
         this.ctx.fillStyle = 'white';
+        var playerX = player.x + xOffset;
+        var playerY = player.y + yOffset;
+        this.applyRotation(player, playerX, playerY, width);
         var cooldownPercent = 0.8 * (100 - player.boostCooldown) / 100 + 0.2;
         this.drawRectangle(
             player.x + xOffset + cooldownPercent * width / 2,
@@ -457,6 +504,15 @@ class GameCanvas extends React.Component {
             -height + cooldownPercent * height
         );
         this.ctx.fill();
+        this.ctx.restore();
+    }
+
+    applyRotation(player, playerX, playerY, width){
+        if(!player.ducked && player.alive){
+            this.ctx.translate(playerX + width / 2 - this.state.camera.x, playerY - this.state.camera.y);              //translate to center of shape
+            this.ctx.rotate(player.xVelocity * 0.01);  //rotate 25 degrees.
+            this.ctx.translate(-(playerX + width / 2 - this.state.camera.x), -(playerY - this.state.camera.y));            //translate center back to 0,0    
+        }
     }
 
     drawScores(players, lastWinner){
@@ -534,7 +590,8 @@ class GameCanvas extends React.Component {
         this.ctx.save();
         this.ctx.lineWidth = haloWidth;
         this.ctx.beginPath();
-        this.ctx.strokeStyle = "gold";
+        this.ctx.strokeStyle = "yellow";
+        this.applyRotation(player, player.x + xOffset, player.y + yOffset, width);
         this.drawRectangle(
             player.x - haloWidth / 2 + xOffset,
             player.y + haloWidth / 2 + yOffset,
@@ -567,7 +624,6 @@ class GameCanvas extends React.Component {
             this.drawPlayerLegs(player, breathingOffset);
         }
         this.drawPlayerCube(player, currentPlayerWidth, currentPlayerHeight, xOffset, yOffset);
-        this.drawPlayerName(player, currentPlayerHeight, xOffset, yOffset);
 
         // If player is dead, don't draw the rest.
         if (!player.alive) {
@@ -577,6 +633,7 @@ class GameCanvas extends React.Component {
 
         this.drawPlayerStamina(player, currentPlayerWidth, currentPlayerHeight, xOffset, yOffset);
         this.drawPlayerHealth(player, currentPlayerWidth, currentPlayerHeight, xOffset, yOffset, currentPlayerHeight / this.state.playerSize);
+        this.drawPlayerName(player, currentPlayerHeight, xOffset, yOffset);
         this.ctx.globalAlpha = 1;
     }
 
