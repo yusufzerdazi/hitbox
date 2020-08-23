@@ -1,15 +1,17 @@
 var Player = require('./players/player');
 var SimpleAi = require('./players/simpleAi');
 var CleverAi = require('./players/cleverAi');
+var RunningAi = require('./players/runningAi');
 var Utils = require('./utils');
 var BattleRoyale = require('./game/battleRoyale');
 var Tag = require('./game/tag');
 var FreeForAll = require('./game/freeForAll');
 var DeathWall = require('./game/deathWall');
+var CollectTheOrbs = require('./game/collectTheOrbs');
 var Square = require('./square');
 var Constants = require('./constants');
 
-var GameModes = [DeathWall, BattleRoyale, FreeForAll, Tag];
+var GameModes = [CollectTheOrbs, DeathWall, BattleRoyale, Tag];
 
 const state = {
     STARTED: "started",
@@ -28,7 +30,7 @@ class Game {
         this.gameMode = new GameModes[Math.floor(Math.random() * GameModes.length)](this.clients, this.ticks);
 
         this.humanPlayers = () => { return this.clients.filter(c => c.player && !c.player.ai) }
-        this.aiPlayers = () => { return this.clients.filter(c => c.player.ai) }
+        this.aiPlayers = () => { return this.clients.filter(c => c.player.ai && !c.player.orb) }
         this.livingPlayers = () => { return this.clients.filter(c => c.player.alive); }
         this.movingPlayers = () => { return this.livingPlayers().filter(c => !c.player.ducked); }
         this.vulnerablePlayers = () => { return this.livingPlayers().filter(c => c.player.invincibility == 0); }
@@ -42,8 +44,9 @@ class Game {
     }
 
     removeSpectator(client){
-        var matchingSpectator = this.spectators.filter(c => c == client);
-        if(!matchingSpectator){
+        var existingClient = this.clients.indexOf(client);
+        var existingSpectator = this.spectators.indexOf(client);
+        if(existingClient !== -1 || existingSpectator === -1){
             return;
         }
         this.removeClientListeners(client);
@@ -51,6 +54,10 @@ class Game {
     }
 
     addClient(player, client){
+        var existingClient = this.clients.filter(c => c.player.name == player.name);
+        if(existingClient.length !== 0){
+            return;
+        }
         client.player = new Player(
             Utils.randomColor(),
             player.name);
@@ -127,7 +134,10 @@ class Game {
                 return;
             }
             var ai = null;
-            if(Math.random() > 0.5){
+            if(this.gameMode.title == "Death Wall"){
+                ai = new RunningAi(Utils.randomColor(),
+                Utils.generateName())
+            } else if(Math.random() > 0.5){
                 ai = new SimpleAi(Utils.randomColor(),
                     Utils.generateName())
             } else {
@@ -313,10 +323,12 @@ class Game {
                     }
     
                     if(client.player.ducked){
-                        client.player.newYVelocity = - otherClient.player.yVelocity;
+                        client.player.newYVelocity = - Math.min(otherClient.player.yVelocity, Constants.JUMPSPEED);
+                        client.player.boostCooldown = Math.min(100, client.player.boostCooldown + 80);
+                        //client.player.y = client.player.y - Constants.PLAYERHEIGHT
                         otherClient.player.newYVelocity = 0;
                     }else if(Math.abs(client.player.yVelocity) < Math.abs(otherClient.player.yVelocity)){
-                        otherClient.player.newYVelocity = - otherClient.player.yVelocity;
+                        otherClient.player.newYVelocity = - Math.min(otherClient.player.yVelocity, Constants.JUMPSPEED);
                         client.player.newYVelocity = otherClient.player.yVelocity + (Constants.SHUNTSPEED * Math.sign(otherClient.player.yVelocity));
                     } else if (Math.abs(client.player.yVelocity) == Math.abs(otherClient.player.yVelocity)) {
                         var flip = Math.sign(client.player.yVelocity) * Math.sign(otherClient.player.yVelocity)
@@ -367,6 +379,34 @@ class Game {
     reset() {
         var positions = [];
         this.gameMode = new GameModes[Math.floor(Math.random() * GameModes.length)](this.clients, this.ticks);
+
+        var aiPlayers = this.aiPlayers().filter(c => !c.player.orb);
+        var orb = this.aiPlayers().filter(c => c.player.orb);
+        if(this.gameMode.title == "Death Wall"){
+            for(var i = 0; i<aiPlayers.length; i++){
+                var score = aiPlayers[i].player.score;
+                aiPlayers[i].player = new RunningAi(aiPlayers[i].player.colour, aiPlayers[i].player.name)
+                aiPlayers[i].player.score = score;
+            }
+        } else {
+            this.emitToAllClients("deathWall", {
+                deathWallX: null,
+                maxDistance: null
+            });
+            for(var i = 0; i<aiPlayers.length; i++){
+                var score = aiPlayers[i].player.score;
+                if(Math.random() > 0.5){
+                    aiPlayers[i].player = new SimpleAi(aiPlayers[i].player.colour, aiPlayers[i].player.name)
+                } else {
+                    aiPlayers[i].player = new CleverAi(aiPlayers[i].player.colour, aiPlayers[i].player.name)
+                }
+                aiPlayers[i].player.score = score;
+            }
+        }
+        this.clients = this.humanPlayers().concat(aiPlayers);
+        this.clients = this.gameMode.orb ? this.clients.concat(this.gameMode.orb) : this.clients;
+        this.gameMode.updateClients(this.clients);
+
         this.clients.forEach((client, i)=> {
             client.player.respawn(this.clients, this.gameMode.level);
             positions.push({x: client.player.x, y: client.player.y});
@@ -383,7 +423,7 @@ class Game {
     moveAi() {
         this.livingPlayers().filter(p => p.player.ai).forEach(ai => {
             var otherPlayers = this.livingPlayers().filter(p => p != ai).map(p => p.player);
-            ai.player.move(otherPlayers, this.ticks);
+            ai.player.move(otherPlayers, this.ticks, this.gameMode.level);
         })
     }
     
@@ -434,8 +474,32 @@ class Game {
             if(redrawLevel){
                 this.emitToAllClients("level", this.gameMode.level.platforms);
             }
-            this.emitToAllClients("deathWall", this.gameMode.deathWallX);
-            this.emitToAllClients("allPlayers", this.clients.map(socket => socket.player));
+            if(this.gameMode.title == "Death Wall"){
+                this.emitToAllClients("deathWall", {
+                    deathWallX: this.gameMode.deathWallX,
+                    levelMaxDistance: this.gameMode.level.maxDistance,
+                    maxDistance: this.gameMode.maxDistance
+                });
+            }
+            this.emitToAllClients("allPlayers", this.clients.map(socket => {
+                return {
+                    name: socket.player.name,
+                    x: socket.player.x,
+                    y: socket.player.y,
+                    xVelocity: socket.player.xVelocity,
+                    yVelocity: socket.player.yVelocity,
+                    it: socket.player.it,
+                    lives: socket.player.lives,
+                    health: socket.player.health,
+                    boostCooldown: socket.player.boostCooldown,
+                    alive: socket.player.alive,
+                    ducked: socket.player.ducked,
+                    invincibility: socket.player.invincibility,
+                    colour: socket.player.colour,
+                    score: socket.player.score,
+                    orb: socket.player.orb
+                };
+            }));
             this.ticks++;
         }, 1000 / 60);
     }

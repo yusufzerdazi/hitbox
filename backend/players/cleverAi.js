@@ -54,28 +54,26 @@ class CleverAi extends Player {
     }
 
     followFirstPlayer(players, ticks){
-        if(players[0] && players[0].x < this.x){
-            var playerCloseToMeVertically = Math.abs(players[0].y - this.y) < this.yBoostDistanceThreshold;
-            if(playerCloseToMeVertically || (this.y > players[0].y && this.x > 480)){
+        var orb = players.filter(p => p.orb);
+        var followablePlayers = orb.length > 0 ? orb : players;
+        if(followablePlayers[0] && followablePlayers[0].x < this.x){
+            var playerCloseToMeVertically = Math.abs(followablePlayers[0].y - this.y) < this.yBoostDistanceThreshold;
+            if(playerCloseToMeVertically || (this.y > followablePlayers[0].y && this.x > 480)){
                 this.boostLeft = true;
             }
             this.left = true;
             this.right = false;
-        } else if (players[0]) {
-            var playerCloseToMeVertically = Math.abs(players[0].y - this.y) < this.yBoostDistanceThreshold;
-            if(playerCloseToMeVertically || (this.y > players[0].y && this.x <= 480)){
+        } else if (followablePlayers[0]) {
+            var playerCloseToMeVertically = Math.abs(followablePlayers[0].y - this.y) < this.yBoostDistanceThreshold;
+            if(playerCloseToMeVertically || (this.y > followablePlayers[0].y && this.x <= 480)){
                 this.boostRight = true;
             }
             this.left = false;
             this.right = true;
         }
 
-        if(players[0] && players[0].y <= this.y){
-            if(this.y == Constants.PLATFORMHEIGHT){
-                this.space = true
-            } else if(this.alwaysHigher) {
-                this.space = true;
-            }
+        if(followablePlayers[0] && followablePlayers[0].y <= this.y){
+            this.space = true;
         } else {
             this.space = false;
         }

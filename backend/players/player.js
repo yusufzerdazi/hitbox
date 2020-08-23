@@ -12,7 +12,7 @@ class Player {
         this.left = false;
         this.right = false;
         this.onSurface = [];
-        this.lives = 5;
+        this.lives = 0;
 
         this.xVelocity = 0;
         this.yVelocity = 0;
@@ -38,7 +38,7 @@ class Player {
         this.boostCooldown = 20;
         this.onSurface = [];
         this.it = false;
-        this.lives = 5;
+        this.lives = 0;
     }
 
     respawn(clients, level){
@@ -49,8 +49,8 @@ class Player {
             anyCollision = false;
 
             newPosition = {
-                x: -1000 + Utils.getRandomInt(2000 + Constants.WIDTH - Constants.PLAYERWIDTH),
-                y: -1000 + Constants.PLAYERHEIGHT + Utils.getRandomInt(1000 + Constants.PLATFORMHEIGHT - Constants.PLAYERHEIGHT)
+                x: level.spawnArea.leftX() + Utils.getRandomInt(level.spawnArea.width),
+                y: level.spawnArea.topY() + Constants.PLAYERHEIGHT + Utils.getRandomInt(level.spawnArea.height)
             };
 
             for(var i = 0; i < clients.length; i++){
@@ -80,7 +80,7 @@ class Player {
 
     isCollision(player) {
         var xCollision = Math.abs((this.x + this.xVelocity) - (player.x + player.xVelocity)) <= Constants.PLAYERWIDTH;
-        var yCollision = Math.abs((this.y + this.yVelocity) - (player.y + player.yVelocity)) <= Constants.PLAYERHEIGHT - 10;
+        var yCollision = Math.abs((this.y + this.yVelocity) - (player.y + player.yVelocity)) <= Constants.PLAYERHEIGHT;
         var duckedYCollision = (Math.abs((this.y + this.yVelocity) - (player.y + player.yVelocity)) <= Constants.PLAYERHEIGHT * Constants.DUCKEDHEIGHT) ||
             player.y + player.yVelocity > Constants.PLATFORMHEIGHT;
     

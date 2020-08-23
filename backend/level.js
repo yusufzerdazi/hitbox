@@ -1,8 +1,9 @@
 class Level {
-    constructor(platforms, inAirBoostCooldown, scale){
+    constructor(platforms, spawnArea, inAirBoostCooldown, scale){
         this.platforms = platforms;
         this.inAirBoostCooldown = inAirBoostCooldown;
         this.scale = scale;
+        this.spawnArea = spawnArea;
     }
 }
 

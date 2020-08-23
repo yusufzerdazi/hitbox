@@ -12,7 +12,10 @@ class DeathWall extends GameMode {
         this.startingTicks = ticks;
         this.jumpDistance = 2 * ((2 * Constants.JUMPSPEED) / Constants.VERTICALACCELERATION) * Constants.TERMINAL;
         this.deathWallX = - 1500;
+        this.maxDistance = 0;
         this.deathWallSpeed = 5;
+        this.level.maxDistance = this.level.maxDistance || 0;
+        this.winner = null;
     }
 
     endCondition(ticks){
@@ -34,10 +37,10 @@ class DeathWall extends GameMode {
                     }
                 })
             }
-            return {winner:alivePlayers[0], end:true};
+            this.winner = alivePlayers[0];
         }
         if(alive == 0){
-            return {end:true};
+            return {end:true, winner: this.winner};
         }
         return {end:false};
     }
@@ -57,12 +60,14 @@ class DeathWall extends GameMode {
         var farthestRightPlayer = Math.max.apply(Math, this.clients.map(c => c.player.x));
         this.deathWallSpeed = Math.min(Constants.TERMINAL, this.deathWallSpeed * 1.001);
         this.deathWallX += this.deathWallSpeed;
+        this.level.maxDistance = Math.max(farthestRightPlayer, this.level.maxDistance);
+        this.maxDistance = Math.max(farthestRightPlayer, this.maxDistance);
         this.clients.forEach(c => {
             if(c.player.x < this.deathWallX){
                 c.player.health = 0;
             }
         })
-        if(farthestRightPlayer < farthestRigthPlatformX){
+        if(farthestRightPlayer + 4000 < farthestRigthPlatformX){
             return false;
         }
         var newPlatformX = farthestRigthPlatformX + this.jumpDistance * Math.random();

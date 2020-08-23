@@ -13,7 +13,8 @@ module.exports = Object.freeze({
     DAMAGETHRESHOLD: 5,
     FRICTION: 0.96,
     BOOSTSPEED: 35,
-    DUCKEDHEIGHT: 1/8,
+    DUCKEDHEIGHT: 1/5,
     MAXPLAYERS: 10,
-    BOOSTCOST: 60
+    BOOSTCOST: 60,
+    MAXDISTANCE: 0
 });
