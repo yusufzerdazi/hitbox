@@ -419,7 +419,9 @@ class GameCanvas extends React.Component {
 
     drawPlayerName(player, height, xOffset, yOffset) {
         this.ctx.save();
-        this.ctx.fillStyle = 'white';
+        var healthProportion = 255 * (player.health / 100);
+        var nameColour = 'rgb(255,' + healthProportion + ',' + healthProportion + ')';
+        this.ctx.fillStyle = nameColour;
         this.ctx.font = Math.max(13,(13*(1/this.state.scale))) + "px Consolas";
         this.ctx.textAlign = "center";
 
@@ -439,52 +441,56 @@ class GameCanvas extends React.Component {
     }
 
     drawPlayerHealth(player, width, height, xOffset, yOffset, heightMultiplier) {
+        if(player.ducked){
+            return;
+        }
         this.ctx.save();
-        this.ctx.strokeStyle = "black";
+        this.ctx.strokeStyle = "s";
         this.ctx.lineCap = "round";
+        this.ctx.lineWidth = 2;
         
         var playerX = player.x + xOffset;
         var playerY = player.y + yOffset;
         this.applyRotation(player, playerX, playerY, width);
 
         if(player.health < 90){
-            this.drawLine(player.x + xOffset, player.y + yOffset - height, 6, 10 * heightMultiplier);
-            this.drawLine(player.x + xOffset + 6, player.y + yOffset - height + 10 * heightMultiplier, 8, 2 * heightMultiplier);
-            this.drawLine(player.x + xOffset + 6, player.y + yOffset - height + 10 * heightMultiplier, 2, 5 * heightMultiplier);
+            this.drawLine(player.x + xOffset + 1, player.y + yOffset - height + 1, 5, 9);
+            this.drawLine(player.x + xOffset + 6, player.y + yOffset - height + 10, 8, 2);
+            this.drawLine(player.x + xOffset + 6, player.y + yOffset - height + 10, 2, 5);
         }
         if(player.health < 80){
-            this.drawLine(player.x + xOffset, player.y + yOffset, 12, -8 * heightMultiplier);
-            this.drawLine(player.x + xOffset + 12, player.y + yOffset -8 * heightMultiplier, 7, 2 * heightMultiplier);
-            this.drawLine(player.x + xOffset + 12, player.y + yOffset -8 * heightMultiplier, 2, -5 * heightMultiplier);
+            this.drawLine(player.x + xOffset + 1, player.y + yOffset - 1, 11, -7);
+            this.drawLine(player.x + xOffset + 12, player.y + yOffset -8, 7, 2);
+            this.drawLine(player.x + xOffset + 12, player.y + yOffset -8, 2, -5);
         }
         if(player.health < 70){
-            this.drawLine(player.x + xOffset + width, player.y + yOffset - height, -7, 4 * heightMultiplier);
-            this.drawLine(player.x + xOffset + width -7, player.y + yOffset - height + 4 * heightMultiplier, -1, 5 * heightMultiplier);
+            this.drawLine(player.x + xOffset + width - 1, player.y + yOffset - height + 1, -6, 3);
+            this.drawLine(player.x + xOffset + width -7, player.y + yOffset - height + 4, -1, 5);
         }
         if(player.health < 60){
-            this.drawLine(player.x + xOffset + width, player.y + yOffset, -5, -10 * heightMultiplier);
-            this.drawLine(player.x + xOffset + width-5, player.y + yOffset-10 * heightMultiplier, -3, 5 * heightMultiplier);
-            this.drawLine(player.x + xOffset + width-5, player.y + yOffset-10 * heightMultiplier, -4, -5 * heightMultiplier);
+            this.drawLine(player.x + xOffset + width - 1, player.y + yOffset - 1, -4, -9);
+            this.drawLine(player.x + xOffset + width-5, player.y + yOffset-10, -3, 5);
+            this.drawLine(player.x + xOffset + width-5, player.y + yOffset-10, -4, -5);
         }
         if(player.health < 50){
-            this.drawLine(player.x + xOffset + width -7, player.y + yOffset - height + 4 * heightMultiplier, -10, 2 * heightMultiplier);
-            this.drawLine(player.x + xOffset + width -17, player.y + yOffset - height + 6 * heightMultiplier, -5, 3 * heightMultiplier);
+            this.drawLine(player.x + xOffset + width -7, player.y + yOffset - height + 4, -10, 2);
+            this.drawLine(player.x + xOffset + width -17, player.y + yOffset - height + 6, -5, 3);
         }
         if(player.health < 40){
-            this.drawLine(player.x + xOffset + 14, player.y + yOffset -13 * heightMultiplier, 10, -5 * heightMultiplier);
-            this.drawLine(player.x + xOffset + 14, player.y + yOffset -13 * heightMultiplier, -4, -8 * heightMultiplier);
+            this.drawLine(player.x + xOffset + 14, player.y + yOffset -13, 10, -5);
+            this.drawLine(player.x + xOffset + 14, player.y + yOffset -13, -4, -8);
         }
         if(player.health < 30){
-            this.drawLine(player.x + xOffset + width -8, player.y + yOffset - height + 9 * heightMultiplier, -12, 6 * heightMultiplier);
-            this.drawLine(player.x + xOffset + width -8, player.y + yOffset - height + 9 * heightMultiplier, 2, 7 * heightMultiplier);
+            this.drawLine(player.x + xOffset + width -8, player.y + yOffset - height + 9, -12, 6);
+            this.drawLine(player.x + xOffset + width -8, player.y + yOffset - height + 9, 2, 7);
         }
         if(player.health < 20){
-            this.drawLine(player.x + xOffset + 14, player.y + yOffset - height + 12 * heightMultiplier, 1, 9 * heightMultiplier);
-            this.drawLine(player.x + xOffset + 14, player.y + yOffset - height + 12 * heightMultiplier, 8, -2 * heightMultiplier);
+            this.drawLine(player.x + xOffset + 14, player.y + yOffset - height + 12, 1, 9);
+            this.drawLine(player.x + xOffset + 14, player.y + yOffset - height + 12, 8, -2);
         }
         if(player.health < 10){
-            this.drawLine(player.x + xOffset + width-9, player.y + yOffset-15 * heightMultiplier, -13, 4 * heightMultiplier);
-            this.drawLine(player.x + xOffset + width-9, player.y + yOffset-15 * heightMultiplier, -2, -12 * heightMultiplier);
+            this.drawLine(player.x + xOffset + width-9, player.y + yOffset-15, -13, 4);
+            this.drawLine(player.x + xOffset + width-9, player.y + yOffset-15, -2, -12);
         }
         this.ctx.restore();
     }
