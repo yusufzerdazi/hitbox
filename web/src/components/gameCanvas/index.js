@@ -445,7 +445,7 @@ class GameCanvas extends React.Component {
             return;
         }
         this.ctx.save();
-        this.ctx.strokeStyle = "s";
+        this.ctx.strokeStyle = "white";
         this.ctx.lineCap = "round";
         this.ctx.lineWidth = 2;
         
