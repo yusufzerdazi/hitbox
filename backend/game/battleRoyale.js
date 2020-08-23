@@ -4,7 +4,10 @@ var Levels = require('../levels');
 class BattleRoyale extends GameMode {
     constructor(clients){
         super(clients, true);
-        var possibleLevels = clients.length > 10 ? [Levels.Complex, Levels.Towers] : [Levels.Basic, Levels.Complex, Levels.Towers];
+        var possibleLevels = [Levels.Complex, Levels.Towers, Levels.Island, Levels.Maze];
+        if(clients.length < 10){
+            possibleLevels.push(Levels.Basic);
+        }
         this.level = possibleLevels[Math.floor(possibleLevels.length * Math.random())];
         this.title = "Battle Royale";
         this.subtitle = "Be the last one standing!";

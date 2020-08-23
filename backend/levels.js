@@ -27,5 +27,24 @@ module.exports = {
         new Square(-2000, - Constants.HEIGHT, Constants.WIDTH, Constants.HEIGHT * 2),
         new Square(Constants.WIDTH / 2, - Constants.HEIGHT, Constants.WIDTH, Constants.HEIGHT * 2),
         new Square(2000 + Constants.WIDTH, - Constants.HEIGHT, Constants.WIDTH, Constants.HEIGHT * 2)
-    ], new Square(-2000, - 3 * Constants.HEIGHT, 4000 + 2 * Constants.WIDTH, 2 * Constants.HEIGHT), 0.5, 0.5)
+    ], new Square(-2000, - 3 * Constants.HEIGHT, 4000 + 2 * Constants.WIDTH, 2 * Constants.HEIGHT), 0.5, 0.5),
+    Maze: new Level([
+        new Square(-1000, Constants.HEIGHT / 2, Constants.WIDTH + 2000, Constants.HEIGHT / 2), // Ground
+        new Square(-1000, -Constants.HEIGHT / 2, Constants.WIDTH / 2 + 800, 200), // Layer 1
+        new Square(Constants.WIDTH / 2 + 200, -Constants.HEIGHT / 2, Constants.WIDTH / 2 + 800, 200),
+        new Square(Constants.WIDTH / 4 - 400, -3 * Constants.HEIGHT / 2, Constants.WIDTH / 2 + 800, 200), // Layer 2
+        new Square(-1000, -3 * Constants.HEIGHT / 2, Constants.WIDTH / 4 + 200, 200),
+        new Square(3 * Constants.WIDTH / 4 + 800, -3 * Constants.HEIGHT / 2, Constants.WIDTH / 4 + 200, 200),
+        new Square(-1000, - 5 * Constants.HEIGHT / 2, Constants.WIDTH / 2 + 800, 200), // Layer 3
+        new Square(Constants.WIDTH / 2 + 200, -5 *Constants.HEIGHT / 2, Constants.WIDTH / 2 + 800, 200),
+        new Square(Constants.WIDTH / 4 - 400, -7 * Constants.HEIGHT / 2, Constants.WIDTH / 2 + 800, 200), // Layer 4
+        new Square(-1000, -7 * Constants.HEIGHT / 2, Constants.WIDTH / 4 + 200, 200),
+        new Square(3 * Constants.WIDTH / 4 + 800, -7 * Constants.HEIGHT / 2, Constants.WIDTH / 4 + 200, 200),
+        new Square(-2000, -9 * Constants.HEIGHT / 2 - 500, 500, 11 * Constants.HEIGHT / 2 + 500, true),
+        new Square(Constants.WIDTH + 1500, -9 * Constants.HEIGHT / 2 - 500, 500, 11 * Constants.HEIGHT / 2 + 500, true),
+        new Square(-2000, -9 * Constants.HEIGHT / 2 - 500, Constants.WIDTH + 4000, 500, true),
+    ], new Square(-1000, -9 * Constants.HEIGHT / 2, Constants.WIDTH + 2000, 5 * Constants.HEIGHT), null, 0.5),
+    Island: new Level([
+        new Square(-1000, Constants.HEIGHT / 2, Constants.WIDTH + 2000, Constants.HEIGHT / 2), // Ground
+    ], new Square(-1000, -3 * Constants.HEIGHT / 2, Constants.WIDTH + 2000, 2 * Constants.HEIGHT), 0.5, 0.5),
 }

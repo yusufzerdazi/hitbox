@@ -5,7 +5,7 @@ var Orb = require('../players/orb');
 class CollectTheOrbs extends GameMode {
     constructor(clients){
         super(clients, true);
-        var possibleLevels = [Levels.Complex, Levels.Towers];
+        var possibleLevels = [Levels.Complex, Levels.Towers, Levels.Island, Levels.Maze];
         this.level = possibleLevels[Math.floor(possibleLevels.length * Math.random())];
         this.title = "Collect the Orbs";
         this.subtitle = "First to 10!";

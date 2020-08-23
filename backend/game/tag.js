@@ -6,7 +6,10 @@ var Levels = require('../levels');
 class Tag extends GameMode {
     constructor(clients, startingTicks){
         super(clients, false);
-        var possibleLevels = clients.length > 10 ? [Levels.Complex, Levels.Towers] : [Levels.Basic, Levels.Complex, Levels.Towers];
+        var possibleLevels = [Levels.Complex, Levels.Towers, Levels.Island, Levels.Maze];
+        if(clients.length < 10){
+            possibleLevels.push(Levels.Basic);
+        }
         this.level = possibleLevels[Math.floor(possibleLevels.length * Math.random())];
         this.gameLength = 1000;
         this.startingTicks = startingTicks;

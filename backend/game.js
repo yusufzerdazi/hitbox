@@ -12,6 +12,7 @@ var Square = require('./square');
 var Constants = require('./constants');
 
 var GameModes = [CollectTheOrbs, DeathWall, BattleRoyale, Tag];
+//var GameModes = [BattleRoyale];
 
 const state = {
     STARTED: "started",
