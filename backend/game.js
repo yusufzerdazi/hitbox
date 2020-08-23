@@ -7,11 +7,11 @@ var BattleRoyale = require('./game/battleRoyale');
 var Tag = require('./game/tag');
 var FreeForAll = require('./game/freeForAll');
 var DeathWall = require('./game/deathWall');
-var CollectTheOrbs = require('./game/collectTheOrbs');
+var CollectTheBoxes = require('./game/collectTheBoxes');
 var Square = require('./square');
 var Constants = require('./constants');
 
-var GameModes = [CollectTheOrbs, DeathWall, BattleRoyale, Tag];
+var GameModes = [CollectTheBoxes, DeathWall, BattleRoyale, Tag];
 //var GameModes = [BattleRoyale];
 
 const state = {

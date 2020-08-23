@@ -2,12 +2,12 @@ var GameMode = require('./gameMode');
 var Levels = require('../levels');
 var Orb = require('../players/orb');
 
-class CollectTheOrbs extends GameMode {
+class CollectTheBoxes extends GameMode {
     constructor(clients){
         super(clients, true);
         var possibleLevels = [Levels.Complex, Levels.Towers, Levels.Island, Levels.Maze];
         this.level = possibleLevels[Math.floor(possibleLevels.length * Math.random())];
-        this.title = "Collect the Orbs";
+        this.title = "Collect the Boxes";
         this.subtitle = "First to 10!";
         this.finished = false;
         this.clients.forEach(c => {
@@ -58,4 +58,4 @@ class CollectTheOrbs extends GameMode {
     }
 }
 
-module.exports = CollectTheOrbs;
+module.exports = CollectTheBoxes;
