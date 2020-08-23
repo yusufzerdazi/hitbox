@@ -3,7 +3,7 @@ var Constants = require('../constants');
 
 class Orb extends Player {
     constructor(){
-        super("gold", "", 0, 0, true);
+        super("yellow", "", 0, 0, true);
         this.orb = true;
     }
 

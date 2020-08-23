@@ -23,7 +23,7 @@ class CollectTheOrbs extends GameMode {
         var winner = this.clients.filter(c => c.player.lives === 10);
         if(winner.length === 1){
             this.finished = true;
-            return {end: true, winner: winner[0]};
+            return {end: true, winner: this.clients.filter(c => !c.player.orb).length > 1 ? winner[0] : null};
         }
         return {end: false}
     }

@@ -11,12 +11,37 @@ Object.defineProperty(String.prototype, 'hashCode', {
 });
 
 class Utils {
-    static randomColor() {
-        return 'rgb(' + 
-            (Math.floor(Math.random()*150)+90) + ', ' +
-            (Math.floor(Math.random()*150)+90) + ', ' +
-            (Math.floor(Math.random()*150)+90) +
-        ')';
+    static randomColor(){
+        // Threshold can be between 0 and 127: 
+        //    the higher it is, the more colors are considered to be too grey-like.
+        const threshold = 50;
+        // Generate three color parts randomly
+        const parts = Array.from(Array(3), _ => 
+                Math.floor(Math.random()*256)
+            ).sort( (a, b) => a-b );
+        
+        // Check whether they are too close to the same value:
+        if (parts[2] - parts[0] < threshold) { // color is too greyish
+            // Replace the middle one with a random value outside of the "too close" range
+            const exclude = Math.min(255, parts[0] + threshold) 
+                        - Math.max(0, parts[2] - threshold);
+            parts[1] = Math.floor(Math.random()*(256-exclude));
+            if (parts[1] >= parts[2] - threshold) parts[1] += exclude;
+        }
+        // Shuffle and format the color parts and return the resulting string
+        parts.sort( (a, b) => Math.random() < 0.5 );
+        return 'rgb(' + parts[0] + ', ' + parts[1] + ', ' + parts[2] + ')';
+    }
+
+    static randomColor2() {
+        const rangeSize = 100; // adapt as needed
+        const parts = [
+            Math.floor(Math.random()*256),
+            Math.floor(Math.random()*rangeSize),
+            Math.floor(Math.random()*rangeSize) + 256-rangeSize 
+        ].sort( (a, b) => Math.random() < 0.5 );
+
+        return 'rgb(' + parts[0] + ', ' + parts[1] + ', ' + parts[2] + ')';
     }
     
     static getRandomInt(max) {

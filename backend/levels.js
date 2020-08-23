@@ -5,11 +5,11 @@ var Level = require('./level');
 
 module.exports = {
     Basic: new Level([
-        new Square(-1000, -Constants.HEIGHT / 2 - 500, 500, 3 * Constants.HEIGHT / 2 + 500), // Left wall
-        new Square(Constants.WIDTH + 500, -Constants.HEIGHT / 2 - 500, 500, 3 * Constants.HEIGHT / 2 + 500), // Right wall
-        new Square(-200, Constants.HEIGHT / 2, Constants.WIDTH + 400, Constants.HEIGHT / 2), // Standing platform
-        new Square(-1000, -Constants.HEIGHT / 2 - 500, 2000 + Constants.WIDTH, 500, true), // Roof
-    ], new Square(-500, -Constants.HEIGHT / 2, 100 + Constants.WIDTH, 3 * Constants.HEIGHT / 2), null, 1),
+        new Square(-1500, -Constants.HEIGHT / 2 - 1000, 500, 3 * Constants.HEIGHT / 2 + 1000, true), // Left wall
+        new Square(Constants.WIDTH + 1000, -Constants.HEIGHT / 2 - 1000, 500, 3 * Constants.HEIGHT / 2 + 1000, true), // Right wall
+        new Square(-450, Constants.HEIGHT / 2, Constants.WIDTH + 900, Constants.HEIGHT / 2), // Standing platform
+        new Square(-1500, -Constants.HEIGHT / 2 - 1000, 3000 + Constants.WIDTH, 500, true) // Roof
+    ], new Square(-1000, -Constants.HEIGHT / 2 - 500, 2000 + Constants.WIDTH, 500 + Constants.HEIGHT), null, 0.75),
     Complex: new Level([
         new Square(-1000, -Constants.HEIGHT / 2, 500, 500), // Left square
         new Square(Constants.WIDTH + 500, -Constants.HEIGHT / 2, 500, 500), // Right square
