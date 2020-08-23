@@ -71,9 +71,9 @@ class GameService {
             }
         });
 
-        this.socket.on('deathWall', (deathWallX) => {
+        this.socket.on('deathWall', (deathWall) => {
             if(this.mounted){
-                this.canvasRef.current.updateDeathWall(deathWallX);
+                this.canvasRef.current.updateDeathWall(deathWall);
             }
         })
 

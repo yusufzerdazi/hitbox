@@ -7,6 +7,10 @@ import star from '../../assets/images/star.png';
 
 const HEIGHT = 540;
 const WIDTH = 960;
+const ACTUALISE = new Image();
+ACTUALISE.src = actualise;
+const STAR = new Image();
+STAR.src = star;
 
 const cameraType = {
     STATIC: "static",
@@ -29,7 +33,8 @@ class GameCanvas extends React.Component {
             },
             scale: 1,
             cameraType: cameraType.FOLLOWING,
-            gameMode: {title:null,subtitle:null}
+            gameMode: {title:null,subtitle:null},
+            clouds: []
         };
 
         this.canvasRef = React.createRef();
@@ -39,6 +44,7 @@ class GameCanvas extends React.Component {
         this.ctx = this.canvasRef.current.getContext("2d");
         this.ctx.setTransform(this.state.scale, 0, 0, this.state.scale, this.ctx.canvas.width / 2, this.ctx.canvas.height / 2);
         this.fullScreen();
+        //this.initialiseClouds();
 
         var $this = this;
 
@@ -75,6 +81,17 @@ class GameCanvas extends React.Component {
             $this.ctx.setTransform($this.state.scale, 0, 0, $this.state.scale, $this.ctx.canvas.width / 2, $this.ctx.canvas.height / 2);
         }, false);
     }
+    
+    toggleCamera(){
+        switch(this.state.cameraType){
+            case(cameraType.FOLLOWING):
+                this.setState({cameraType: cameraType.DRAG});
+                break;
+            case(cameraType.DRAG):
+                this.setState({cameraType: cameraType.FOLLOWING});
+                break;
+        }
+    }
 
     setScale(scale){
         if(scale){
@@ -85,9 +102,9 @@ class GameCanvas extends React.Component {
 
     draw(players, level, name, lastWinner) {
         if(this.state.cameraType == cameraType.FOLLOWING){
-            var you = players.filter(p => p.name === name && p.alive);
+            var you = players.filter(p => p.name === name && p.alive && !p.orb);
             if(you.length == 0){
-                you = players.filter(p => p.alive);
+                you = players.filter(p => p.alive && !p.orb);
             }
             if(you.length > 0){
                 var xDelta = you[0].xVelocity * 5;
@@ -110,7 +127,13 @@ class GameCanvas extends React.Component {
                 this.drawLevel(l);
             }
         });
-        this.drawLevelPlatform({x: -((this.ctx.canvas.width) / 2)/this.state.scale + this.state.camera.x, y:HEIGHT, width:this.ctx.canvas.width/this.state.scale, height: ((this.ctx.canvas.height) / 2)/this.state.scale + this.state.camera.y}, "#C63838")
+        this.drawLevelPlatform({
+            x: -((this.ctx.canvas.width) / 2)/this.state.scale + this.state.camera.x,
+            y:HEIGHT,
+            width:this.ctx.canvas.width/this.state.scale,
+            height: ((this.ctx.canvas.height) / 2)/this.state.scale + this.state.camera.y
+        }, 
+        "#064273");
         this.draw3DSection(-((this.ctx.canvas.width) / 2)/this.state.scale + this.state.camera.x, HEIGHT, ((this.ctx.canvas.width) / 2)/this.state.scale + this.state.camera.x, HEIGHT, 480, 410, WIDTH / 2, -900, "grey")
         
         players
@@ -123,9 +146,9 @@ class GameCanvas extends React.Component {
             }
             return Math.abs(player2.x - 480) - Math.abs(player1.x - 480);
         })
-        this.drawDeathWall();
         players.filter(p => p.y <= 400).forEach(player => this.drawPlayer(player));
         level.forEach(l => this.drawLevelPlatform(l));
+        this.drawDeathWall();
         this.drawStartingTimer();
         this.drawGameMode();
         this.drawScores(players, lastWinner);
@@ -134,12 +157,28 @@ class GameCanvas extends React.Component {
     drawDeathWall(){
         if(this.state.deathWallX){
             this.drawLevelPlatform({x: this.state.deathWallX, y:-(this.ctx.canvas.height / 2)/this.state.scale + this.state.camera.y, 
-                width: -(((this.ctx.canvas.width) / 2)/this.state.scale) + this.state.camera.x - this.state.deathWallX, height: this.ctx.canvas.height / this.state.scale}, "#C63838")
+                width: -(((this.ctx.canvas.width) / 2)/this.state.scale) + this.state.camera.x - this.state.deathWallX, height: this.ctx.canvas.height / this.state.scale}, "#f0af00")
+        }
+        if(this.state.maxDistance){
+            this.ctx.save()
+            this.ctx.fillStyle = 'black';
+            this.ctx.font = (30/this.state.scale)+"px Consolas";
+            this.ctx.shadowColor = "white";
+            this.ctx.shadowOffsetX = 1;
+            this.ctx.shadowOffsetY = 1;
+            this.ctx.shadowBlur = 1;
+            this.ctx.textAlign = "center";
+            this.ctx.fillText(Math.round(this.state.maxDistance / 50) + "m  (Max: " + Math.round(this.state.levelMaxDistance / 50) + "m)", 0, -(this.ctx.canvas.height / 2 - 80) / this.state.scale);
+            this.ctx.restore()
         }
     }
 
-    updateDeathWall(deathWallX){
-        this.setState({deathWallX: deathWallX});
+    updateDeathWall(deathWall){
+        this.setState({
+            deathWallX: deathWall.deathWallX,
+            maxDistance: deathWall.maxDistance,
+            levelMaxDistance: deathWall.levelMaxDistance
+        });
     }
 
     drawLevel(level){
@@ -150,12 +189,18 @@ class GameCanvas extends React.Component {
         this.draw3DSection(level.x + level.width, level.y, level.x + level.width, level.y + level.height, 480, 410, xVanishingPoint, yVanishingPoint, "grey", false);
     }
 
-    drawLevelPlatform(level, colour = "black"){
+    drawLevelPlatform(level, colour){
         this.ctx.save();
-        this.ctx.fillStyle = colour;
+        this.ctx.fillStyle = colour || "#1a1001";
         this.ctx.beginPath();
         this.drawRectangle(level.x, level.y, level.width, level.height);
         this.ctx.fill();
+        if(!colour){
+            this.ctx.beginPath();
+            this.ctx.fillStyle = colour || "green";
+            this.drawRectangle(level.x - 5, level.y, level.width + 10, 20);
+            this.ctx.fill();
+        }
         this.ctx.restore();
     }
 
@@ -165,14 +210,85 @@ class GameCanvas extends React.Component {
     }
 
     drawBackground() {
-        this.ctx.fillStyle = "white";
+        this.ctx.fillStyle = "#ecf0ff";
         this.ctx.beginPath();
         this.ctx.rect(-this.ctx.canvas.width/this.state.scale, -this.ctx.canvas.height/this.state.scale, 
             2*this.ctx.canvas.width/this.state.scale, 2*this.ctx.canvas.height/this.state.scale);
         this.ctx.fill();
+        
+        //this.drawClouds();
+
+        this.ctx.fillStyle = "lightgreen";
+        this.ctx.beginPath();
+        this.ctx.rect(-this.ctx.canvas.width/this.state.scale, -this.state.camera.y / 4, 
+            2*this.ctx.canvas.width/this.state.scale, this.ctx.canvas.height/this.state.scale);
+        this.ctx.fill();
+
+        
+        this.ctx.fillStyle = "#3fdf2e";
+        this.ctx.beginPath();
+        this.ctx.rect(-this.ctx.canvas.width/this.state.scale, -this.state.camera.y / 2 + 181, 
+            2 * this.ctx.canvas.width/this.state.scale, this.ctx.canvas.height/this.state.scale);
+        this.ctx.fill();
+
+        this.ctx.fillStyle = "yellow";
+        this.ctx.beginPath();
+        this.ctx.rect(-200 - this.state.camera.x / 4, -1000 - this.state.camera.y / 4, 
+            400, 400);
+        this.ctx.fill();
+    }
+
+    initialiseClouds(){
+        var leftVisibleX = this.state.camera.x / 4 - (this.ctx.canvas.width / 2)/this.state.scale;
+        var rightVisibleX = this.state.camera.x / 4 + (this.ctx.canvas.width / 2)/this.state.scale;
+        var topVisibleY = this.state.camera.y / 4 - (this.ctx.canvas.height / 2)/this.state.scale;
+        var bottomVisibleY = this.state.camera.y / 4 + (this.ctx.canvas.height / 2)/this.state.scale;
+        var clouds = []
+        while(clouds.length < 10){
+            clouds.push({
+                x: leftVisibleX - 1000 + Math.random() * (2000 + rightVisibleX - leftVisibleX),
+                y: topVisibleY + Math.random() * (bottomVisibleY - topVisibleY),
+                width: 100 + Math.random() * 100,
+                height: 50 + Math.random() * 50
+            });
+        }
+        this.setState({clouds: clouds});
+    }
+
+    drawClouds(){
+        var leftVisibleX = this.state.camera.x / 4 - (this.ctx.canvas.width / 2)/this.state.scale;
+        var rightVisibleX = this.state.camera.x / 4 + (this.ctx.canvas.width / 2)/this.state.scale;
+        var topVisibleY = this.state.camera.y / 4 - (this.ctx.canvas.height / 2)/this.state.scale;
+        var bottomVisibleY = this.state.camera.y / 4 + (this.ctx.canvas.height / 2)/this.state.scale;
+
+        var clouds = this.state.clouds;
+        var visibleClouds = clouds.filter(c => 
+            ((c.x < rightVisibleX + 1000 && c.x + c.width > leftVisibleX - 1000) && (c.y + c.height > topVisibleY && c.y < bottomVisibleY))// ||
+            //(c.x + c.width > leftVisibleX && (c.y + c.height > topVisibleY || c.y < bottomVisibleY))
+        );
+
+        if(visibleClouds.length < 10){
+            var newCloud = {
+                x: rightVisibleX + Math.random() * 1000,
+                y: topVisibleY + Math.random() * (bottomVisibleY - topVisibleY),
+                width: 100 + Math.random() * 100,
+                height: 50 + Math.random() * 50
+            }
+            clouds.push(newCloud);
+            this.setState({clouds: clouds});
+        }
+
+        clouds.forEach(c => {
+            this.ctx.fillStyle = "white";
+            this.ctx.beginPath();
+            this.ctx.rect(c.x - this.state.camera.x / 4, -this.state.camera.y / 4 + c.y, 
+                c.width, c.height);
+            this.ctx.fill();
+        });
     }
 
     draw3DSection(x1, y1, x2, y2, centerX, centerY, xVanishingPoint, yVanishingPoint, colour, useCenterPoint = true, length = 10) {
+        return;
         x1 = x1 - this.state.camera.x;
         x2 = x2 - this.state.camera.x;
         y1 = y1 - this.state.camera.y;
@@ -209,6 +325,7 @@ class GameCanvas extends React.Component {
     }
 
     drawPlayerCube(player, width, height, xOffset, yOffset) {
+        this.ctx.save();
         var xVanishingPoint = this.state.camera.x;
         var yVanishingPoint = -900 + this.state.camera.y;
 
@@ -230,13 +347,12 @@ class GameCanvas extends React.Component {
         this.ctx.fillStyle = player.colour;
         this.drawRectangle(playerX, playerY, width, - height);
         this.ctx.fill();
-        if(!player.crouched && (player.name === "yusuf" || player.name === "intrinsion")){
-            var img = new Image();
-            img.src = actualise;
+        if(!player.ducked && (player.name === "yusuf" || player.name === "intrinsion")){
             this.ctx.globalAlpha = 0.5;
-            this.ctx.drawImage(img, playerX - this.state.camera.x, playerY - height - this.state.camera.y, width, height);
-            this.ctx.globalAlpha = 1.0;
+            this.ctx.drawImage(ACTUALISE, playerX - this.state.camera.x, playerY - height - this.state.camera.y, width, height);
         }
+
+        this.ctx.restore()
     }
 
     drawRectangle(x, y, width, height){
@@ -261,21 +377,6 @@ class GameCanvas extends React.Component {
         this.ctx.beginPath();
         this.ctx.moveTo(x1 - this.state.camera.x, y1 - this.state.camera.y);
         this.ctx.lineTo(x2 - this.state.camera.x, y2 - this.state.camera.y);
-        this.ctx.stroke();
-        this.ctx.restore();
-    }
-
-    drawPlayerOutline(player, width, height, xOffset, yOffset) {
-        this.ctx.save();
-        this.ctx.lineWidth = 6;
-        this.ctx.beginPath();
-        this.ctx.strokeStyle = player.colour;
-        this.drawRectangle(
-            player.x + 3 + xOffset,
-            player.y - 3 + yOffset,
-            width - 6,
-            - height + 6
-        );
         this.ctx.stroke();
         this.ctx.restore();
     }
@@ -348,7 +449,7 @@ class GameCanvas extends React.Component {
     drawPlayerStamina(player, width, height, xOffset, yOffset) {
         this.ctx.beginPath();
         this.ctx.fillStyle = 'white';
-        var cooldownPercent = (100 - player.boostCooldown) / 100;
+        var cooldownPercent = 0.8 * (100 - player.boostCooldown) / 100 + 0.2;
         this.drawRectangle(
             player.x + xOffset + cooldownPercent * width / 2,
             player.y + yOffset - cooldownPercent * height / 2,
@@ -371,7 +472,7 @@ class GameCanvas extends React.Component {
 
         var scores = [];
 
-        players.forEach(p => {
+        players.filter(p => !p.orb).forEach(p => {
             scores.push({
                 name: p.name, 
                 colour: p.colour, 
@@ -393,7 +494,7 @@ class GameCanvas extends React.Component {
             this.ctx.fillStyle = s.colour;
             var aliveText = (!s.alive ? "☠ " : "");
             var lastWinnerText = (lastWinner?.name == s.name ? " [WINNER]" : "");
-            var livesText = (this.state.gameMode.title == "Free for All") ? " (" + s.lives + ")" : "";
+            var livesText = (this.state.gameMode.title == "Free for All" || this.state.gameMode.title == "Collect the Orbs") ? " (" + s.lives + ")" : "";
             var scoreText = 
             this.ctx.fillText(
                 aliveText + s.name + ": " + s.score + livesText + lastWinnerText, 
@@ -428,15 +529,20 @@ class GameCanvas extends React.Component {
         }
     }
 
-    drawPlayerIsIt(player, width, height, yOffset){
-        var starWidth = 20;
-
-        if(player.it){
-            var img = new Image();
-            img.src = star;
-            this.ctx.drawImage(img, player.x + width / 2 - starWidth / 2 - this.state.camera.x, 
-                player.y + yOffset - height - 35 - this.state.camera.y, starWidth, starWidth)
-        }
+    drawPlayerIsIt(player, width, height, xOffset, yOffset){
+        var haloWidth = 15;
+        this.ctx.save();
+        this.ctx.lineWidth = haloWidth;
+        this.ctx.beginPath();
+        this.ctx.strokeStyle = "gold";
+        this.drawRectangle(
+            player.x - haloWidth / 2 + xOffset,
+            player.y + haloWidth / 2 + yOffset,
+            width + haloWidth,
+            - height - haloWidth
+        );
+        this.ctx.stroke();
+        this.ctx.restore();
     }
 
     drawPlayer(player) {
@@ -454,6 +560,9 @@ class GameCanvas extends React.Component {
         var yOffset = player.ducked ? 0 : -30 + breathingOffset;
 
         var rotation = player.xVelocity * 0.002 * !player.ducked;
+        if(player.it){
+            this.drawPlayerIsIt(player, currentPlayerWidth, currentPlayerHeight, xOffset, yOffset);
+        }
         if(!player.ducked && player.alive){
             this.drawPlayerLegs(player, breathingOffset);
         }
@@ -467,9 +576,7 @@ class GameCanvas extends React.Component {
         }
 
         this.drawPlayerStamina(player, currentPlayerWidth, currentPlayerHeight, xOffset, yOffset);
-        this.drawPlayerOutline(player, currentPlayerWidth, currentPlayerHeight, xOffset, yOffset);
         this.drawPlayerHealth(player, currentPlayerWidth, currentPlayerHeight, xOffset, yOffset, currentPlayerHeight / this.state.playerSize);
-        this.drawPlayerIsIt(player, this.state.playerSize, currentPlayerHeight, yOffset);
         this.ctx.globalAlpha = 1;
     }
 

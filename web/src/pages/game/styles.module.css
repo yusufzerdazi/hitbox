@@ -22,7 +22,7 @@
 .addAiButton {
     font-size: large;
     font-weight: bold;
-    background-color: lightgrey;
+    background-color: white;
     cursor: pointer;
     padding: 5px;
     margin: 5px;
@@ -55,14 +55,14 @@
 .name {
     font-size: large;
     font-weight: bold;
-    background-color: lightgrey;
+    background-color: white;
     padding: 5px;
     margin: 5px;
 }
 
 .playFabName{
     font-size: large;
-    background-color: lightgrey;
+    background-color: white;
     padding: 5px;
     margin: 5px;
 }
@@ -74,5 +74,5 @@
 .nameInput {
     outline: none;
     border: none;
-    background-color: lightgrey;
+    background-color: white;
 }

@@ -208,6 +208,10 @@ class Game extends React.Component {
         this.setState({instructionsOpen: open == undefined ? !this.state.instructionsOpen : open});
     }
 
+    toggleCamera(){
+        this.canvasRef.current.toggleCamera();
+    }
+
     buttonUp(buttonName) {
         switch (buttonName) {
             case 'A':
@@ -318,6 +322,10 @@ class Game extends React.Component {
                     <span data-tip="Quit game" onClick={this.quit} className={styles.addAiButton}>
                         <i style={{ color: 'red' }} className="fas fa-ban"></i>
                     </span>
+                    <span data-tip="Toggle camera" 
+                        onClick={this.toggleCamera} className={styles.addAiButton}>
+                        <i className="fas fa-video"></i>
+                    </span>
                     <span style={{ display: this.state.soundEnabled ? 'inline-block' : 'none' }} data-tip="Mute audio" 
                         onClick={this.toggleSound} className={styles.addAiButton}>
                         <i className="fas fa-volume-mute"></i>
@@ -389,6 +397,7 @@ class Game extends React.Component {
         this.crouch = this.crouch.bind(this);
         this.openLeaderboard = this.openLeaderboard.bind(this);
         this.openInstructions = this.openInstructions.bind(this);
+        this.toggleCamera = this.toggleCamera.bind(this);
     }
 }
 
