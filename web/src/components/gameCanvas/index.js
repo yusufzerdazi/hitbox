@@ -239,14 +239,14 @@ class GameCanvas extends React.Component {
             2*this.ctx.canvas.width/this.state.scale, -this.ctx.canvas.height/this.state.scale);
         this.ctx.fill();
         
-        this.drawClouds();
-        this.drawHills();
-
         this.ctx.fillStyle = "#fbff91";
         this.ctx.beginPath();
         this.ctx.rect(-200 - this.state.camera.x / 4, -1000 - this.state.camera.y / 4, 
             400, 400);
         this.ctx.fill();
+
+        this.drawHills();
+        this.drawClouds();
     }
 
     drawHills(){
@@ -282,11 +282,11 @@ class GameCanvas extends React.Component {
         this.ctx.rect(-this.ctx.canvas.width/this.state.scale, -this.state.camera.y / 2 + foregroundHillsOffset + 100, 
             2 * this.ctx.canvas.width/this.state.scale, this.ctx.canvas.height/this.state.scale);
 
-        this.ctx.rect( - ((this.state.camera.x + 2 * hillRepeatDistance) / 2) % hillRepeatDistance + hillRepeatDistance / 2 - WIDTH * 2.5, -this.state.camera.y / 2 + foregroundHillsOffset, 
+        this.ctx.rect( - ((this.state.camera.x + hillRepeatDistance) / 2) % hillRepeatDistance + hillRepeatDistance / 2 - WIDTH * 2.5, -this.state.camera.y / 2 + foregroundHillsOffset, 
             WIDTH * 5, this.ctx.canvas.height/this.state.scale);
-        this.ctx.rect( - ((this.state.camera.x + 2 * hillRepeatDistance) / 2) % hillRepeatDistance + hillRepeatDistance / 2 - WIDTH * 1.5, -this.state.camera.y / 2 - 100 + foregroundHillsOffset, 
+        this.ctx.rect( - ((this.state.camera.x + hillRepeatDistance) / 2) % hillRepeatDistance + hillRepeatDistance / 2 - WIDTH * 1.5, -this.state.camera.y / 2 - 100 + foregroundHillsOffset, 
             WIDTH * 3, this.ctx.canvas.height/this.state.scale);
-        this.ctx.rect( - ((this.state.camera.x + 2 * hillRepeatDistance) / 2) % hillRepeatDistance + hillRepeatDistance / 2 - WIDTH / 2, -this.state.camera.y / 2 - 200 + foregroundHillsOffset, 
+        this.ctx.rect( - ((this.state.camera.x + hillRepeatDistance) / 2) % hillRepeatDistance + hillRepeatDistance / 2 - WIDTH / 2, -this.state.camera.y / 2 - 200 + foregroundHillsOffset, 
             WIDTH, this.ctx.canvas.height/this.state.scale);
 
         this.ctx.rect( - ((this.state.camera.x) / 2) % hillRepeatDistance + hillRepeatDistance / 2 - WIDTH * 2.5, -this.state.camera.y / 2 + foregroundHillsOffset, 
@@ -304,18 +304,18 @@ class GameCanvas extends React.Component {
         this.ctx.fillStyle = "white";
         this.ctx.beginPath();
         var cloudRepeatDistance = 15000;
-        this.ctx.rect( - ((this.state.camera.x + 2 * cloudRepeatDistance) / 4) % cloudRepeatDistance + cloudRepeatDistance / 2 - WIDTH * 2.5, -this.state.camera.y / 4 - 1200, 
+        this.ctx.rect( - ((this.state.camera.x + cloudRepeatDistance) / 2) % cloudRepeatDistance + cloudRepeatDistance / 2 - WIDTH * 2.5, -this.state.camera.y / 2 - 2200, 
             900, 400);
-        this.ctx.rect( - ((this.state.camera.x + 2 * cloudRepeatDistance) / 4) % cloudRepeatDistance + cloudRepeatDistance / 2 - WIDTH, -this.state.camera.y / 4 - 2200, 
+        this.ctx.rect( - ((this.state.camera.x + cloudRepeatDistance) / 2) % cloudRepeatDistance + cloudRepeatDistance / 2 - WIDTH, -this.state.camera.y / 2 - 1200, 
             900, 400);
-        this.ctx.rect( - ((this.state.camera.x + 2 * cloudRepeatDistance) / 4) % cloudRepeatDistance + cloudRepeatDistance / 2 + WIDTH + 4, -this.state.camera.y / 4 - 1200, 
+        this.ctx.rect( - ((this.state.camera.x + cloudRepeatDistance) / 2) % cloudRepeatDistance + cloudRepeatDistance / 2 + WIDTH + 4, -this.state.camera.y / 2 - 2200, 
             900, 400);
         
-        this.ctx.rect( - ((this.state.camera.x) / 4) % cloudRepeatDistance + cloudRepeatDistance / 2 - WIDTH * 2.5, -this.state.camera.y / 4 - 1200, 
+        this.ctx.rect( - ((this.state.camera.x) / 2) % cloudRepeatDistance + cloudRepeatDistance / 2 - WIDTH * 2.5, -this.state.camera.y / 2 - 1200, 
             900, 400);
-        this.ctx.rect( - ((this.state.camera.x) / 4) % cloudRepeatDistance + cloudRepeatDistance / 2 - WIDTH, -this.state.camera.y / 4 - 2200, 
+        this.ctx.rect( - ((this.state.camera.x) / 2) % cloudRepeatDistance + cloudRepeatDistance / 2 - WIDTH, -this.state.camera.y / 2 - 2200, 
             900, 400);
-        this.ctx.rect( - ((this.state.camera.x) / 4) % cloudRepeatDistance + cloudRepeatDistance / 2 + WIDTH + 4, -this.state.camera.y / 4 - 1200, 
+        this.ctx.rect( - ((this.state.camera.x) / 2) % cloudRepeatDistance + cloudRepeatDistance / 2 + WIDTH + 4, -this.state.camera.y / 2 - 1200, 
             900, 400);
             
         this.ctx.fill();
