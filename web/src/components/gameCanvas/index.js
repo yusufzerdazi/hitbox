@@ -556,7 +556,7 @@ class GameCanvas extends React.Component {
             this.ctx.fillStyle = s.colour;
             var aliveText = (!s.alive ? "☠ " : "");
             var lastWinnerText = (lastWinner?.name == s.name ? " [WINNER]" : "");
-            var livesText = (this.state.gameMode.title == "Free for All" || this.state.gameMode.title == "Collect the Orbs") ? " (" + s.lives + ")" : "";
+            var livesText = (this.state.gameMode.title == "Free for All" || this.state.gameMode.title == "Collect the Boxes") ? " (" + s.lives + ")" : "";
             var scoreText = 
             this.ctx.fillText(
                 aliveText + s.name + ": " + s.score + livesText + lastWinnerText, 
