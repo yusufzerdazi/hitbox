@@ -47,4 +47,10 @@ module.exports = {
     Island: new Level([
         new Square(-1000, Constants.HEIGHT / 2, Constants.WIDTH + 2000, Constants.HEIGHT / 2), // Ground
     ], new Square(-1000, -3 * Constants.HEIGHT / 2, Constants.WIDTH + 2000, 2 * Constants.HEIGHT), 0.5, 0.5),
+    Space: new Level([
+        new Square(-1500, 2 * Constants.HEIGHT, Constants.WIDTH + 3000, Constants.HEIGHT / 2), // Ground
+        new Square(-2000, -9 * Constants.HEIGHT / 2 - 500, 500, 11 * Constants.HEIGHT / 2 + 500, true),
+        new Square(Constants.WIDTH + 1500, -9 * Constants.HEIGHT / 2 - 500, 500, 11 * Constants.HEIGHT / 2 + 500, true),
+        new Square(-2000, -9 * Constants.HEIGHT / 2 - 500, Constants.WIDTH + 4000, 500, true),
+    ], new Square(-1500, -3 * Constants.HEIGHT / 2, Constants.WIDTH + 3000, 2 * Constants.HEIGHT), 5, 0.5, 0.6),
 }

@@ -6,7 +6,7 @@ var Levels = require('../levels');
 class Tag extends GameMode {
     constructor(clients, startingTicks){
         super(clients, false);
-        var possibleLevels = [Levels.Complex, Levels.Towers, Levels.Island, Levels.Maze];
+        var possibleLevels = [Levels.Space, Levels.Complex, Levels.Towers, Levels.Island, Levels.Maze];
         if(clients.length < 10){
             possibleLevels.push(Levels.Basic);
         }

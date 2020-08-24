@@ -4,7 +4,7 @@ var Levels = require('../levels');
 class BattleRoyale extends GameMode {
     constructor(clients){
         super(clients, true);
-        var possibleLevels = [Levels.Complex, Levels.Towers, Levels.Island, Levels.Maze];
+        var possibleLevels = [Levels.Space, Levels.Complex, Levels.Towers, Levels.Island, Levels.Maze];
         if(clients.length < 10){
             possibleLevels.push(Levels.Basic);
         }

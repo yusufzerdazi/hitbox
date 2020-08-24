@@ -232,7 +232,7 @@ class Game {
                 client.player.xVelocity = newMagnitude * velSign;
             }
             if(client.player.y != Constants.PLATFORMHEIGHT || client.player.x + Constants.PLAYERHEIGHT < 100 || client.player.x > 860 || client.player.yVelocity < 0) {
-                client.player.yVelocity += Constants.VERTICALACCELERATION;
+                client.player.yVelocity += Constants.VERTICALACCELERATION * this.gameMode.level.gravity;
             } else {
                 client.player.yVelocity = 0;
             }

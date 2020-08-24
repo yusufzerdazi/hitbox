@@ -6,11 +6,11 @@ const SIMPLEX = new SimplexNoise();
 class SimpleAi extends Player {
     constructor(colour, name, x, y){
         super(colour, name, x, y, true);
-        this.randomMovementThreshold = Math.random();//0.8;
-        this.doNothingThreshold = Math.random(); //0.6;
-        this.boostThreshold = Math.random(); //0.99;
-        this.randomBoostThreshold = Math.random(); //0.995;
-        this.randomJumpThreshold = Math.random(); //0.99;
+        this.randomMovementThreshold = 0.5 + 0.5 * Math.random();//0.8;
+        this.doNothingThreshold = 0 + 0.5 * Math.random(); //0.6;
+        this.boostThreshold = 0.96 + 0.04 * Math.random(); //0.99;
+        this.randomBoostThreshold = 0.99 + 0.01 * Math.random(); //0.995;
+        this.randomJumpThreshold = 0.96 + 0.04 * Math.random(); //0.99;
         this.jumpThreshold = 0.3;
         this.duckThreshold = -0.5;
         this.poundThreshold = 0.9;
