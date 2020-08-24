@@ -131,6 +131,7 @@ class GameCanvas extends React.Component {
                 this.drawLevel(l);
             }
         });
+        level.forEach(l => this.drawLevelPlatform(l));
         this.drawWater();
         
         players
@@ -144,7 +145,6 @@ class GameCanvas extends React.Component {
             return Math.abs(player2.x - 480) - Math.abs(player1.x - 480);
         })
         players.filter(p => p.y <= 400).forEach(player => this.drawPlayer(player));
-        level.forEach(l => this.drawLevelPlatform(l));
         this.drawDeathWall();
         this.drawStartingTimer();
         this.drawGameMode();
