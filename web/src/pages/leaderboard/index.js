@@ -52,7 +52,7 @@ const columns = [
     sortFunction: (rowA, rowB) => sortFunction(rowA, rowB, 'losses')
   },
   {
-    name: 'Score (beaten - losses)',
+    name: 'Score',
     selector: 'killdeath',
     sortable: true,
     right: true,

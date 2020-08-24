@@ -17,7 +17,6 @@ class App extends React.Component {
     return (
       <Provider store={store}>
         <Router>
-          <Header/>
           <Switch>
             <Route exact path="/">
               <Game/>

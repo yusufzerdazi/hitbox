@@ -19,8 +19,14 @@
 
 h1 {
     color: white;
+    font-size: x-large;
 }
 
 p {
     color: white;
+    font-size: small;
+}
+
+table {
+    font-size: small;
 }

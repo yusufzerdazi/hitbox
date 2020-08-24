@@ -5,6 +5,7 @@ import actualise from '../../assets/images/actualise.png';
 import { RunningForward, RunningBackward, Standing } from './animation';
 import star from '../../assets/images/star.png';
 
+const FONT = "FR73PixelW00-Regular";
 const HEIGHT = 540;
 const WIDTH = 960;
 const ACTUALISE = new Image();
@@ -80,7 +81,7 @@ class GameCanvas extends React.Component {
             $this.ctx.setTransform($this.state.scale, 0, 0, $this.state.scale, $this.ctx.canvas.width / 2, $this.ctx.canvas.height / 2);
         }, false);
     }
-    
+
     toggleCamera(){
         switch(this.state.cameraType){
             case(cameraType.FOLLOWING):
@@ -133,7 +134,7 @@ class GameCanvas extends React.Component {
         });
         level.forEach(l => this.drawLevelPlatform(l));
         this.drawWater();
-        
+
         players
             .filter(p => p.y > 400)
             .forEach(player => this.drawPlayer(player));
@@ -144,8 +145,9 @@ class GameCanvas extends React.Component {
             }
             return Math.abs(player2.x - 480) - Math.abs(player1.x - 480);
         })
-        players.filter(p => p.y <= 400).forEach(player => this.drawPlayer(player));
         this.drawDeathWall();
+        players.filter(p => p.y <= 400).forEach(player => this.drawPlayer(player, name));
+        players.filter(p => p.name === name).forEach(player => this.drawPlayerStats(player));
         this.drawStartingTimer();
         this.drawGameMode();
         this.drawScores(players, lastWinner);
@@ -157,7 +159,7 @@ class GameCanvas extends React.Component {
             y:HEIGHT,
             width:this.ctx.canvas.width/this.state.scale,
             height: ((this.ctx.canvas.height) / 2)/this.state.scale + this.state.camera.y
-        }, 
+        },
         "#064273");
 
         this.drawLevelPlatform({
@@ -165,7 +167,7 @@ class GameCanvas extends React.Component {
             y:HEIGHT * 2,
             width:this.ctx.canvas.width/this.state.scale,
             height: ((this.ctx.canvas.height) / 2)/this.state.scale + this.state.camera.y
-        }, 
+        },
         "#002138");
 
         this.draw3DSection(-((this.ctx.canvas.width) / 2)/this.state.scale + this.state.camera.x, HEIGHT, ((this.ctx.canvas.width) / 2)/this.state.scale + this.state.camera.x, HEIGHT, 480, 410, WIDTH / 2, -900, "grey")
@@ -173,13 +175,13 @@ class GameCanvas extends React.Component {
 
     drawDeathWall(){
         if(this.state.deathWallX){
-            this.drawLevelPlatform({x: this.state.deathWallX, y:-(this.ctx.canvas.height / 2)/this.state.scale + this.state.camera.y, 
+            this.drawLevelPlatform({x: this.state.deathWallX, y:-(this.ctx.canvas.height / 2)/this.state.scale + this.state.camera.y,
                 width: -(((this.ctx.canvas.width) / 2)/this.state.scale) + this.state.camera.x - this.state.deathWallX, height: this.ctx.canvas.height / this.state.scale}, "#f0af00")
         }
         if(this.state.maxDistance){
             this.ctx.save()
             this.ctx.fillStyle = 'black';
-            this.ctx.font = (30/this.state.scale)+"px Consolas";
+            this.ctx.font = (25/this.state.scale)+"px " + FONT;
             this.ctx.shadowColor = "white";
             this.ctx.shadowOffsetX = 1;
             this.ctx.shadowOffsetY = 1;
@@ -229,19 +231,19 @@ class GameCanvas extends React.Component {
     drawBackground() {
         this.ctx.fillStyle = "#ebf0fe";
         this.ctx.beginPath();
-        this.ctx.rect(-this.ctx.canvas.width/this.state.scale, -this.ctx.canvas.height/this.state.scale, 
+        this.ctx.rect(-this.ctx.canvas.width/this.state.scale, -this.ctx.canvas.height/this.state.scale,
             2*this.ctx.canvas.width/this.state.scale, 2*this.ctx.canvas.height/this.state.scale);
         this.ctx.fill();
 
         this.ctx.fillStyle = "#b9d7fd";
         this.ctx.beginPath();
-        this.ctx.rect(-this.ctx.canvas.width/this.state.scale, -1500 - this.state.camera.y / 4, 
+        this.ctx.rect(-this.ctx.canvas.width/this.state.scale, -1500 - this.state.camera.y / 4,
             2*this.ctx.canvas.width/this.state.scale, -this.ctx.canvas.height/this.state.scale);
         this.ctx.fill();
-        
+
         this.ctx.fillStyle = "#fbff91";
         this.ctx.beginPath();
-        this.ctx.rect(-200 - this.state.camera.x / 4, -1000 - this.state.camera.y / 4, 
+        this.ctx.rect(-200 - this.state.camera.x / 4, -1000 - this.state.camera.y / 4,
             400, 400);
         this.ctx.fill();
 
@@ -255,45 +257,45 @@ class GameCanvas extends React.Component {
         this.ctx.beginPath();
 
         // Background hills
-        this.ctx.rect(-this.ctx.canvas.width/this.state.scale, -this.state.camera.y / 4 + 50, 
+        this.ctx.rect(-this.ctx.canvas.width/this.state.scale, -this.state.camera.y / 4 + 50,
             2*this.ctx.canvas.width/this.state.scale, this.ctx.canvas.height/this.state.scale);
 
-        this.ctx.rect( - ((this.state.camera.x + 2 * hillRepeatDistance) / 4) % hillRepeatDistance + hillRepeatDistance / 2 - WIDTH * 2.5, -this.state.camera.y / 4, 
+        this.ctx.rect( - ((this.state.camera.x + 2 * hillRepeatDistance) / 4) % hillRepeatDistance + hillRepeatDistance / 2 - WIDTH * 2.5, -this.state.camera.y / 4,
             WIDTH * 5, this.ctx.canvas.height/this.state.scale);
-        this.ctx.rect( - ((this.state.camera.x + 2 * hillRepeatDistance) / 4) % hillRepeatDistance + hillRepeatDistance / 2 - WIDTH * 1.5, -this.state.camera.y / 4 - 50, 
+        this.ctx.rect( - ((this.state.camera.x + 2 * hillRepeatDistance) / 4) % hillRepeatDistance + hillRepeatDistance / 2 - WIDTH * 1.5, -this.state.camera.y / 4 - 50,
             WIDTH * 3, this.ctx.canvas.height/this.state.scale);
-        this.ctx.rect( - ((this.state.camera.x + 2 * hillRepeatDistance) / 4) % hillRepeatDistance + hillRepeatDistance / 2 - WIDTH / 2, -this.state.camera.y / 4 - 100, 
+        this.ctx.rect( - ((this.state.camera.x + 2 * hillRepeatDistance) / 4) % hillRepeatDistance + hillRepeatDistance / 2 - WIDTH / 2, -this.state.camera.y / 4 - 100,
             WIDTH, this.ctx.canvas.height/this.state.scale);
 
-        this.ctx.rect( - ((this.state.camera.x) / 4) % hillRepeatDistance + hillRepeatDistance / 2 - WIDTH * 2.5, -this.state.camera.y / 4, 
+        this.ctx.rect( - ((this.state.camera.x) / 4) % hillRepeatDistance + hillRepeatDistance / 2 - WIDTH * 2.5, -this.state.camera.y / 4,
             WIDTH * 5, this.ctx.canvas.height/this.state.scale);
-        this.ctx.rect( - ((this.state.camera.x) / 4) % hillRepeatDistance + hillRepeatDistance / 2 - WIDTH * 1.5, -this.state.camera.y / 4 - 50, 
+        this.ctx.rect( - ((this.state.camera.x) / 4) % hillRepeatDistance + hillRepeatDistance / 2 - WIDTH * 1.5, -this.state.camera.y / 4 - 50,
             WIDTH * 3, this.ctx.canvas.height/this.state.scale);
-        this.ctx.rect( - ((this.state.camera.x) / 4) % hillRepeatDistance + hillRepeatDistance / 2 - WIDTH / 2, -this.state.camera.y / 4 - 100, 
+        this.ctx.rect( - ((this.state.camera.x) / 4) % hillRepeatDistance + hillRepeatDistance / 2 - WIDTH / 2, -this.state.camera.y / 4 - 100,
             WIDTH, this.ctx.canvas.height/this.state.scale);
 
         this.ctx.fill();
 
         // Foreground hills
         var foregroundHillsOffset = 181;
-        this.ctx.fillStyle = "#28c91c";
+        this.ctx.fillStyle = "#44db6c";
         this.ctx.beginPath();
 
-        this.ctx.rect(-this.ctx.canvas.width/this.state.scale, -this.state.camera.y / 2 + foregroundHillsOffset + 100, 
+        this.ctx.rect(-this.ctx.canvas.width/this.state.scale, -this.state.camera.y / 2 + foregroundHillsOffset + 100,
             2 * this.ctx.canvas.width/this.state.scale, this.ctx.canvas.height/this.state.scale);
 
-        this.ctx.rect( - ((this.state.camera.x + hillRepeatDistance) / 2) % hillRepeatDistance + hillRepeatDistance / 2 - WIDTH * 2.5, -this.state.camera.y / 2 + foregroundHillsOffset, 
+        this.ctx.rect( - ((this.state.camera.x + hillRepeatDistance) / 2) % hillRepeatDistance + hillRepeatDistance / 2 - WIDTH * 2.5, -this.state.camera.y / 2 + foregroundHillsOffset,
             WIDTH * 5, this.ctx.canvas.height/this.state.scale);
-        this.ctx.rect( - ((this.state.camera.x + hillRepeatDistance) / 2) % hillRepeatDistance + hillRepeatDistance / 2 - WIDTH * 1.5, -this.state.camera.y / 2 - 100 + foregroundHillsOffset, 
+        this.ctx.rect( - ((this.state.camera.x + hillRepeatDistance) / 2) % hillRepeatDistance + hillRepeatDistance / 2 - WIDTH * 1.5, -this.state.camera.y / 2 - 100 + foregroundHillsOffset,
             WIDTH * 3, this.ctx.canvas.height/this.state.scale);
-        this.ctx.rect( - ((this.state.camera.x + hillRepeatDistance) / 2) % hillRepeatDistance + hillRepeatDistance / 2 - WIDTH / 2, -this.state.camera.y / 2 - 200 + foregroundHillsOffset, 
+        this.ctx.rect( - ((this.state.camera.x + hillRepeatDistance) / 2) % hillRepeatDistance + hillRepeatDistance / 2 - WIDTH / 2, -this.state.camera.y / 2 - 200 + foregroundHillsOffset,
             WIDTH, this.ctx.canvas.height/this.state.scale);
 
-        this.ctx.rect( - ((this.state.camera.x) / 2) % hillRepeatDistance + hillRepeatDistance / 2 - WIDTH * 2.5, -this.state.camera.y / 2 + foregroundHillsOffset, 
+        this.ctx.rect( - ((this.state.camera.x) / 2) % hillRepeatDistance + hillRepeatDistance / 2 - WIDTH * 2.5, -this.state.camera.y / 2 + foregroundHillsOffset,
             WIDTH * 5, this.ctx.canvas.height/this.state.scale);
-        this.ctx.rect( - ((this.state.camera.x) / 2) % hillRepeatDistance + hillRepeatDistance / 2 - WIDTH * 1.5, -this.state.camera.y / 2 - 100 + foregroundHillsOffset, 
+        this.ctx.rect( - ((this.state.camera.x) / 2) % hillRepeatDistance + hillRepeatDistance / 2 - WIDTH * 1.5, -this.state.camera.y / 2 - 100 + foregroundHillsOffset,
             WIDTH * 3, this.ctx.canvas.height/this.state.scale);
-        this.ctx.rect( - ((this.state.camera.x) / 2) % hillRepeatDistance + hillRepeatDistance / 2 - WIDTH / 2, -this.state.camera.y / 2 - 200 + foregroundHillsOffset, 
+        this.ctx.rect( - ((this.state.camera.x) / 2) % hillRepeatDistance + hillRepeatDistance / 2 - WIDTH / 2, -this.state.camera.y / 2 - 200 + foregroundHillsOffset,
             WIDTH, this.ctx.canvas.height/this.state.scale);
 
         this.ctx.fill();
@@ -304,20 +306,20 @@ class GameCanvas extends React.Component {
         this.ctx.fillStyle = "white";
         this.ctx.beginPath();
         var cloudRepeatDistance = 15000;
-        this.ctx.rect( - ((this.state.camera.x + cloudRepeatDistance) / 2) % cloudRepeatDistance + cloudRepeatDistance / 2 - WIDTH * 2.5, -this.state.camera.y / 2 - 2200, 
+        this.ctx.rect( - ((this.state.camera.x + cloudRepeatDistance) / 2) % cloudRepeatDistance + cloudRepeatDistance / 2 - WIDTH * 2.5, -this.state.camera.y / 2 - 2200,
             900, 400);
-        this.ctx.rect( - ((this.state.camera.x + cloudRepeatDistance) / 2) % cloudRepeatDistance + cloudRepeatDistance / 2 - WIDTH, -this.state.camera.y / 2 - 1200, 
+        this.ctx.rect( - ((this.state.camera.x + cloudRepeatDistance) / 2) % cloudRepeatDistance + cloudRepeatDistance / 2 - WIDTH, -this.state.camera.y / 2 - 1200,
             900, 400);
-        this.ctx.rect( - ((this.state.camera.x + cloudRepeatDistance) / 2) % cloudRepeatDistance + cloudRepeatDistance / 2 + WIDTH + 4, -this.state.camera.y / 2 - 2200, 
+        this.ctx.rect( - ((this.state.camera.x + cloudRepeatDistance) / 2) % cloudRepeatDistance + cloudRepeatDistance / 2 + WIDTH + 4, -this.state.camera.y / 2 - 2200,
             900, 400);
-        
-        this.ctx.rect( - ((this.state.camera.x) / 2) % cloudRepeatDistance + cloudRepeatDistance / 2 - WIDTH * 2.5, -this.state.camera.y / 2 - 1200, 
+
+        this.ctx.rect( - ((this.state.camera.x) / 2) % cloudRepeatDistance + cloudRepeatDistance / 2 - WIDTH * 2.5, -this.state.camera.y / 2 - 1200,
             900, 400);
-        this.ctx.rect( - ((this.state.camera.x) / 2) % cloudRepeatDistance + cloudRepeatDistance / 2 - WIDTH, -this.state.camera.y / 2 - 2200, 
+        this.ctx.rect( - ((this.state.camera.x) / 2) % cloudRepeatDistance + cloudRepeatDistance / 2 - WIDTH, -this.state.camera.y / 2 - 2200,
             900, 400);
-        this.ctx.rect( - ((this.state.camera.x) / 2) % cloudRepeatDistance + cloudRepeatDistance / 2 + WIDTH + 4, -this.state.camera.y / 2 - 1200, 
+        this.ctx.rect( - ((this.state.camera.x) / 2) % cloudRepeatDistance + cloudRepeatDistance / 2 + WIDTH + 4, -this.state.camera.y / 2 - 1200,
             900, 400);
-            
+
         this.ctx.fill();
     }
 
@@ -422,12 +424,12 @@ class GameCanvas extends React.Component {
         var healthProportion = 255 * (player.health / 100);
         var nameColour = 'rgb(255,' + healthProportion + ',' + healthProportion + ')';
         this.ctx.fillStyle = nameColour;
-        this.ctx.font = Math.max(13,(13*(1/this.state.scale))) + "px Consolas";
+        this.ctx.font = Math.max(12,(12*(1/this.state.scale))) + "px " + FONT;
         this.ctx.textAlign = "center";
 
         this.ctx.shadowColor = "black";
-        this.ctx.shadowOffsetX = 1;
-        this.ctx.shadowOffsetY = 1;
+        this.ctx.shadowOffsetX = 0.7;
+        this.ctx.shadowOffsetY = 0.7;
         this.ctx.shadowBlur = 1;
         if (player.name) {
             this.ctx.fillText(
@@ -440,7 +442,7 @@ class GameCanvas extends React.Component {
         this.ctx.restore();
     }
 
-    drawPlayerHealth(player, width, height, xOffset, yOffset, heightMultiplier) {
+    drawPlayerHealth(player, width, height, xOffset, yOffset, name) {
         if(player.ducked){
             return;
         }
@@ -448,7 +450,7 @@ class GameCanvas extends React.Component {
         this.ctx.strokeStyle = "white";
         this.ctx.lineCap = "round";
         this.ctx.lineWidth = 2;
-        
+
         var playerX = player.x + xOffset;
         var playerY = player.y + yOffset;
         this.applyRotation(player, playerX, playerY, width);
@@ -495,7 +497,7 @@ class GameCanvas extends React.Component {
         this.ctx.restore();
     }
 
-    drawPlayerStamina(player, width, height, xOffset, yOffset) {
+    drawPlayerStamina(player, width, height, xOffset, yOffset, name) {
         this.ctx.save();
         this.ctx.beginPath();
         this.ctx.fillStyle = 'white';
@@ -513,31 +515,83 @@ class GameCanvas extends React.Component {
         this.ctx.restore();
     }
 
+    drawPlayerStats(player){
+        this.ctx.save()
+        this.ctx.beginPath();
+        this.ctx.fillStyle = 'white';
+        this.ctx.rect((this.ctx.canvas.width / 2 - 225) / this.state.scale,
+            (this.ctx.canvas.height / 2 - 55) / this.state.scale,
+            210 / this.state.scale,
+            40 / this.state.scale);
+        this.ctx.fill();
+        this.ctx.beginPath();
+        this.ctx.fillStyle = 'blue';
+        this.ctx.rect((this.ctx.canvas.width / 2 - 220) / this.state.scale,
+            (this.ctx.canvas.height / 2 - 50) / this.state.scale,
+            (200 - 2 * player.boostCooldown) / this.state.scale,
+            30 / this.state.scale);
+        this.ctx.fill();
+        this.ctx.beginPath();
+        this.ctx.fillStyle = "white"
+        this.ctx.font = 15*(1/this.state.scale) + "px " + FONT;
+        this.ctx.fillText(
+            "Stamina",
+            (this.ctx.canvas.width / 2 - 210) / this.state.scale,
+            (this.ctx.canvas.height / 2 - 29) / this.state.scale
+        );
+        this.ctx.fill();
+
+        this.ctx.beginPath();
+        this.ctx.fillStyle = 'white';
+        this.ctx.rect((this.ctx.canvas.width / 2 - 450) / this.state.scale,
+            (this.ctx.canvas.height / 2 - 55) / this.state.scale,
+            210 / this.state.scale,
+            40 / this.state.scale);
+        this.ctx.fill();
+        this.ctx.beginPath();
+        this.ctx.fillStyle = 'red';
+        this.ctx.rect((this.ctx.canvas.width / 2 - 445) / this.state.scale,
+            (this.ctx.canvas.height / 2 - 50) / this.state.scale,
+            (2 * player.health) / this.state.scale,
+            30 / this.state.scale);
+        this.ctx.fill();
+        this.ctx.beginPath();
+        this.ctx.fillStyle = "white"
+        this.ctx.font = 15*(1/this.state.scale) + "px " + FONT;
+        this.ctx.fillText(
+            "Health",
+            (this.ctx.canvas.width / 2 - 435) / this.state.scale,
+            (this.ctx.canvas.height / 2 - 29) / this.state.scale
+        );
+        this.ctx.fill();
+        this.ctx.restore();
+    }
+
     applyRotation(player, playerX, playerY, width){
         if(!player.ducked && player.alive){
             this.ctx.translate(playerX + width / 2 - this.state.camera.x, playerY - this.state.camera.y);              //translate to center of shape
             this.ctx.rotate(player.xVelocity * 0.01);  //rotate 25 degrees.
-            this.ctx.translate(-(playerX + width / 2 - this.state.camera.x), -(playerY - this.state.camera.y));            //translate center back to 0,0    
+            this.ctx.translate(-(playerX + width / 2 - this.state.camera.x), -(playerY - this.state.camera.y));            //translate center back to 0,0
         }
     }
 
     drawScores(players, lastWinner){
         this.ctx.save();
         this.ctx.fillStyle = 'white';
-        this.ctx.font = Math.max(15,(15*(1/this.state.scale))) + "px Consolas";
+        this.ctx.font = 15*(1/this.state.scale) + "px " + FONT;
         this.ctx.textAlign = "left";
 
         this.ctx.shadowColor = "black";
-        this.ctx.shadowOffsetX = 1;
-        this.ctx.shadowOffsetY = 1;
+        this.ctx.shadowOffsetX = 0.7;
+        this.ctx.shadowOffsetY = 0.7;
         this.ctx.shadowBlur = 1;
 
         var scores = [];
 
         players.filter(p => !p.orb).forEach(p => {
             scores.push({
-                name: p.name, 
-                colour: p.colour, 
+                name: p.name,
+                colour: p.colour,
                 score: p.score,
                 alive: p.alive,
                 lives: p.lives
@@ -554,13 +608,13 @@ class GameCanvas extends React.Component {
         })
         scores.forEach((s, i) => {
             this.ctx.fillStyle = s.colour;
-            var aliveText = (!s.alive ? "☠ " : "");
+            var aliveText = (!s.alive ? "[DEAD] " : "");
             var lastWinnerText = (lastWinner?.name == s.name ? " [WINNER]" : "");
             var livesText = (this.state.gameMode.title == "Free for All" || this.state.gameMode.title == "Collect the Boxes") ? " (" + s.lives + ")" : "";
-            var scoreText = 
+            var scoreText =
             this.ctx.fillText(
-                aliveText + s.name + ": " + s.score + livesText + lastWinnerText, 
-                (-this.ctx.canvas.width / 2 + 10) / this.state.scale, 
+                aliveText + s.name + ": " + s.score + livesText + lastWinnerText,
+                (-this.ctx.canvas.width / 2 + 10) / this.state.scale,
                 (-this.ctx.canvas.height / 2 + 20 * (1+i)) / this.state.scale
             );
         })
@@ -602,13 +656,13 @@ class GameCanvas extends React.Component {
             player.x - haloWidth / 2 + xOffset,
             player.y + haloWidth / 2 + yOffset,
             width + haloWidth,
-            - height - haloWidth
+            - height - haloWidth - (player.ducked ? haloWidth : 0)
         );
         this.ctx.stroke();
         this.ctx.restore();
     }
 
-    drawPlayer(player) {
+    drawPlayer(player, name) {
         // If player is invincible make them flash.
         if (player.alive && player.invincibility !== 0 && (Math.round(Utils.millis() / 10)) % 2 === 0) return;
 
@@ -637,8 +691,8 @@ class GameCanvas extends React.Component {
             return;
         }
 
-        this.drawPlayerStamina(player, currentPlayerWidth, currentPlayerHeight, xOffset, yOffset);
-        this.drawPlayerHealth(player, currentPlayerWidth, currentPlayerHeight, xOffset, yOffset, currentPlayerHeight / this.state.playerSize);
+        this.drawPlayerStamina(player, currentPlayerWidth, currentPlayerHeight, xOffset, yOffset, name);
+        this.drawPlayerHealth(player, currentPlayerWidth, currentPlayerHeight, xOffset, yOffset, name);
         this.drawPlayerName(player, currentPlayerHeight, xOffset, yOffset);
         this.ctx.globalAlpha = 1;
     }
@@ -646,7 +700,7 @@ class GameCanvas extends React.Component {
     drawStartingTimer() {
         this.ctx.save()
         this.ctx.fillStyle = 'black';
-        this.ctx.font = (50/this.state.scale)+"px Consolas";
+        this.ctx.font = (50/this.state.scale)+"px " + FONT;
         this.ctx.shadowColor = "white";
         this.ctx.shadowOffsetX = 1;
         this.ctx.shadowOffsetY = 1;
@@ -665,7 +719,7 @@ class GameCanvas extends React.Component {
     drawGameMode(){
         this.ctx.save()
         this.ctx.fillStyle = 'black';
-        this.ctx.font = (30/this.state.scale)+"px Consolas";
+        this.ctx.font = (30/this.state.scale)+"px " + FONT;
         this.ctx.shadowColor = "white";
         this.ctx.shadowOffsetX = 1;
         this.ctx.shadowOffsetY = 1;
