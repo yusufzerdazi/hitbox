@@ -684,6 +684,7 @@ class GameCanvas extends React.Component {
             this.drawPlayerLegs(player, breathingOffset);
         }
         this.drawPlayerCube(player, currentPlayerWidth, currentPlayerHeight, xOffset, yOffset);
+        this.drawPlayerName(player, currentPlayerHeight, xOffset, yOffset);
 
         // If player is dead, don't draw the rest.
         if (!player.alive) {
@@ -693,7 +694,6 @@ class GameCanvas extends React.Component {
 
         this.drawPlayerStamina(player, currentPlayerWidth, currentPlayerHeight, xOffset, yOffset, name);
         this.drawPlayerHealth(player, currentPlayerWidth, currentPlayerHeight, xOffset, yOffset, name);
-        this.drawPlayerName(player, currentPlayerHeight, xOffset, yOffset);
         this.ctx.globalAlpha = 1;
     }
 
