@@ -654,9 +654,9 @@ class GameCanvas extends React.Component {
         this.applyRotation(player, player.x + xOffset, player.y + yOffset, width);
         this.drawRectangle(
             player.x - haloWidth / 2 + xOffset,
-            player.y + haloWidth / 2 + yOffset,
+            player.y + haloWidth / 2 + yOffset - (player.ducked ? haloWidth : 0),
             width + haloWidth,
-            - height - haloWidth - (player.ducked ? haloWidth : 0)
+            - height - haloWidth + (player.ducked ? haloWidth : 0)
         );
         this.ctx.stroke();
         this.ctx.restore();
