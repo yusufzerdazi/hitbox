@@ -181,13 +181,13 @@ class GameCanvas extends React.Component {
         if(this.state.maxDistance){
             this.ctx.save()
             this.ctx.fillStyle = 'black';
-            this.ctx.font = (25/this.state.scale)+"px " + FONT;
+            this.ctx.font = (20/this.state.scale)+"px " + FONT;
             this.ctx.shadowColor = "white";
             this.ctx.shadowOffsetX = 1;
             this.ctx.shadowOffsetY = 1;
             this.ctx.shadowBlur = 1;
             this.ctx.textAlign = "center";
-            this.ctx.fillText(Math.round(this.state.maxDistance / 50) + "m  (Max: " + Math.round(this.state.levelMaxDistance / 50) + "m)", 0, -(this.ctx.canvas.height / 2 - 80) / this.state.scale);
+            this.ctx.fillText(Math.round(this.state.maxDistance / 50) + "m  (Max: " + Math.round(this.state.levelMaxDistance / 50) + "m)", 0, -(this.ctx.canvas.height / 2 - 100) / this.state.scale);
             this.ctx.restore()
         }
     }
@@ -712,21 +712,34 @@ class GameCanvas extends React.Component {
         } else if (!this.state.countdown) {
             timerText = ""
         }
-        this.ctx.fillText(timerText, 0, 0);
+        this.ctx.fillText(timerText, 0, 35 / this.state.scale);
         this.ctx.restore()
     }
 
     drawGameMode(){
+        var yOffset = 0;
+        var titleFontSize = 30/this.state.scale;
+        var subtitleFontSize = 20/this.state.scale;
+        var centerTitle = this.state.countdown;
+        var yPosition = centerTitle ? - 100 : -(this.ctx.canvas.height / 2 - 40)
+        var subtitleDiff = 30;
+        if(centerTitle){
+            titleFontSize = 60/this.state.scale;
+            subtitleFontSize = 40/this.state.scale;
+            yOffset = (this.ctx.canvas.height / 4);
+            var subtitleDiff = 60;
+        }
         this.ctx.save()
         this.ctx.fillStyle = 'black';
-        this.ctx.font = (30/this.state.scale)+"px " + FONT;
+        this.ctx.font = titleFontSize+"px " + FONT;
         this.ctx.shadowColor = "white";
         this.ctx.shadowOffsetX = 1;
         this.ctx.shadowOffsetY = 1;
         this.ctx.shadowBlur = 1;
         this.ctx.textAlign = "center";
-        var gameModeText = this.state.gameMode.title ? this.state.gameMode.title + ": " + this.state.gameMode.subtitle : "";
-        this.ctx.fillText(gameModeText, 0, -(this.ctx.canvas.height / 2 - 40) / this.state.scale);
+        this.ctx.fillText(this.state.gameMode.title || "", 0, (yPosition) / this.state.scale);
+        this.ctx.font = subtitleFontSize+"px " + FONT;
+        this.ctx.fillText(this.state.gameMode.subtitle || "", 0, (yPosition + subtitleDiff) / this.state.scale);
         this.ctx.restore()
     }
 
