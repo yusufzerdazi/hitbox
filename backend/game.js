@@ -12,7 +12,7 @@ var Square = require('./square');
 var Constants = require('./constants');
 
 var GameModes = [CollectTheBoxes, DeathWall, BattleRoyale, Tag];
-//var GameModes = [BattleRoyale];
+//GameModes = [DeathWall];
 
 const state = {
     STARTED: "started",
@@ -439,11 +439,11 @@ class Game {
 
     calculateStartGame() {
         if(this.state == state.STARTING) {
-            if(this.ticks - this.startingTicks > 60){
+            if(this.ticks - this.startingTicks > 100){
                 this.state = state.STARTED;
             } else {
                 this.emitToAllClients("gameMode", {title: this.gameMode.title, subtitle: this.gameMode.subtitle});
-                this.emitToAllClients("starting", 60 - (this.ticks - this.startingTicks));
+                this.emitToAllClients("starting", 100 - (this.ticks - this.startingTicks));
                 this.emitToAllClients("level", this.gameMode.level.platforms);
                 this.emitToAllClients("scale", this.gameMode.level.scale);
             }
@@ -481,6 +481,9 @@ class Game {
                     levelMaxDistance: this.gameMode.level.maxDistance,
                     maxDistance: this.gameMode.maxDistance
                 });
+            }
+            if(this.gameMode.title == "Tag"){
+                this.emitToAllClients("gameCountdown", (this.gameMode.startingTicks + this.gameMode.gameLength) - this.ticks);
             }
             this.emitToAllClients("allPlayers", this.clients.map(socket => {
                 return {

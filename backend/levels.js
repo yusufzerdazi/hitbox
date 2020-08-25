@@ -52,5 +52,5 @@ module.exports = {
         new Square(-2000, -9 * Constants.HEIGHT / 2 - 500, 500, 11 * Constants.HEIGHT / 2 + 500, true),
         new Square(Constants.WIDTH + 1500, -9 * Constants.HEIGHT / 2 - 500, 500, 11 * Constants.HEIGHT / 2 + 500, true),
         new Square(-2000, -9 * Constants.HEIGHT / 2 - 500, Constants.WIDTH + 4000, 500, true),
-    ], new Square(-1500, -3 * Constants.HEIGHT / 2, Constants.WIDTH + 3000, 2 * Constants.HEIGHT), 5, 0.5, 0.6),
+    ], new Square(-1500, -3 * Constants.HEIGHT / 2, Constants.WIDTH + 3000, 2 * Constants.HEIGHT), null, 0.5, 0.6),
 }
