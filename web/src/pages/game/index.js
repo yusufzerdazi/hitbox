@@ -145,6 +145,7 @@ class Game extends React.Component {
     }
 
     loggingIn(loggingIn){
+        var loggingIn = loggingIn != undefined ? loggingIn : !this.state.loggingIn
         if(loggingIn){
             this.openInstructions(false);
             this.openLeaderboard(false);
@@ -156,7 +157,7 @@ class Game extends React.Component {
                 this.getUsername();
             }
         }
-        this.setState({loggingIn: loggingIn != undefined ? loggingIn : !this.state.loggingIn});
+        this.setState({loggingIn: loggingIn});
     }
 
     play() {
