@@ -6,7 +6,6 @@ import Game from './pages/game';
 import Leaderboard from './pages/leaderboard';
 import Instructions from './pages/instructions';
 import Header from './components/header';
-import Login from './components/login';
 import Footer from './components/footer';
 import { store } from './redux/store';
 
@@ -28,7 +27,6 @@ class App extends React.Component {
               <Instructions />
             </Route>
           </Switch>
-          <Login afterSignIn={this.afterSignIn}/>
           <Footer/>
         </Router>
       </Provider>

@@ -20,12 +20,14 @@ class Instructions extends React.Component {
           <h1>Controls (Keyboard)</h1>
           <table>
             <thead>
-              <th>
-                Button
-              </th>
-              <th>
-                Action
-              </th>
+              <tr>
+                <th>
+                  Button
+                </th>
+                <th>
+                  Action
+                </th>
+              </tr>
             </thead>
             <tbody>
               <tr>
@@ -75,12 +77,14 @@ class Instructions extends React.Component {
           <h1>Controls (Controller)</h1>
           <table>
             <thead>
-              <th>
-                Button
-              </th>
-              <th>
-                Action
-              </th>
+              <tr>
+                <th>
+                  Button
+                </th>
+                <th>
+                  Action
+                </th>
+              </tr>
             </thead>
             <tbody>
               <tr>

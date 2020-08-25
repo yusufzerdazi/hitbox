@@ -75,7 +75,13 @@ class GameService {
             if(this.mounted){
                 this.canvasRef.current.updateDeathWall(deathWall);
             }
-        })
+        });
+        
+        this.socket.on('gameCountdown', (gameCountdown) => {
+            if(this.mounted){
+                this.canvasRef.current.updateGameCountdown(gameCountdown);
+            }
+        });
 
         this.socket.on('scale', (scale) => {
             if(this.mounted && scale){
@@ -223,7 +229,7 @@ class GameService {
     }
 
     changeName(name){
-        this.socket.emit("nameChange", this.state.name);
+        this.socket.emit("nameChange", name);
     }
 
     playSound(soundFile) {

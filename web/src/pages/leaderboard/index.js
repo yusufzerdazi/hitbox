@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { connect } from "react-redux";
-import DataTable from 'react-data-table-component';
+import DataTable, { createTheme } from 'react-data-table-component';
 import { store } from '../../redux/store';
 import styles from './styles.module.css';
 
@@ -17,6 +17,21 @@ const sortFunction = (rowA, rowB, selector) => {
   }
   return rowA[selector] - rowB[selector];
 }
+
+createTheme('dark', {
+  text: {
+    primary: '#FFFFFF',
+    secondary: 'rgba(255, 255, 255, 0.7)',
+    disabled: 'rgba(0,0,0,.12)',
+  },
+  background: {
+    default: '#000000',
+  },
+  divider: {
+    default: 'rgba(81, 81, 81, 1)',
+  },
+});
+
 const columns = [
   {
     name: 'Name',

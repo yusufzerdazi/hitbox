@@ -5,6 +5,7 @@ import Gamepad from 'react-gamepad';
 import Modal from 'react-overlays/Modal';
 import Leaderboard from '../leaderboard';
 import Instructions from '../instructions';
+import Login from '../../components/login';
 import { connect } from "react-redux";
 import { store } from '../../redux/store';
 import { isMobile } from "react-device-detect";
@@ -41,7 +42,10 @@ class Game extends React.Component {
             lastWinner: null,
             editingUsername: true,
             soundEnabled: true,
-            room: room
+            room: room,
+            loggingIn: false,
+            leaderboardOpen: false,
+            instructionsOpen: false
         };
         this.canvasRef = React.createRef();
         this.gameService = new GameService(this.canvasRef);
@@ -60,8 +64,10 @@ class Game extends React.Component {
                 user: {
                     name: state.logIn.user.name
                 },
-                editingUsername: false
-            })
+                editingUsername: false,
+                loggingIn: false
+            });
+            this.play();
         } else {
             var customId = localStorage.getItem("customId");
             if (customId) {
@@ -111,7 +117,6 @@ class Game extends React.Component {
 
     componentDidMount() {
         this.mounted = true;
-        this.getUsername();
 
         store.subscribe(() => {
             this.getUsername();
@@ -139,12 +144,28 @@ class Game extends React.Component {
         });
     }
 
+    loggingIn(loggingIn){
+        if(loggingIn){
+            this.openInstructions(false);
+            this.openLeaderboard(false);
+        }
+        if(this.state.user?.name){
+            this.play();
+            return;
+        } else {
+            this.getUsername();
+        }
+        this.setState({loggingIn: loggingIn != undefined ? loggingIn : !this.state.loggingIn});
+    }
+
     play() {
         this.customIdLogin();
-        var name = this.props.user?.name || this.state.name;
+        var name = this.props.user?.name || this.state.name || this.state.user?.name;
         if (name) {
             this.gameService.play(name, this.state.room);
-            this.setState({nameClass: styles.name});
+            this.setState({nameClass: styles.name,
+                playing: true
+            });
             this.setState({nameInputClass: styles.nameInput});
         } else {
             this.setState({nameClass: styles.name + ' ' + styles.red});
@@ -154,6 +175,9 @@ class Game extends React.Component {
 
     quit() {
         this.gameService.quit();
+        this.setState({
+            playing: false
+        });
     }
 
     addAi(){
@@ -201,11 +225,23 @@ class Game extends React.Component {
     }
 
     openLeaderboard(open){
-        this.setState({leaderboardOpen: open == undefined ? !this.state.leaderboardOpen : open});
+        open = open == undefined ? !this.state.leaderboardOpen : open
+        if(open){
+            this.openInstructions(false);
+            this.loggingIn(false);
+        }
+        if(this.state.user?.name){
+            this.setState({leaderboardOpen: open});
+        }
     }
 
     openInstructions(open){
-        this.setState({instructionsOpen: open == undefined ? !this.state.instructionsOpen : open});
+        open = open == undefined ? !this.state.instructionsOpen : open
+        if(open){
+            this.openLeaderboard(false);
+            this.loggingIn(false);
+        }
+        this.setState({instructionsOpen: open});
     }
 
     toggleCamera(){
@@ -306,53 +342,38 @@ class Game extends React.Component {
                 <GameCanvas ref={this.canvasRef} />
                 { !isMobile ?
                 <div className={styles.addAi}>
-                    <span style={{ display: this.props.user?.name ? 'inline-block' : 'none' }} className={styles.playFabName}>
-                        <b>Name:</b> {this.props.user?.name}
-                    </span>
-                    <span style={{ display: this.state.editingUsername ? 'inline-block' : 'none' }} className={this.state.nameClass}>
-                        <input onChange={this.handleChange} placeholder="Enter name" className={this.state.nameInputClass} type="text"></input>
-                    </span>
-                    <span data-tip="Edit username" style={{ display: this.props.user && !this.state.editingUsername ? 'inline-block' : 'none' }} 
-                        onClick={this.editName} className={styles.addAiButton}>
-                        <i className="fas fa-pencil"></i>
-                    </span>
-                    <span data-tip="Confirm username" style={{ display: this.props.user && this.state.editingUsername ? 'inline-block' : 'none' }} 
-                        onClick={this.setName} className={styles.addAiButton}>
-                        <i className="fas fa-check"></i>
-                    </span>
-                    <span data-tip="Cancel name change" style={{ display: this.props.user && this.state.editingUsername ? 'inline-block' : 'none' }} 
-                        onClick={this.cancelNameChange} className={styles.addAiButton}>
-                        <i className="fas fa-times"></i
-                    ></span>
-                    <span data-tip="Join game" onClick={this.play} className={styles.addAiButton}>
-                        <i className="fas fa-gamepad-alt"></i>
-                    </span>
-                    <span data-tip="Quit game" onClick={this.quit} className={styles.addAiButton}>
-                        <i style={{ color: 'red' }} className="fas fa-ban"></i>
-                    </span>
-                    <span data-tip="Toggle camera" 
+                    {!this.state.playing ? 
+                    <span style={{backgroundColor:'mediumseagreen', color: 'white'}} onClick={() => this.loggingIn(true)} className={styles.addAiButton}>
+                        Join
+                    </span> : <></>}
+                    {this.state.playing ? 
+                    <span style={{backgroundColor:'darkred', color: 'white'}} onClick={this.quit} className={styles.addAiButton}>
+                        Quit
+                    </span> : <></>}
+                    <span style={{backgroundColor:'turquoise', color: 'white'}}
                         onClick={this.toggleCamera} className={styles.addAiButton}>
-                        <i className="fas fa-video"></i>
+                        Camera
                     </span>
-                    <span style={{ display: this.state.soundEnabled ? 'inline-block' : 'none' }} data-tip="Mute audio" 
+                    {this.state.soundEnabled ? <span style={{backgroundColor:'firebrick', color: 'white' }}
                         onClick={this.toggleSound} className={styles.addAiButton}>
-                        <i className="fas fa-volume-mute"></i>
-                    </span>
-                    <span style={{ display: !this.state.soundEnabled ? 'inline-block' : 'none' }} data-tip="Enable audio" 
+                        Mute
+                    </span> : <></>}
+                    {!this.state.soundEnabled ? <span style={{ backgroundColor:'purple', color: 'white' }}
                         onClick={this.toggleSound} className={styles.addAiButton}>
-                        <i className="fas fa-volume"></i>
+                        Unmute
+                    </span> : <></>}
+                    {this.state.user?.name ? 
+                    <span style={{backgroundColor:'darkslateblue', color: 'white' }} onClick={() => this.openLeaderboard()} className={styles.addAiButton}>
+                        Stats
+                    </span> : <></>}
+                    <span style={{backgroundColor:'indigo', color: 'white' }} onClick={() => this.openInstructions()} className={styles.addAiButton}>
+                        Controls
                     </span>
-                    <span data-tip="Leaderboard" onClick={() => this.openLeaderboard()} className={styles.addAiButton}>
-                        <i className="fas fa-bars"></i>
+                    <span style={{backgroundColor:'lawngreen', color: 'white' }} onClick={this.addAi} className={styles.addAiButton}>
+                        +AI
                     </span>
-                    <span data-tip="Instructions" onClick={() => this.openInstructions()} className={styles.addAiButton}>
-                        <i className="fas fa-info-circle"></i>
-                    </span>
-                    <span data-tip="Add AI" onClick={this.addAi} className={styles.addAiButton}>
-                        <i className="fas fa-robot"></i>
-                    </span>
-                    <span data-tip="Delete AI" onClick={this.removeAi} className={styles.addAiButton}>
-                        <i style={{ color: 'red' }} className="fas fa-robot"></i>
+                    <span style={{backgroundColor:'indianred', color: 'white' }} onClick={this.removeAi} className={styles.addAiButton}>
+                        -AI
                     </span>
                 </div> : <></>
                 }
@@ -368,7 +389,6 @@ class Game extends React.Component {
                     <p></p>
                 </Gamepad>
                 <Modal show={this.state.leaderboardOpen} 
-                    onClick={() => this.openLeaderboard()}
                     onHide={() => this.openLeaderboard(false)}>
                     <Leaderboard />
                 </Modal>
@@ -377,7 +397,23 @@ class Game extends React.Component {
                     onHide={() => this.openInstructions(false)}>
                     <Instructions />
                 </Modal>
-                <ReactTooltip />
+                <Modal show={this.state.loggingIn} 
+                    onHide={() => this.loggingIn(false)}>
+                        <div className={styles.loggingInContainer}>
+                            <div className={styles.loggingIn}>
+                                <h1>Log In</h1>
+                                <div className={styles.textLogin}>
+                                    <span style={{ display: this.state.editingUsername ? 'inline' : 'none' }} className={this.state.nameClass}>
+                                        <input onChange={this.handleChange} placeholder="Enter name" className={this.state.nameInputClass} type="text"></input>
+                                    </span>
+                                    <span data-tip="Join game" onClick={this.play} className={styles.addAiButton}>
+                                        Play
+                                    </span>
+                                </div>
+                                <Login/>
+                            </div>
+                        </div>
+                </Modal>
             </>
         );
     }
@@ -406,6 +442,7 @@ class Game extends React.Component {
         this.openLeaderboard = this.openLeaderboard.bind(this);
         this.openInstructions = this.openInstructions.bind(this);
         this.toggleCamera = this.toggleCamera.bind(this);
+        this.loggingIn = this.loggingIn.bind(this);
     }
 }
 

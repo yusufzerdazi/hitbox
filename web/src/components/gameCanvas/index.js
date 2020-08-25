@@ -147,8 +147,12 @@ class GameCanvas extends React.Component {
         })
         this.drawDeathWall();
         players.filter(p => p.y <= 400).forEach(player => this.drawPlayer(player, name));
-        players.filter(p => p.name === name).forEach(player => this.drawPlayerStats(player));
+        players.filter(p => p.name === name).forEach(player => {
+            this.drawPlayerStats(player);
+            this.drawPlayerScore(player);
+        });
         this.drawStartingTimer();
+        this.drawGameCountdown();
         this.drawGameMode();
         this.drawScores(players, lastWinner);
     }
@@ -197,6 +201,12 @@ class GameCanvas extends React.Component {
             deathWallX: deathWall.deathWallX,
             maxDistance: deathWall.maxDistance,
             levelMaxDistance: deathWall.levelMaxDistance
+        });
+    }
+
+    updateGameCountdown(gameCountdown){
+        this.setState({
+            gameCountdown: gameCountdown
         });
     }
 
@@ -564,6 +574,20 @@ class GameCanvas extends React.Component {
             (this.ctx.canvas.height / 2 - 29) / this.state.scale
         );
         this.ctx.fill();
+        
+        this.ctx.beginPath();
+        this.ctx.textAlign = 'right'
+        this.ctx.shadowColor = "black";
+        this.ctx.shadowOffsetX = 0.7;
+        this.ctx.shadowOffsetY = 0.7;
+        this.ctx.shadowBlur = 1;
+        this.ctx.font = 15*(1/this.state.scale) + "px " + FONT;
+        this.ctx.fillText(
+            "Name: " + player.name,
+            (this.ctx.canvas.width / 2 - 15) / this.state.scale,
+            (this.ctx.canvas.height / 2 - 70) / this.state.scale
+        );
+        this.ctx.fill();
         this.ctx.restore();
     }
 
@@ -714,6 +738,36 @@ class GameCanvas extends React.Component {
         }
         this.ctx.fillText(timerText, 0, 35 / this.state.scale);
         this.ctx.restore()
+    }
+
+    drawGameCountdown(){
+        if(this.state.gameCountdown){
+            this.ctx.save()
+            this.ctx.fillStyle = 'black';
+            this.ctx.font = (20/this.state.scale)+"px " + FONT;
+            this.ctx.shadowColor = "white";
+            this.ctx.shadowOffsetX = 1;
+            this.ctx.shadowOffsetY = 1;
+            this.ctx.shadowBlur = 1;
+            this.ctx.textAlign = "center";
+            this.ctx.fillText((this.state.gameCountdown / 60).toFixed(2), 0, -(this.ctx.canvas.height / 2 - 100) / this.state.scale);
+            this.ctx.restore()
+        }
+    }
+
+    drawPlayerScore(player){
+        if(this.state.gameMode.title == "Collect the Boxes"){
+            this.ctx.save()
+            this.ctx.fillStyle = 'black';
+            this.ctx.font = (20/this.state.scale)+"px " + FONT;
+            this.ctx.shadowColor = "white";
+            this.ctx.shadowOffsetX = 1;
+            this.ctx.shadowOffsetY = 1;
+            this.ctx.shadowBlur = 1;
+            this.ctx.textAlign = "center";
+            this.ctx.fillText(player.lives, 0, -(this.ctx.canvas.height / 2 - 100) / this.state.scale);
+            this.ctx.restore()
+        }
     }
 
     drawGameMode(){

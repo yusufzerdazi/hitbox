@@ -59,7 +59,8 @@ class Login extends React.Component {
       window.gapi.signin2.render('g-signin2', {
         'scope': 'profile email',
         'theme': 'dark',
-        'onsuccess': $this.onSignIn
+        'onsuccess': $this.onSignIn,
+        'onerror': () => console.log("test")
       }, 500);
     });
   }
