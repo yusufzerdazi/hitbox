@@ -148,12 +148,13 @@ class Game extends React.Component {
         if(loggingIn){
             this.openInstructions(false);
             this.openLeaderboard(false);
-        }
-        if(this.state.user?.name){
-            this.play();
-            return;
-        } else {
-            this.getUsername();
+
+            if(this.state.user?.name){
+                this.play();
+                return;
+            } else {
+                this.getUsername();
+            }
         }
         this.setState({loggingIn: loggingIn != undefined ? loggingIn : !this.state.loggingIn});
     }
