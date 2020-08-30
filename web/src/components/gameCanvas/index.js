@@ -35,7 +35,8 @@ class GameCanvas extends React.Component {
             scale: 1,
             cameraType: cameraType.FOLLOWING,
             gameMode: {title:null,subtitle:null},
-            zoomRate: 1
+            zoomRate: 1,
+            players: {}
         };
 
         this.canvasRef = React.createRef();
@@ -127,11 +128,6 @@ class GameCanvas extends React.Component {
         }
         this.setScale(this.state.scale * this.state.zoomRate);
         this.drawBackground();
-        level.forEach(l => {
-            if(!l.border){
-                this.drawLevel(l);
-            }
-        });
         level.forEach(l => this.drawLevelPlatform(l));
         this.drawWater();
 
@@ -173,8 +169,6 @@ class GameCanvas extends React.Component {
             height: ((this.ctx.canvas.height) / 2)/this.state.scale + this.state.camera.y
         },
         "#002138");
-
-        this.draw3DSection(-((this.ctx.canvas.width) / 2)/this.state.scale + this.state.camera.x, HEIGHT, ((this.ctx.canvas.width) / 2)/this.state.scale + this.state.camera.x, HEIGHT, 480, 410, WIDTH / 2, -900, "grey")
     }
 
     drawDeathWall(){
@@ -208,14 +202,6 @@ class GameCanvas extends React.Component {
         this.setState({
             gameCountdown: gameCountdown
         });
-    }
-
-    drawLevel(level){
-        var xVanishingPoint = 0;
-        var yVanishingPoint = -900;
-        this.draw3DSection(level.x, level.y, level.x, level.y + level.height, 480, 410, xVanishingPoint, yVanishingPoint, "grey", false);
-        this.draw3DSection(level.x, level.y, level.x + level.width, level.y, 480, 410, xVanishingPoint, yVanishingPoint, "grey", false);
-        this.draw3DSection(level.x + level.width, level.y, level.x + level.width, level.y + level.height, 480, 410, xVanishingPoint, yVanishingPoint, "grey", false);
     }
 
     drawLevelPlatform(level, colour){
@@ -333,43 +319,6 @@ class GameCanvas extends React.Component {
         this.ctx.fill();
     }
 
-    draw3DSection(x1, y1, x2, y2, centerX, centerY, xVanishingPoint, yVanishingPoint, colour, useCenterPoint = true, length = 10) {
-        return;
-        x1 = x1 - this.state.camera.x;
-        x2 = x2 - this.state.camera.x;
-        y1 = y1 - this.state.camera.y;
-        y2 = y2 - this.state.camera.y;
-
-        var isHorizontal = y1 === y2;
-
-        var cubeLength = 20;
-
-        var angle1 = Math.atan(((useCenterPoint ? centerY : y1) - yVanishingPoint) / ((useCenterPoint ? centerX : x1) - xVanishingPoint));
-        if ((useCenterPoint ? centerX : x1) > xVanishingPoint) {
-            angle1 += Math.PI;
-        }
-
-        var brPointY = y1 - length;
-        var brPointX = x1 + cubeLength * Math.cos(angle1);
-
-        var angle2 = Math.atan(((useCenterPoint ? centerY : y2) - yVanishingPoint) / ((useCenterPoint ? centerX : x2) - xVanishingPoint));
-        if ((useCenterPoint ? centerX : x2) > xVanishingPoint) {
-            angle2 += Math.PI;
-        }
-
-        var trPointY = y2 - length;
-        var trPointX = x2 + cubeLength * Math.cos(isHorizontal ? angle2 : angle1);
-
-        this.ctx.fillStyle = colour;
-        this.ctx.beginPath();
-        this.ctx.moveTo(x1, y1);
-        this.ctx.lineTo(brPointX, brPointY);
-        this.ctx.lineTo(trPointX, trPointY);
-        this.ctx.lineTo(x2, y2);
-        this.ctx.closePath();
-        this.ctx.fill();
-    }
-
     drawPlayerCube(player, width, height, xOffset, yOffset) {
         this.ctx.save();
         var xVanishingPoint = this.state.camera.x;
@@ -385,22 +334,60 @@ class GameCanvas extends React.Component {
         var centerX = (playerX + (width / 2));
         var centerY = (playerY - (height / 2));
 
-        this.draw3DSection(rightX, bottomY, rightX, topY, centerX, centerY, xVanishingPoint, yVanishingPoint, 'black');
-        this.draw3DSection(leftX, bottomY, leftX, topY, centerX, centerY, xVanishingPoint, yVanishingPoint, 'black');
-        this.draw3DSection(leftX, topY, rightX, topY, centerX, centerY, xVanishingPoint, yVanishingPoint, 'grey');
-
         this.ctx.beginPath();
         this.ctx.fillStyle = player.colour;
         this.applyRotation(player, playerX, playerY, width);
 
-        this.drawRectangle(playerX, playerY, width, - height);
-        this.ctx.fill();
-        if(!player.ducked && (player.name === "yusuf" || player.name === "intrinsion")){
-            this.ctx.globalAlpha = 0.5;
-            this.ctx.drawImage(ACTUALISE, playerX - this.state.camera.x, playerY - height - this.state.camera.y, width, height);
+        if(player.ducked){
+            this.drawRectangle(playerX, playerY, width, - height);
+            this.ctx.fill();
         }
-
+        else {
+            if(!(player.name in this.state.players) || player.health === 100){
+                var players = this.state.players;
+                players[player.name] = [{x: 0, y: 0},{x: width, y: 0},{x: width, y: -height}, {x: 0, y: -height}];
+                this.setState({players});
+            }
+            var players = this.state.players;
+            while((players[player.name].length - 4) < (100 - player.health) / 2){
+                var newPolygon = this.addDamageVertices(players[player.name]);
+                players[player.name] = newPolygon;
+                this.setState({players});
+            }
+            this.drawPolygon(player, this.state.players[player.name], xOffset, yOffset);
+            this.ctx.clip();
+            if(!player.ducked && (player.name === "yusuf" || player.name === "intrinsion")){
+                this.ctx.globalAlpha = 0.5;
+                this.ctx.drawImage(ACTUALISE, playerX - this.state.camera.x - 5, playerY - height - this.state.camera.y - 5, width + 10, height + 10);
+            }
+        }
+        
         this.ctx.restore()
+    }
+
+    drawPolygon(player, polygon, xOffset, yOffset, colour = null){
+        this.ctx.fillStyle = colour|| player.colour;
+        this.ctx.beginPath();
+        this.ctx.moveTo(player.x + polygon[0].x + xOffset - this.state.camera.x, player.y + yOffset + polygon[0].y - this.state.camera.y);
+        polygon.forEach((p,i) => {
+            if(i > 0){
+                this.ctx.lineTo(player.x + p.x + xOffset - this.state.camera.x, player.y + yOffset + p.y - this.state.camera.y);
+            }
+        });
+        this.ctx.closePath();
+        this.ctx.fill();
+    }
+
+    addDamageVertices(polygon){
+        var newPolygon = [];
+        polygon.forEach((p, i) => {
+            newPolygon.push(p);
+            newPolygon.push({
+                x: (p.x + polygon[(i + 1) % polygon.length].x) / 2 + 5 * (Math.random() - 0.5),
+                y: (p.y + polygon[(i + 1) % polygon.length].y) / 2 + 5 * (Math.random() - 0.5),
+            });
+        });
+        return newPolygon;
     }
 
     drawRectangle(x, y, width, height){
@@ -452,76 +439,30 @@ class GameCanvas extends React.Component {
         this.ctx.restore();
     }
 
-    drawPlayerHealth(player, width, height, xOffset, yOffset, name) {
-        if(player.ducked){
-            return;
-        }
-        this.ctx.save();
-        this.ctx.strokeStyle = "white";
-        this.ctx.lineCap = "round";
-        this.ctx.lineWidth = 2;
-
-        var playerX = player.x + xOffset;
-        var playerY = player.y + yOffset;
-        this.applyRotation(player, playerX, playerY, width);
-
-        if(player.health < 90){
-            this.drawLine(player.x + xOffset + 1, player.y + yOffset - height + 1, 5, 9);
-            this.drawLine(player.x + xOffset + 6, player.y + yOffset - height + 10, 8, 2);
-            this.drawLine(player.x + xOffset + 6, player.y + yOffset - height + 10, 2, 5);
-        }
-        if(player.health < 80){
-            this.drawLine(player.x + xOffset + 1, player.y + yOffset - 1, 11, -7);
-            this.drawLine(player.x + xOffset + 12, player.y + yOffset -8, 7, 2);
-            this.drawLine(player.x + xOffset + 12, player.y + yOffset -8, 2, -5);
-        }
-        if(player.health < 70){
-            this.drawLine(player.x + xOffset + width - 1, player.y + yOffset - height + 1, -6, 3);
-            this.drawLine(player.x + xOffset + width -7, player.y + yOffset - height + 4, -1, 5);
-        }
-        if(player.health < 60){
-            this.drawLine(player.x + xOffset + width - 1, player.y + yOffset - 1, -4, -9);
-            this.drawLine(player.x + xOffset + width-5, player.y + yOffset-10, -3, 5);
-            this.drawLine(player.x + xOffset + width-5, player.y + yOffset-10, -4, -5);
-        }
-        if(player.health < 50){
-            this.drawLine(player.x + xOffset + width -7, player.y + yOffset - height + 4, -10, 2);
-            this.drawLine(player.x + xOffset + width -17, player.y + yOffset - height + 6, -5, 3);
-        }
-        if(player.health < 40){
-            this.drawLine(player.x + xOffset + 14, player.y + yOffset -13, 10, -5);
-            this.drawLine(player.x + xOffset + 14, player.y + yOffset -13, -4, -8);
-        }
-        if(player.health < 30){
-            this.drawLine(player.x + xOffset + width -8, player.y + yOffset - height + 9, -12, 6);
-            this.drawLine(player.x + xOffset + width -8, player.y + yOffset - height + 9, 2, 7);
-        }
-        if(player.health < 20){
-            this.drawLine(player.x + xOffset + 14, player.y + yOffset - height + 12, 1, 9);
-            this.drawLine(player.x + xOffset + 14, player.y + yOffset - height + 12, 8, -2);
-        }
-        if(player.health < 10){
-            this.drawLine(player.x + xOffset + width-9, player.y + yOffset-15, -13, 4);
-            this.drawLine(player.x + xOffset + width-9, player.y + yOffset-15, -2, -12);
-        }
-        this.ctx.restore();
-    }
-
     drawPlayerStamina(player, width, height, xOffset, yOffset, name) {
         this.ctx.save();
         this.ctx.beginPath();
-        this.ctx.fillStyle = 'white';
         var playerX = player.x + xOffset;
         var playerY = player.y + yOffset;
         this.applyRotation(player, playerX, playerY, width);
-        var cooldownPercent = 0.8 * (100 - player.boostCooldown) / 100 + 0.2;
-        this.drawRectangle(
-            player.x + xOffset + cooldownPercent * width / 2,
-            player.y + yOffset - cooldownPercent * height / 2,
-            width - cooldownPercent * width,
-            -height + cooldownPercent * height
-        );
-        this.ctx.fill();
+        var boostPolygon = [];
+        var polygon = this.state.players[player.name];
+        polygon.forEach((p, i) => {
+            if(p.y > - height + (100 - player.boostCooldown) / 2){
+                boostPolygon.push({x: (p.x - width / 2) * 0.8 + width / 2, y: (p.y + height / 2) * 0.8 - height / 2});
+                if(polygon[(i + 1) % polygon.length].y <= - height + (100 - player.boostCooldown) / 2){
+                    boostPolygon.push({x: (p.x - width / 2) * 0.8 + width / 2, y: (- height / 2 + (100 - player.boostCooldown) / 2) * 0.8  - height / 2});
+                }
+            } else {
+                if(polygon[(i + 1) % polygon.length].y > - height + (100 - player.boostCooldown) / 2){
+                    boostPolygon.push({x: (p.x - width / 2) * 0.8 + width / 2, y: (- height / 2 + (100 - player.boostCooldown) / 2) * 0.8 - height / 2});
+                }
+            }
+        });
+        if(boostPolygon.length > 0){
+            this.ctx.globalAlpha = player.boostCooldown / 200 + 0.5;
+            this.drawPolygon(player, boostPolygon, xOffset, yOffset, 'white');
+        }
         this.ctx.restore();
     }
 
@@ -574,7 +515,7 @@ class GameCanvas extends React.Component {
             (this.ctx.canvas.height / 2 - 29) / this.state.scale
         );
         this.ctx.fill();
-        
+
         this.ctx.beginPath();
         this.ctx.textAlign = 'right'
         this.ctx.shadowColor = "black";
@@ -656,7 +597,7 @@ class GameCanvas extends React.Component {
             frame = Math.floor(frame);
             var direction = Math.sign(player.xVelocity);
             var img = direction > 0 ? RunningBackward[frame] : RunningForward[frame];
-            this.ctx.drawImage(img, player.x - this.state.camera.x, player.y + yOffset - this.state.camera.y, 50, 30);
+            this.ctx.drawImage(img, player.x - this.state.camera.x, player.y + yOffset - 3 - this.state.camera.y, 50, 33);
         }
         else {
             var frame = 0.005 * Utils.millis() % 3;
@@ -665,7 +606,7 @@ class GameCanvas extends React.Component {
             }
             frame = Math.floor(frame);
             var img = Standing[frame];
-            this.ctx.drawImage(img, player.x - this.state.camera.x, player.y + yOffset + breathingOffset - this.state.camera.y, 50, 30 - breathingOffset);
+            this.ctx.drawImage(img, player.x - this.state.camera.x, player.y + yOffset + breathingOffset - 3 - this.state.camera.y, 50, 33 - breathingOffset);
         }
     }
 
@@ -715,9 +656,9 @@ class GameCanvas extends React.Component {
             this.ctx.globalAlpha = 1;
             return;
         }
-
-        this.drawPlayerStamina(player, currentPlayerWidth, currentPlayerHeight, xOffset, yOffset, name);
-        this.drawPlayerHealth(player, currentPlayerWidth, currentPlayerHeight, xOffset, yOffset, name);
+        if(!player.ducked && player.boostCooldown != 0){
+            this.drawPlayerStamina(player, currentPlayerWidth, currentPlayerHeight, xOffset, yOffset, name);
+        }
         this.ctx.globalAlpha = 1;
     }
 
