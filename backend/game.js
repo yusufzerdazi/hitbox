@@ -12,7 +12,7 @@ var Square = require('./square');
 var Constants = require('./constants');
 
 var GameModes = [CollectTheBoxes, DeathWall, BattleRoyale, Tag];
-//GameModes = [DeathWall];
+//GameModes = [CollectTheBoxes];
 
 const state = {
     STARTED: "started",
@@ -28,7 +28,7 @@ class Game {
         this.maxPlayers = 100;
         this.startingTicks = 0;
         this.ticks = 0;
-        this.gameMode = new GameModes[Math.floor(Math.random() * GameModes.length)](this.clients, this.ticks);
+        this.gameMode = new GameModes[Math.floor(Math.random() * GameModes.length)](this.clients, this.ticks, (v1, v2) =>this.emitToAllClients(v1,v2,this));
 
         this.humanPlayers = () => { return this.clients.filter(c => c.player && !c.player.ai) }
         this.aiPlayers = () => { return this.clients.filter(c => c.player.ai && !c.player.orb) }
@@ -164,8 +164,8 @@ class Game {
         });
     }
 
-    emitToAllClients(event, eventData){
-        var clients = this.humanPlayers().concat(this.spectators);
+    emitToAllClients(event, eventData, context = this){
+        var clients = context.humanPlayers().concat(context.spectators);
         clients.forEach(client => {
             client.emit(event, eventData);
         });
@@ -208,7 +208,16 @@ class Game {
                     client.player.xVelocity = leftMultiplier * Math.max(client.player.xVelocity - Constants.ACCELERATION, -Constants.TERMINAL);
                 }
             } else {
-                client.player.xVelocity = client.player.xVelocity * Constants.FRICTION;
+                if(client.player.right && client.player.xVelocity < 0){
+                    var rightMultiplier = client.player.right == true ? 1 : (1/0.75) * client.player.right;
+                    client.player.xVelocity = rightMultiplier * Math.min(client.player.xVelocity + Constants.ACCELERATION, Constants.TERMINAL);
+                }
+                else if(client.player.left && client.player.xVelocity > 0){
+                    var leftMultiplier = client.player.left == true ? 1 : (1/0.75) * client.player.left;
+                    client.player.xVelocity = leftMultiplier * Math.max(client.player.xVelocity - Constants.ACCELERATION, -Constants.TERMINAL);
+                } else {
+                    client.player.xVelocity = client.player.xVelocity * Constants.FRICTION;
+                }
             }
             var inAirBoostCooldown = (!client.player.onSurface.includes(true) ? this.gameMode.level.inAirBoostCooldown || 1 : 1);
             client.player.boostCooldown = Math.max(client.player.boostCooldown - inAirBoostCooldown, 0);
@@ -309,7 +318,15 @@ class Game {
                     if(clientSpeed < otherClientSpeed){
                         if(this.gameMode.damageEnabled) client.player.health = Math.max(client.player.health - (this.gameMode.playerDamage ? this.gameMode.playerDamage : otherClientSpeed), 0);
                         if(client.player.health == 0){
-                            if(!client.player.ai && !otherClient.player.ai) otherClient.emit("kill");
+                            if(!client.player.ai && !otherClient.player.ai){
+                                otherClient.emit("kill");
+                            }
+                            this.emitToAllClients("event", {
+                                type: "death",
+                                method: Constants.DEATHMETHODS[Math.floor(Math.random() * Constants.DEATHMETHODS.length)],
+                                killed: client.player.name,
+                                killer: otherClient.player.name
+                            });
                         }
                         client.player.invincibility = 100;
                     } else if(speedDifference == 0){
@@ -356,6 +373,11 @@ class Game {
             }
             if(client.player.y >= Constants.HEIGHT + Constants.PLAYERHEIGHT){
                 client.player.health = 0;
+                this.emitToAllClients("event", {
+                    type: "death",
+                    killed: client.player.name,
+                    method: Constants.SUICIDEMETHODS[Math.floor(Math.random() * Constants.SUICIDEMETHODS.length)]
+                });
             }
         })
         this.invulnerablePlayers().forEach((client, i) => {
@@ -379,7 +401,7 @@ class Game {
     
     reset() {
         var positions = [];
-        this.gameMode = new GameModes[Math.floor(Math.random() * GameModes.length)](this.clients, this.ticks);
+        this.gameMode = new GameModes[Math.floor(Math.random() * GameModes.length)](this.clients, this.ticks, (v1, v2) =>this.emitToAllClients(v1,v2,this));
 
         var aiPlayers = this.aiPlayers().filter(c => !c.player.orb);
         var orb = this.aiPlayers().filter(c => c.player.orb);

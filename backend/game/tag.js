@@ -4,8 +4,8 @@ var Constants = require('../constants');
 var Levels = require('../levels');
 
 class Tag extends GameMode {
-    constructor(clients, startingTicks){
-        super(clients, false);
+    constructor(clients, startingTicks, emitToAllClients){
+        super(clients, false, emitToAllClients);
         var possibleLevels = [Levels.Space, Levels.Complex, Levels.Maze];
         if(clients.length < 10){
             possibleLevels.push(Levels.Basic);
@@ -44,11 +44,21 @@ class Tag extends GameMode {
             client2.player.it = true;
             client1.player.it = false;
             client2.player.invincibility = 1000;
+            this.emitToAllClients("event", {
+                type: "halo",
+                from: client1.player.name,
+                to: client2.player.name
+            });
         }
         if(client2wasIt){
             client2.player.it = false;
             client1.player.it = true;
             client1.player.invincibility = 1000;
+            this.emitToAllClients("event", {
+                type: "halo",
+                from: client2.player.name,
+                to: client1.player.name
+            });
         }
     }
 

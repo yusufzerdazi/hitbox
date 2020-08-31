@@ -11,10 +11,12 @@ module.exports = Object.freeze({
     HEIGHT: 540,
     WALLDAMPING: 0.75,
     DAMAGETHRESHOLD: 5,
-    FRICTION: 0.96,
+    FRICTION: 0.99,
     BOOSTSPEED: 35,
     DUCKEDHEIGHT: 1/5,
     MAXPLAYERS: 10,
     BOOSTCOST: 60,
-    MAXDISTANCE: 0
+    MAXDISTANCE: 0,
+    DEATHMETHODS: [" murdered ", " boxed ", " destroyed ", " hit ", " killed "],
+    SUICIDEMETHODS: [" drowned", " killed themself", " died"]
 });

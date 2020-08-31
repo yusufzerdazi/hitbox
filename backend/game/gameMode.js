@@ -1,7 +1,8 @@
 class GameMode {
-    constructor(clients, damageEnabled) {
+    constructor(clients, damageEnabled, emitToAllClients) {
         this.clients = clients;
         this.damageEnabled = damageEnabled;
+        this.emitToAllClients = emitToAllClients;
     }
 
     endCondition(ticks){
