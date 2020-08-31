@@ -36,7 +36,8 @@ class GameCanvas extends React.Component {
             cameraType: cameraType.FOLLOWING,
             gameMode: {title:null,subtitle:null},
             zoomRate: 1,
-            players: {}
+            players: {},
+            events: []
         };
 
         this.canvasRef = React.createRef();
@@ -151,6 +152,7 @@ class GameCanvas extends React.Component {
         this.drawGameCountdown();
         this.drawGameMode();
         this.drawScores(players, lastWinner);
+        this.drawEvents();
     }
 
     drawWater(){
@@ -540,6 +542,57 @@ class GameCanvas extends React.Component {
         }
     }
 
+    drawEvents(){
+        var events = this.state.events.filter(d => Utils.millis() < d.timestamp + 5000);
+        this.setState({events});
+        this.ctx.save();
+        this.ctx.font = 15*(1/this.state.scale) + "px " + FONT;
+        this.ctx.textAlign = "right";
+
+        this.ctx.shadowColor = "black";
+        this.ctx.shadowOffsetX = 0.7;
+        this.ctx.shadowOffsetY = 0.7;
+        this.ctx.shadowBlur = 1;
+
+        events.sort((ev1, ev2) => {
+            if(ev1.timestamp > ev2.timestamp){
+                return -1;
+            }
+            return 1;
+        })
+        
+        events.forEach((d, i) => {
+            if(i >= 10){
+                return;
+            }
+            if(d.type == "death"){
+                this.ctx.fillStyle = 'red';
+                this.ctx.fillText(
+                    d.killer ? d.killer + d.method + d.killed : d.killed + d.method,
+                    (this.ctx.canvas.width / 2 - 15) / this.state.scale,
+                    (this.ctx.canvas.height / 2 - 80 - 20 * (1+i)) / this.state.scale
+                );
+            }
+            if(d.type == "halo"){
+                this.ctx.fillStyle = 'yellow';
+                this.ctx.fillText(
+                    d.to + " took the halo from " + d.from,
+                    (this.ctx.canvas.width / 2 - 15) / this.state.scale,
+                    (this.ctx.canvas.height / 2 - 80 - 20 * (1+i)) / this.state.scale
+                );
+            }
+            if(d.type == "box"){
+                this.ctx.fillStyle = 'yellow';
+                this.ctx.fillText(
+                    d.player + " collected a box",
+                    (this.ctx.canvas.width / 2 - 15) / this.state.scale,
+                    (this.ctx.canvas.height / 2 - 80 - 20 * (1+i)) / this.state.scale
+                );
+            }
+        })
+        this.ctx.restore();
+    }
+
     drawScores(players, lastWinner){
         this.ctx.save();
         this.ctx.fillStyle = 'white';
@@ -744,6 +797,13 @@ class GameCanvas extends React.Component {
 
     gameMode(gameMode){
         this.setState({gameMode: gameMode});
+    }
+
+    event(event){
+        var events = this.state.events;
+        event.timestamp = Utils.millis();
+        events.push(event);
+        this.setState({events});
     }
 
     fullScreen() {

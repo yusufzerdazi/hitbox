@@ -24,18 +24,20 @@ class GameService {
         this.audioLoader = new THREE.AudioLoader();
 
         var $this = this;
-        this.wallSound.forEach(ws => {
+        this.wallSound.forEach((ws, i) => {
             this.audioLoader.load(wall, function (buffer) {
                 ws.setBuffer(buffer);
                 ws.duration = 0.1;
                 ws.setVolume(1/$this.wallSound.length);
+                ws.playbackRate = 0.9 + i * 0.1;
             });
         });
-        this.playerSound.forEach(ps => {
+        this.playerSound.forEach((ps, i) => {
             this.audioLoader.load(hit, function (buffer) {
                 ps.setBuffer(buffer);
                 ps.duration = 0.1;
                 ps.setVolume(1/$this.playerSound.length);
+                ps.playbackRate = 0.9 + i * 0.1;
             });
         });
     }
@@ -137,6 +139,12 @@ class GameService {
                 FunctionName: "playerLoses",
                 GeneratePlayStreamEvent: true
             });
+        });
+
+        this.socket.on('event', (event) => {
+            if(this.mounted){
+                this.canvasRef.current.event(event);
+            }
         });
 
         document.addEventListener("keydown", e => {
