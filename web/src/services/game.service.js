@@ -3,6 +3,7 @@ import io from 'socket.io-client';
 import * as THREE from 'three';
 import hit from '../assets/sounds/hit.mp3';
 import wall from '../assets/sounds/wall.mp3';
+import hitbox from '../assets/sounds/hitbox.mp3';
 import Utils from '../utils';
 
 class GameService {
@@ -21,17 +22,25 @@ class GameService {
 
         this.wallSound = [new THREE.Audio(this.listener), new THREE.Audio(this.listener), new THREE.Audio(this.listener)];
         this.playerSound = [new THREE.Audio(this.listener), new THREE.Audio(this.listener), new THREE.Audio(this.listener)];
+        this.bgMusic = new THREE.Audio(this.listener);
         this.audioLoader = new THREE.AudioLoader();
 
         var $this = this;
+
+        this.audioLoader.load(hitbox, function(buffer){
+            $this.bgMusic.setBuffer(buffer);
+            $this.bgMusic.setVolume(0.2);
+            $this.bgMusic.setLoop(true);
+        });
+
         this.wallSound.forEach((ws, i) => {
             this.audioLoader.load(wall, function (buffer) {
                 ws.setBuffer(buffer);
                 ws.duration = 0.1;
-                ws.setVolume(1/$this.wallSound.length);
                 ws.playbackRate = 0.9 + i * 0.1;
             });
         });
+
         this.playerSound.forEach((ps, i) => {
             this.audioLoader.load(hit, function (buffer) {
                 ps.setBuffer(buffer);
@@ -238,6 +247,7 @@ class GameService {
     }
 
     play(name, room) {
+        this.bgMusic.play();
         this.socket.emit('play', { name: name, room: room });
     }
 
@@ -255,6 +265,11 @@ class GameService {
     
     toggleSound() {
         this.soundEnabled = !this.soundEnabled;
+        if(!this.soundEnabled){
+            this.bgMusic.pause();
+        } else {
+            this.bgMusic.play();
+        }
     }
 
     changeName(name){
@@ -262,13 +277,17 @@ class GameService {
     }
 
     playerHit(){
-        this.playerSound[Math.floor(Math.random() * this.playerSound.length)].play();
-        this.playerSoundIndex = (this.playerSoundIndex + 1) % this.playerSound.length;
+        var soundToPlay = this.playerSound[Math.floor(Math.random() * this.playerSound.length)];
+        if(!soundToPlay.isPlaying){
+            soundToPlay.play();
+        }
     }
 
     wallHit(){
-        this.wallSound[Math.floor(Math.random() * this.wallSound.length)].play();
-        this.wallSoundIndex = (this.wallSoundIndex + 1) % this.wallSound.length;
+        var soundToPlay = this.wallSound[Math.floor(Math.random() * this.wallSound.length)];
+        if(!soundToPlay.isPlaying){
+            soundToPlay.play();
+        }
     }
 
     onWin(callback) {
