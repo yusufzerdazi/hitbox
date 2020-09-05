@@ -11,9 +11,9 @@ class DeathWall extends GameMode {
         this.subtitle = "Don't touch the wall!";
         this.startingTicks = ticks;
         this.jumpDistance = 2 * ((2 * Constants.JUMPSPEED) / Constants.VERTICALACCELERATION) * Constants.TERMINAL;
-        this.deathWallX = - 1500;
+        this.deathWallX = - 2000;
         this.maxDistance = 0;
-        this.deathWallSpeed = 5;
+        this.deathWallSpeed = 10;
         this.level.maxDistance = this.level.maxDistance || 0;
         this.winner = null;
     }
@@ -58,12 +58,12 @@ class DeathWall extends GameMode {
     onTick(){
         var farthestRigthPlatformX = Math.max.apply(Math, this.level.platforms.map((platform) => platform.rightX()));
         var farthestRightPlayer = Math.max.apply(Math, this.clients.map(c => c.player.x));
-        this.deathWallSpeed = Math.min(Constants.TERMINAL, this.deathWallSpeed * 1.001);
+        this.deathWallSpeed = Math.min(Constants.TERMINAL + 1, this.deathWallSpeed * 1.001);
         if(this.clients.length > 0){
             this.deathWallX += this.deathWallSpeed;
         } else {
-            this.deathWallX = - 1500;
-            this.deathWallSpeed = 5;
+            this.deathWallX = - 2000;
+            this.deathWallSpeed = 10;
         }
         this.level.maxDistance = Math.max(farthestRightPlayer, this.level.maxDistance);
         this.maxDistance = Math.max(farthestRightPlayer, this.maxDistance);
@@ -80,7 +80,8 @@ class DeathWall extends GameMode {
         if(farthestRightPlayer + 4000 < farthestRigthPlatformX){
             return false;
         }
-        var newPlatformX = farthestRigthPlatformX + this.jumpDistance * Math.random();
+
+        var newPlatformX = farthestRigthPlatformX + (this.jumpDistance) * Math.random() + (farthestRigthPlatformX / 50);
         var newPlatformY = Constants.HEIGHT / 2 - Math.random() * 1000;
         var newPlatformWidth = 200 + Math.random() * 1000;
         var newPlatformHeight = 200;

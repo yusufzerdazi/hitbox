@@ -11,8 +11,8 @@ var CollectTheBoxes = require('./game/collectTheBoxes');
 var Square = require('./square');
 var Constants = require('./constants');
 
-var GameModes = [CollectTheBoxes, DeathWall, BattleRoyale, Tag];
-//GameModes = [CollectTheBoxes];
+var GameModes = [CollectTheBoxes, DeathWall, BattleRoyale, Tag, BattleRoyale, BattleRoyale];
+//GameModes = [DeathWall];
 
 const state = {
     STARTED: "started",

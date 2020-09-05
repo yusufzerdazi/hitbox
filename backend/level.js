@@ -5,7 +5,6 @@ class Level {
         this.scale = scale;
         this.spawnArea = spawnArea;
         this.gravity = gravity;
-        this.maxDistance = 8761 * 50;
     }
 }
 
