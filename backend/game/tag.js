@@ -46,8 +46,14 @@ class Tag extends GameMode {
             client2.player.invincibility = 1000;
             this.emitToAllClients("event", {
                 type: "halo",
-                from: client1.player.name,
-                to: client2.player.name
+                from: {
+                    name: client1.player.name,
+                    colour: client1.player.colour
+                },
+                to: {
+                    name: client2.player.name,
+                    colour: client2.player.colour
+                }
             });
         }
         if(client2wasIt){
@@ -56,8 +62,14 @@ class Tag extends GameMode {
             client1.player.invincibility = 1000;
             this.emitToAllClients("event", {
                 type: "halo",
-                from: client2.player.name,
-                to: client1.player.name
+                from: {
+                    name: client2.player.name,
+                    colour: client2.player.colour
+                },
+                to: {
+                    name: client1.player.name,
+                    colour: client1.player.colour
+                }
             });
         }
     }

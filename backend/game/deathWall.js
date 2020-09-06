@@ -72,7 +72,11 @@ class DeathWall extends GameMode {
                 c.player.health = 0;
                 this.emitToAllClients("event", {
                     type: "death",
-                    killed: c.player.name,
+                    colour: "orange",
+                    killed: {
+                        name: c.player.name,
+                        colour: c.player.colour
+                    },
                     method: " was consumed by the wall"
                 })
             }

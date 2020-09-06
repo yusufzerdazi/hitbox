@@ -178,12 +178,15 @@ class Game {
             } else if(client.player.boostRight && client.player.boostCooldown + Constants.BOOSTCOST <= 100){
                 client.player.xVelocity = Constants.BOOSTSPEED;
                 client.player.boostCooldown += Constants.BOOSTCOST;
+                this.emitToAllClients("boost");
             } else if(client.player.boostLeft && client.player.boostCooldown + Constants.BOOSTCOST <= 100){
                 client.player.xVelocity = -Constants.BOOSTSPEED;
                 client.player.boostCooldown += Constants.BOOSTCOST;
+                this.emitToAllClients("boost");
             } else if(client.player.clicked && client.player.boostRight == 0 && client.player.xVelocity != 0 && client.player.boostCooldown + Constants.BOOSTCOST <= 100){
                 client.player.xVelocity = Constants.BOOSTSPEED * Math.sign(client.player.xVelocity);
                 client.player.boostCooldown += Constants.BOOSTCOST;
+                this.emitToAllClients("boost");
             }
 
             if(client.player.down && client.player.onSurface.includes(true) && client.player.yVelocity >= 0){
@@ -197,6 +200,7 @@ class Game {
             if(client.player.down && client.player.boostCooldown + Constants.BOOSTCOST <= 100 && !client.player.onSurface.includes(true)){
                 client.player.yVelocity = Constants.BOOSTSPEED;
                 client.player.boostCooldown += Constants.BOOSTCOST;
+                this.emitToAllClients("boost");
             }
             else if(Math.abs(client.player.xVelocity) <= Constants.TERMINAL){
                 if(client.player.right){
@@ -309,7 +313,11 @@ class Game {
         this.vulnerablePlayers().forEach(client => {
             this.movingPlayers().filter(c => c != client && c.player.invincibility == 0).forEach(otherClient=> {
                 if(client.player.isCollision(otherClient.player) && this.isDamaged(client.player, otherClient.player)) {
-                    wasCollision = true;
+                    if(client.player.orb || client.player.it || otherClient.player.it){
+                        wasCollision = "box";
+                    } else {
+                        wasCollision = wasCollision || "player";
+                    }
 
                     var clientSpeed = client.player.speed();
                     var otherClientSpeed = otherClient.player.speed();
@@ -324,8 +332,14 @@ class Game {
                             this.emitToAllClients("event", {
                                 type: "death",
                                 method: Constants.DEATHMETHODS[Math.floor(Math.random() * Constants.DEATHMETHODS.length)],
-                                killed: client.player.name,
-                                killer: otherClient.player.name
+                                killed: {
+                                    name: client.player.name,
+                                    colour: client.player.colour
+                                },
+                                killer: {
+                                    name: otherClient.player.name,
+                                    colour: otherClient.player.colour
+                                }
                             });
                         }
                         client.player.invincibility = 100;
@@ -375,7 +389,10 @@ class Game {
                 client.player.health = 0;
                 this.emitToAllClients("event", {
                     type: "death",
-                    killed: client.player.name,
+                    killed: {
+                        name: client.player.name,
+                        colour: client.player.colour
+                    },
                     method: Constants.SUICIDEMETHODS[Math.floor(Math.random() * Constants.SUICIDEMETHODS.length)]
                 });
             }
@@ -483,7 +500,7 @@ class Game {
                 this.calculateMovement();
                 var wasCollision = this.calculateCollision();
                 if(wasCollision){
-                    this.emitToAllClients("collision");
+                    this.emitToAllClients("collision", wasCollision);
                 }
                 if(this.aiEnabled){
                     this.moveAi();

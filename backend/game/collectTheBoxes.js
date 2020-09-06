@@ -38,14 +38,20 @@ class CollectTheBoxes extends GameMode {
             client1.player.respawn(this.clients, this.level);
             this.emitToAllClients("event", {
                 type: "box",
-                player: client2.player.name
+                player: {
+                    name: client2.player.name,
+                    colour: client2.player.colour
+                }
             });
         } else if(client2.player.orb){
             client1.player.lives += 1;
             client2.player.respawn(this.clients, this.level);
             this.emitToAllClients("event", {
                 type: "box",
-                player: client1.player.name
+                player: {
+                    name: client1.player.name,
+                    colour: client1.player.colour
+                }
             });
         }
     }
