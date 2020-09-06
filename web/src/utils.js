@@ -9,5 +9,19 @@ export default {
     millis(){
         var d = new Date();
         return d.getTime();
+    },
+
+    fillMixedText(ctx, args, x, y) {
+        let defaultFillStyle = ctx.fillStyle;
+        let defaultFont = ctx.font;
+      
+        ctx.save();
+        args.forEach(({ text, fillStyle, font }) => {
+          ctx.fillStyle = fillStyle || defaultFillStyle;
+          ctx.font = font || defaultFont;
+          ctx.fillText(text, x, y);
+          x -= ctx.measureText(text).width;
+        });
+        ctx.restore();
     }
 }

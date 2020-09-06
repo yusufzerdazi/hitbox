@@ -132,18 +132,8 @@ class GameCanvas extends React.Component {
         level.forEach(l => this.drawLevelPlatform(l));
         this.drawWater();
 
-        players
-            .filter(p => p.y > 400)
-            .forEach(player => this.drawPlayer(player));
-        players = players.concat();
-        players.sort((player1, player2) => {
-            if (Math.abs(player2.y - player1.y) > this.state.playerSize) {
-                return Math.abs(player2.y) - Math.abs(player1.y);
-            }
-            return Math.abs(player2.x - 480) - Math.abs(player1.x - 480);
-        })
         this.drawDeathWall();
-        players.filter(p => p.y <= 400).forEach(player => this.drawPlayer(player, name));
+        players.forEach(player => this.drawPlayer(player, name));
         players.filter(p => p.name === name).forEach(player => {
             this.drawPlayerStats(player);
             this.drawPlayerScore(player);
@@ -321,23 +311,26 @@ class GameCanvas extends React.Component {
         this.ctx.fill();
     }
 
+    drawPulsingOrb(player, xOffset, yOffset){
+        this.ctx.save();
+        this.ctx.beginPath();
+        this.ctx.fillStyle = "red";
+        this.ctx.globalAlpha = 0.4;
+        var pulse = 8 * (1.2 + Math.sin((0.001 * Utils.millis())));
+        this.drawRectangle(player.x - pulse + xOffset, player.y + pulse + yOffset, 50 + 2 * pulse, - 50 - 2 * pulse);
+        this.ctx.fill();
+        this.ctx.restore();
+    }
+
     drawPlayerCube(player, width, height, xOffset, yOffset) {
         this.ctx.save();
-        var xVanishingPoint = this.state.camera.x;
-        var yVanishingPoint = -900 + this.state.camera.y;
 
         var playerX = player.x + xOffset;
         var playerY = player.y + yOffset;
 
-        var rightX = (playerX + width);
-        var leftX = (playerX);
-        var topY = (playerY - height);
-        var bottomY = (playerY);
-        var centerX = (playerX + (width / 2));
-        var centerY = (playerY - (height / 2));
-
         this.ctx.beginPath();
         this.ctx.fillStyle = player.colour;
+        
         this.applyRotation(player, playerX, playerY, width);
 
         if(player.ducked){
@@ -399,23 +392,6 @@ class GameCanvas extends React.Component {
             width,
             height
         );
-    }
-
-    drawLine(x1, y1, xLength, yLength){
-        this.ctx.beginPath();
-        this.ctx.moveTo(x1 - this.state.camera.x, y1 - this.state.camera.y);
-        this.ctx.lineTo(x1 + xLength - this.state.camera.x, y1 + yLength - this.state.camera.y);
-        this.ctx.stroke();
-    }
-
-    drawPath(x1, y1, x2, y2, lineWidth){
-        this.ctx.save();
-        this.ctx.lineWidth = lineWidth;
-        this.ctx.beginPath();
-        this.ctx.moveTo(x1 - this.state.camera.x, y1 - this.state.camera.y);
-        this.ctx.lineTo(x2 - this.state.camera.x, y2 - this.state.camera.y);
-        this.ctx.stroke();
-        this.ctx.restore();
     }
 
     drawPlayerName(player, height, xOffset, yOffset) {
@@ -565,30 +541,29 @@ class GameCanvas extends React.Component {
             if(i >= 10){
                 return;
             }
+            var text = [];
             if(d.type == "death"){
-                this.ctx.fillStyle = 'red';
-                this.ctx.fillText(
-                    d.killer ? d.killer + d.method + d.killed : d.killed + d.method,
-                    (this.ctx.canvas.width / 2 - 15) / this.state.scale,
-                    (this.ctx.canvas.height / 2 - 80 - 20 * (1+i)) / this.state.scale
-                );
+                if(!d.killer){
+                    text.push({text: d.method, fillStyle: d.colour || "red"});
+                }
+                text.push({text: d.killed.name, fillStyle: d.killed.colour});
+                if(d.killer){
+                    text.push({text: d.method, fillStyle: d.colour || "red"});
+                    text.push({text: d.killer.name, fillStyle: d.killer.colour});
+                }
             }
             if(d.type == "halo"){
-                this.ctx.fillStyle = 'yellow';
-                this.ctx.fillText(
-                    d.to + " took the halo from " + d.from,
-                    (this.ctx.canvas.width / 2 - 15) / this.state.scale,
-                    (this.ctx.canvas.height / 2 - 80 - 20 * (1+i)) / this.state.scale
-                );
+                var text = [];
+                text.push({text: d.from.name, fillStyle: d.from.colour});
+                text.push({text: " took the halo from " , fillStyle: "yellow"});
+                text.push({text: d.to.name, fillStyle: d.to.colour});
             }
             if(d.type == "box"){
-                this.ctx.fillStyle = 'yellow';
-                this.ctx.fillText(
-                    d.player + " collected a box",
-                    (this.ctx.canvas.width / 2 - 15) / this.state.scale,
-                    (this.ctx.canvas.height / 2 - 80 - 20 * (1+i)) / this.state.scale
-                );
+                var text = [];
+                text.push({text: " collected a box", fillStyle: "yellow"});
+                text.push({text: d.player.name, fillStyle: d.player.colour});
             }
+            Utils.fillMixedText(this.ctx, text, (this.ctx.canvas.width / 2 - 15) / this.state.scale, (this.ctx.canvas.height / 2 - 80 - 20 * (1+i)) / this.state.scale);
         })
         this.ctx.restore();
     }
@@ -694,16 +669,19 @@ class GameCanvas extends React.Component {
         var breathingOffset = (player.xVelocity ==- 0 && player.yVelocity === 0) ? 3 * Math.sin((0.01 * Utils.millis())) : 0;
         var yOffset = player.ducked ? 0 : -30 + breathingOffset;
 
-        var rotation = player.xVelocity * 0.002 * !player.ducked;
+        if(player.orb){
+            this.drawPulsingOrb(player, xOffset, yOffset);
+        }
         if(player.it){
             this.drawPlayerIsIt(player, currentPlayerWidth, currentPlayerHeight, xOffset, yOffset);
         }
-        if(!player.ducked && player.alive){
+        if(!player.ducked && player.alive && !player.orb){
             this.drawPlayerLegs(player, breathingOffset);
         }
         this.drawPlayerCube(player, currentPlayerWidth, currentPlayerHeight, xOffset, yOffset);
         this.drawPlayerName(player, currentPlayerHeight, xOffset, yOffset);
 
+        
         // If player is dead, don't draw the rest.
         if (!player.alive) {
             this.ctx.globalAlpha = 1;

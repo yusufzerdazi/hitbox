@@ -1,10 +1,21 @@
 
 import io from 'socket.io-client';
 import * as THREE from 'three';
+
+import ow1 from '../assets/sounds/ow1.mp3';
+import ow2 from '../assets/sounds/ow2.mp3';
+import ow3 from '../assets/sounds/ow3.mp3';
+import ow4 from '../assets/sounds/ow4.mp3';
+import ow5 from '../assets/sounds/ow5.mp3';
+import whoosh from '../assets/sounds/whoosh.mp3';
 import hit from '../assets/sounds/hit.mp3';
 import wall from '../assets/sounds/wall.mp3';
+import box from '../assets/sounds/box.mp3';
+
 import hitbox from '../assets/sounds/hitbox.mp3';
 import Utils from '../utils';
+
+const OW = [ow1, ow2, ow4, ow5];
 
 class GameService {
     constructor(){
@@ -22,22 +33,40 @@ class GameService {
 
         this.wallSound = [new THREE.Audio(this.listener), new THREE.Audio(this.listener), new THREE.Audio(this.listener)];
         this.playerSound = [new THREE.Audio(this.listener), new THREE.Audio(this.listener), new THREE.Audio(this.listener)];
+        this.owSound = [new THREE.Audio(this.listener), new THREE.Audio(this.listener), new THREE.Audio(this.listener), new THREE.Audio(this.listener)];
         this.bgMusic = new THREE.Audio(this.listener);
+        this.boxSound = new THREE.Audio(this.listener);
+        this.whoosh = [new THREE.Audio(this.listener), new THREE.Audio(this.listener), new THREE.Audio(this.listener)];
         this.audioLoader = new THREE.AudioLoader();
 
         var $this = this;
 
-        this.audioLoader.load(hitbox, function(buffer){
-            $this.bgMusic.setBuffer(buffer);
-            $this.bgMusic.setVolume(0.2);
-            $this.bgMusic.setLoop(true);
+        this.audioLoader.load(box, function(buffer){
+            $this.boxSound.setBuffer(buffer);
+            $this.boxSound.setVolume(0.1);
+        });
+
+        this.whoosh.forEach((w, i) => {
+            this.audioLoader.load(whoosh, function(buffer){
+                w.setBuffer(buffer);
+                w.setVolume(0.05);
+                w.playbackRate = 0.9 + i * 0.1;
+            });
         });
 
         this.wallSound.forEach((ws, i) => {
             this.audioLoader.load(wall, function (buffer) {
                 ws.setBuffer(buffer);
                 ws.duration = 0.1;
+                ws.setVolume(0.2);
                 ws.playbackRate = 0.9 + i * 0.1;
+            });
+        });
+
+        this.owSound.forEach((ow, i) => {
+            this.audioLoader.load(OW[i], function (buffer) {
+                ow.setBuffer(buffer);
+                ow.setVolume(0.07);
             });
         });
 
@@ -73,15 +102,26 @@ class GameService {
             }
         });
 
-        this.socket.on('collision', () => {
+        this.socket.on('collision', (type) => {
             if (this.soundEnabled && this.mounted) {
-                this.playerHit();
+                if(type === "player"){
+                    this.playerHit();
+                }
+                if(type == "box"){
+                    this.boxHit();
+                }
             }
         });
 
         this.socket.on('hitWall', () => {
             if (this.soundEnabled && this.mounted) {
                 this.wallHit();
+            }
+        });
+
+        this.socket.on('boost', () => {
+            if (this.soundEnabled && this.mounted) {
+                this.boost();
             }
         });
 
@@ -278,13 +318,30 @@ class GameService {
 
     playerHit(){
         var soundToPlay = this.playerSound[Math.floor(Math.random() * this.playerSound.length)];
+        var soundToPlay2 = this.owSound[Math.floor(Math.random() * this.owSound.length)];
         if(!soundToPlay.isPlaying){
             soundToPlay.play();
+        }
+        if(!soundToPlay2.isPlaying){
+            soundToPlay2.play();
         }
     }
 
     wallHit(){
         var soundToPlay = this.wallSound[Math.floor(Math.random() * this.wallSound.length)];
+        if(!soundToPlay.isPlaying){
+            soundToPlay.play();
+        }
+    }
+
+    boxHit(){
+        if(!this.boxSound.isPlaying){
+            this.boxSound.play();
+        }
+    }
+
+    boost(){
+        var soundToPlay = this.whoosh[Math.floor(Math.random() * this.whoosh.length)];
         if(!soundToPlay.isPlaying){
             soundToPlay.play();
         }
