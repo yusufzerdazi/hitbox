@@ -371,12 +371,16 @@ class Game extends React.Component {
                     <span style={{backgroundColor:'indigo', color: 'white' }} onClick={() => this.openInstructions()} className={styles.addAiButton}>
                         Controls
                     </span>
+                    {this.state.user?.name == "yusuf" || this.state.user?.name == "intrinsion" ? 
+                    <>
                     <span style={{backgroundColor:'lawngreen', color: 'white' }} onClick={this.addAi} className={styles.addAiButton}>
                         +AI
                     </span>
                     <span style={{backgroundColor:'indianred', color: 'white' }} onClick={this.removeAi} className={styles.addAiButton}>
                         -AI
                     </span>
+                    </>
+                    : <></>}
                 </div> : <></>
                 }
                 <Gamepad
