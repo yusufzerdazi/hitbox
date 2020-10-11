@@ -37,12 +37,10 @@ class Game extends React.Component {
             editingUsername: true,
             soundEnabled: true,
             room: room,
-            loggingIn: false,
-            leaderboardOpen: false,
-            instructionsOpen: false
+            playing: false
         };
         this.canvasRef = React.createRef();
-        this.gameService = new GameService(this.canvasRef);
+        this.gameService = new GameService();
     }
 
     componentWillUnmount() {
@@ -53,10 +51,19 @@ class Game extends React.Component {
 
     getUsername() {
         var state = store.getState();
-        console.log(state);
-        if(state.logIn?.user?.name){
+        if(state.logIn?.user?.name && !this.state.playing && state.options?.playing){
             this.gameService.changeName(state.logIn.user.name);
-            this.gameService.play(state.logIn.user.name);
+            window.PlayFabClientSDK.GetPlayerStatistics({
+                StatisticNames: ["rank"]
+            }).then(s => {
+                var rank = s.data?.Statistics[0]?.Value || 1000;
+                this.gameService.play(state.logIn.user, null, rank);
+                this.setState({playing: true});
+            });
+        }
+        if(!state.options?.playing && this.state.playing){
+            this.gameService.quit();
+            this.setState({playing: false});
         }
     }
 
@@ -68,7 +75,7 @@ class Game extends React.Component {
         });
         
         this.gameService
-            .setCanvas(this.current)
+            .setCanvas(this.canvasRef)
             .setMounted(true)
             .onWin(winner => this.setState({lastWinner: winner}));
         
@@ -87,14 +94,6 @@ class Game extends React.Component {
                 }
             }
         });
-    }
-
-    addAi(){
-        this.gameService.addAi();
-    }
-
-    removeAi(){
-        this.gameService.removeAi();
     }
 
     buttonUp(buttonName) {
@@ -189,20 +188,6 @@ class Game extends React.Component {
         return (
             <>
                 <GameCanvas ref={this.canvasRef} />
-                { !isMobile ?
-                <div className={styles.addAi}>
-                    {this.props.user?.name == "yusuf" || this.props.user?.name == "intrinsion" ? 
-                    <>
-                    <span style={{backgroundColor:'lawngreen', color: 'white' }} onClick={this.addAi} className={styles.addAiButton}>
-                        +AI
-                    </span>
-                    <span style={{backgroundColor:'indianred', color: 'white' }} onClick={this.removeAi} className={styles.addAiButton}>
-                        -AI
-                    </span>
-                    </>
-                    : <></>}
-                </div> : <></>
-                }
                 <Gamepad
                     onA={this.jump}
                     onRT={this.boostRight}
@@ -219,8 +204,6 @@ class Game extends React.Component {
     }
 
     bindFunctions(){
-        this.addAi = this.addAi.bind(this);
-        this.removeAi = this.removeAi.bind(this);
         this.getUsername = this.getUsername.bind(this);
         this.buttonUp = this.buttonUp.bind(this);
         this.axisChange = this.axisChange.bind(this);

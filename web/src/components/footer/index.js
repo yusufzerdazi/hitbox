@@ -8,16 +8,17 @@ import Leaderboard from '../../pages/leaderboard';
 import Instructions from '../../pages/instructions';
 
 import { connect } from "react-redux";
-import { store } from '../../redux/store';
 import Collapsible from 'react-collapsible';
+import axios from 'axios';
 
-import { LOG_IN, CAMERA, USERNAME_UPDATED} from '../../constants/actionTypes';
+import { LOG_IN, CAMERA, USERNAME_UPDATED, PLAYING } from '../../constants/actionTypes';
 import { FOLLOWING, DRAG } from '../../constants/cameraTypes';
 
 const mapStateToProps = state => {
     return {
         user: state.logIn.user,
-        cameraType: state.options.cameraType
+        cameraType: state.options.cameraType,
+        isPlaying: state.options.playing
     }
 };
 
@@ -33,6 +34,10 @@ const mapDispatchToProps = dispatch => ({
     camera: x => dispatch({
       type: CAMERA,
       cameraType: x
+    }),
+    playing: x => dispatch({
+      type: PLAYING,
+      playing: x
     })
 });
 
@@ -49,6 +54,8 @@ class Footer extends React.Component {
     this.typeUsername = this.typeUsername.bind(this);
     this.setName = this.setName.bind(this);
     this.validateUserName = this.validateUserName.bind(this);
+    this.onFileUpload = this.onFileUpload.bind(this);
+    this.uploadAvatar = this.uploadAvatar.bind(this);
   }
 
   componentDidMount(){
@@ -74,9 +81,11 @@ class Footer extends React.Component {
         }
         this.props.logIn(response.data.PlayerProfile);
         window.PlayFabClientSDK.GetPlayerStatistics({
-          StatisticNames: ["wins"]
+          StatisticNames: ["rank"]
         }).then(s => {
-          this.setState({score: s.data?.Statistics[0]?.Value || 0})
+          console.log(s);
+          var rank = s.data?.Statistics[0]?.Value || 1000;
+          this.setState({score: rank});
         });
       });
       
@@ -153,6 +162,34 @@ class Footer extends React.Component {
     this.logInWithCustomId();
   }
 
+  openModal(modal){
+    this.setState(prevState => ({  openModal: prevState.openModal != modal ? modal : null }));
+  }
+
+  toggleState(field){
+    var newState = {};
+    newState[field] = !this.state[field];
+    this.setState(newState);
+  }
+
+  onFileUpload(event){
+    this.setState({file: event.target.files[0]});
+  }
+
+  uploadAvatar(){
+    const data = new FormData() 
+    data.append('file', this.state.file);
+    data.append('playerId', this.props.user.id);
+    axios.post("https://hitboxfunctions.azurewebsites.net/api/UploadAvatar?code=CPb1i3KdhSwsewc2mWSM4SbeTdvCTq1Rrn5B3X7PaKjP2hehNEdtDQ==", data, {})
+    .then(res => {
+      this.setState({etag: Utils.uuidv4()});
+      console.log(this.state);
+    })
+    .catch(err => {
+
+    })
+  }
+
   render() {
     return (
       <>
@@ -160,17 +197,17 @@ class Footer extends React.Component {
       <div className={styles.footerContainer}>
         <div className={styles.profile}>
           <div className={styles.profileImageContainer} style={{float: "left"}}>
-            <img className={styles.profileImage} src={yz}/>
+            <img className={styles.profileImage} src={"https://hitbox.blob.core.windows.net/avatars/" + this.props.user.id + ".jpg?etag=" + this.state.etag}/>
           </div>
           <div style={{float: "left"}} className={styles.profileName}>
             {this.props.user?.name}
           </div>
           <div style={{float: "left"}} className={styles.score}>Rank: {this.state?.score}</div>
-          <div style={{float: "left"}} className={styles.options}  onClick={() => {this.setState(prevState => ({  optionsOpen: !prevState.optionsOpen }))}}>Options</div>
+          <div style={{float: "left"}} className={styles.options}  onClick={() => this.toggleState("optionsOpen")}>Options</div>
         </div>
         <Collapsible easing="ease-in-out" open={this.state.optionsOpen} >
           <div className={styles.optionsDetails}>
-            <div className={styles.option} onClick={() => {this.setState(prevState => ({  updatingUsername: !prevState.updatingUsername }))}}>Change username</div>
+            <div className={styles.option} onClick={() => this.toggleState("updatingUsername")}>Change username</div>
             <Collapsible easing="ease-in-out" open={this.state.updatingUsername} >
               <div className={styles.usernameUpdate}>
                 <div className={styles.name}>
@@ -183,11 +220,20 @@ class Footer extends React.Component {
                 <span>{this.state.usernameError}</span>
               </div> : <></> }
             </Collapsible>
-            <div className={styles.option}>Upload custom avatar</div>
-            <div className={styles.option} onClick={() => this.props.camera(this.props.cameraType == FOLLOWING ? DRAG : FOLLOWING)}>Toggle camera mode</div>
-            <div className={styles.option} onClick={() => {this.setState(prevState => ({  openModal: prevState.openModal != 'leaderboard' ? 'leaderboard' : null }))}}>Leaderboard</div>
-            <div className={styles.option} onClick={() => {this.setState(prevState => ({  openModal: prevState.openModal != 'controls' ? 'controls' : null }))}}>Controls</div>
-            <div className={styles.option}>Quit</div>
+            <div className={styles.option} onClick={() => this.toggleState("uploadingAvatar")}>Upload custom avatar</div>
+            <Collapsible easing="ease-in-out" open={this.state.uploadingAvatar} >
+              <div className={styles.usernameUpdate}>
+                <div className={styles.name}>
+                  <input type="file" name="file" onChange={this.onFileUpload}/>
+                </div>
+                {this.state.file ? <div className={styles.updateUsernameButton} onClick={this.uploadAvatar}>Upload</div> : <></> }
+              </div>
+            </Collapsible>
+            <div className={styles.option} onClick={() => this.props.camera(this.props.cameraType == FOLLOWING ? DRAG : FOLLOWING)}>Camera mode: {this.props.cameraType}</div>
+            <div className={styles.option} onClick={() => this.openModal("leaderboard")}>Leaderboard</div>
+            <div className={styles.option} onClick={() => this.openModal("controls")}>Controls</div>
+            {this.props.isPlaying ? <div className={styles.option} onClick={() => this.props.playing(false)}>Quit</div> : <></>}
+            {!this.props.isPlaying ? <div className={styles.option} onClick={() => this.props.playing(true)}>Play</div> : <></>}
           </div>
         </Collapsible>
       </div> : 

@@ -38,7 +38,8 @@ class GameCanvas extends React.Component {
             gameMode: {title:null,subtitle:null},
             zoomRate: 1,
             players: {},
-            events: []
+            events: [],
+            joining: false
         };
 
         this.canvasRef = React.createRef();
@@ -133,6 +134,30 @@ class GameCanvas extends React.Component {
         this.drawGameMode();
         this.drawScores(players, lastWinner);
         this.drawEvents();
+        if(players.filter(p => p.name === name).length == 0 && this.state.joining){
+            this.drawNotification();
+        }
+    }
+
+    joining(joining){
+        this.setState({joining: joining});
+    }
+
+    drawNotification(){
+        var yPosition = 100;
+        var fontSize = 30/this.state.scale;
+        var yOffset = (this.ctx.canvas.height / 4);
+        this.ctx.save()
+        this.ctx.fillStyle = 'black';
+        this.ctx.font = "bold " + fontSize+"px " + FONT;
+        this.ctx.shadowColor = "white";
+        this.ctx.shadowOffsetX = 1;
+        this.ctx.shadowOffsetY = 1;
+        this.ctx.shadowBlur = 1;
+        this.ctx.textAlign = "center";
+        this.ctx.font = "bold " + fontSize+"px " + FONT;
+        this.ctx.fillText("You'll be added at the\nstart of the next round." || "", 0, yPosition / this.state.scale);
+        this.ctx.restore()
     }
 
     drawWater(){
@@ -330,20 +355,26 @@ class GameCanvas extends React.Component {
         else {
             if(!(player.name in this.state.players) || player.health === 100){
                 var players = this.state.players;
-                players[player.name] = [{x: 0, y: 0},{x: width, y: 0},{x: width, y: -height}, {x: 0, y: -height}];
+                players[player.name] = {damage: [{x: 0, y: 0},{x: width, y: 0},{x: width, y: -height}, {x: 0, y: -height}], image: players[player.name]?.image};
                 this.setState({players});
             }
             var players = this.state.players;
-            while((players[player.name].length - 4) < (100 - player.health) / 2){
-                var newPolygon = this.addDamageVertices(players[player.name]);
-                players[player.name] = newPolygon;
+            while((players[player.name].damage.length - 4) < (100 - player.health) / 2){
+                var newPolygon = this.addDamageVertices(players[player.name].damage);
+                players[player.name].damage = newPolygon;
                 this.setState({players});
             }
-            this.drawPolygon(player, this.state.players[player.name], xOffset, yOffset);
+            this.drawPolygon(player, this.state.players[player.name].damage, xOffset, yOffset);
             this.ctx.clip();
-            if(!player.ducked && (player.name === "yusuf" || player.name === "intrinsion")){
-                this.ctx.globalAlpha = 0.5;
-                this.ctx.drawImage(ACTUALISE, playerX - this.state.camera.x - 5, playerY - height - this.state.camera.y - 5, width + 10, height + 10);
+
+            if(!this.state.players[player.name].image){
+                const playerImage = new Image();
+                playerImage.src = "https://hitbox.blob.core.windows.net/avatars/" + player.id + ".jpg";
+                players[player.name].image = playerImage
+                this.setState({players});
+            }
+            if(this.state.players[player.name].image.height != 0){
+                this.ctx.drawImage(this.state.players[player.name].image, playerX - this.state.camera.x - 5, playerY - height - this.state.camera.y - 5, width + 10, height + 10);
             }
         }
         
@@ -414,7 +445,7 @@ class GameCanvas extends React.Component {
         var playerY = player.y + yOffset;
         this.applyRotation(player, playerX, playerY, width);
         var boostPolygon = [];
-        var polygon = this.state.players[player.name];
+        var polygon = this.state.players[player.name].damage;
         polygon.forEach((p, i) => {
             if(p.y > - height + (100 - player.boostCooldown) / 2){
                 boostPolygon.push({x: (p.x - width / 2) * 0.8 + width / 2, y: (p.y + height / 2) * 0.8 - height / 2});
@@ -539,7 +570,7 @@ class GameCanvas extends React.Component {
                 text.push({text: " collected a box", fillStyle: "yellow"});
                 text.push({text: d.player.name, fillStyle: d.player.colour});
             }
-            Utils.fillMixedText(this.ctx, text, (this.ctx.canvas.width / 2 - 15) / this.state.scale, (this.ctx.canvas.height / 2 - 80 - 20 * (1+i)) / this.state.scale);
+            Utils.fillMixedText(this.ctx, text, (this.ctx.canvas.width / 2 - 15) / this.state.scale, (this.ctx.canvas.height / 2 - 60 - 20 * (1+i)) / this.state.scale);
         })
         this.ctx.restore();
     }
