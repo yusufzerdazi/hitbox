@@ -43,7 +43,7 @@ namespace Hitbox
                 var blob = containerClient.GetBlobClient($"{playerId.ToString()}.jpg");
                 using(var stream = file.OpenReadStream()) {
                     using(Image<Rgba32> input = Image.Load<Rgba32>(stream, out IImageFormat format)){
-                        ResizeImage(input, (30, 30));
+                        ResizeImage(input, (100, 100));
                         MemoryStream resizedStream = new MemoryStream();
                         input.Save(resizedStream, format);
                         resizedStream.Position = 0;
