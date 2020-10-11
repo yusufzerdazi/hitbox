@@ -22,7 +22,7 @@ steps:
 
 - task: AzureFunctionApp@1
   inputs:
-    azureSubscription: 'VisualStudioEnterprise'
+    azureSubscription: 'Visual Studio Enterprise'
     appType: 'functionAppLinux'
     appName: 'hitboxfunctions'
     package: '$(System.DefaultWorkingDirectory)/**/*.zip'
