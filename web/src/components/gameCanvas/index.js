@@ -5,6 +5,7 @@ import styles from './styles.module.css';
 import actualise from '../../assets/images/actualise.png';
 import { RunningForward, RunningBackward, Standing } from './animation';
 import { FOLLOWING } from '../../constants/cameraTypes';
+import { PLAYERS } from '../../constants/actionTypes';
 
 const FONT = "'Roboto Mono'";
 const HEIGHT = 540;
@@ -13,11 +14,16 @@ const ACTUALISE = new Image();
 ACTUALISE.src = actualise;
 
 const mapDispatchToProps = dispatch => ({
+    updatePlayers: x => dispatch({
+        type: PLAYERS,
+        players: x
+    })
 });
 
 const mapStateToProps = state => {
     return {
-        cameraType: state.options.cameraType
+        cameraType: state.options.cameraType,
+        players: state.stats.players
     }
 };
 
@@ -131,8 +137,9 @@ class GameCanvas extends React.Component {
         });
         this.drawStartingTimer();
         this.drawGameCountdown();
-        this.drawGameMode();
-        this.drawScores(players, lastWinner);
+        this.drawGameMode(lastWinner);
+        this.props.updatePlayers(players);
+        //this.drawScores(players, lastWinner);
         this.drawEvents();
         if(players.filter(p => p.name === name).length == 0 && this.state.joining){
             this.drawNotification();
@@ -750,11 +757,12 @@ class GameCanvas extends React.Component {
         }
     }
 
-    drawGameMode(){
+    drawGameMode(lastWinner){
         var yOffset = 0;
         var titleFontSize = 30/this.state.scale;
         var subtitleFontSize = 20/this.state.scale;
         var centerTitle = this.state.countdown;
+        var showWinner = this.state.countdown > 60;
         var yPosition = centerTitle ? - 100 : -(this.ctx.canvas.height / 2 - 40)
         var subtitleDiff = 30;
         if(centerTitle){
@@ -771,9 +779,15 @@ class GameCanvas extends React.Component {
         this.ctx.shadowOffsetY = 1;
         this.ctx.shadowBlur = 1;
         this.ctx.textAlign = "center";
-        this.ctx.fillText(this.state.gameMode.title || "", 0, (yPosition) / this.state.scale);
-        this.ctx.font = "bold " + subtitleFontSize+"px " + FONT;
-        this.ctx.fillText(this.state.gameMode.subtitle || "", 0, (yPosition + subtitleDiff) / this.state.scale);
+        
+        if(centerTitle && showWinner && lastWinner){
+            this.ctx.fillText(lastWinner.name + " won!" || "", 0, (yPosition + subtitleDiff) / this.state.scale);
+        } else {
+            this.ctx.fillText(this.state.gameMode.title || "", 0, (yPosition) / this.state.scale);
+            this.ctx.font = "bold " + subtitleFontSize+"px " + FONT;
+            this.ctx.fillText(this.state.gameMode.subtitle || "", 0, (yPosition + subtitleDiff) / this.state.scale);
+        }
+        
         this.ctx.restore()
     }
 

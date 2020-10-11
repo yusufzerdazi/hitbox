@@ -7,6 +7,7 @@ import Leaderboard from './pages/leaderboard';
 import Instructions from './pages/instructions';
 import Options from './components/options';
 import Footer from './components/footer';
+import Scores from './components/scores';
 import { store } from './redux/store';
 
 import './App.css';
@@ -29,6 +30,7 @@ class App extends React.Component {
           </Switch>
           <Options/>
           <Footer/>
+          <Scores/>
         </Router>
       </Provider>
     );

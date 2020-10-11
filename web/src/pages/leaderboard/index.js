@@ -4,19 +4,13 @@ import { connect } from "react-redux";
 import DataTable, { createTheme } from 'react-data-table-component';
 import { store } from '../../redux/store';
 import styles from './styles.module.css';
+import Utils from '../../utils';
 
 const mapStateToProps = state => {
   return {
     user: state.logIn.user
   }
 };
-
-const sortFunction = (rowA, rowB, selector) => {
-  if(rowA[selector] === undefined || rowB[selector] === undefined){
-    return -1;
-  }
-  return rowA[selector] - rowB[selector];
-}
 
 createTheme('dark', {
   text: {
@@ -43,42 +37,42 @@ const columns = [
     selector: 'wins',
     sortable: true,
     right: true,
-    sortFunction: (rowA, rowB) => sortFunction(rowA, rowB, 'wins')
+    sortFunction: (rowA, rowB) => Utils.sortFunction(rowA, rowB, 'wins')
   },
   {
     name: 'Kills',
     selector: 'kills',
     sortable: true,
     right: true,
-    sortFunction: (rowA, rowB) => sortFunction(rowA, rowB, 'kills')
+    sortFunction: (rowA, rowB) => Utils.sortFunction(rowA, rowB, 'kills')
   },
   {
     name: 'Players beaten',
     selector: 'beaten',
     sortable: true,
     right: true,
-    sortFunction: (rowA, rowB) => sortFunction(rowA, rowB, 'beaten')
+    sortFunction: (rowA, rowB) => Utils.sortFunction(rowA, rowB, 'beaten')
   },
   {
     name: 'Losses',
     selector: 'losses',
     sortable: true,
     right: true,
-    sortFunction: (rowA, rowB) => sortFunction(rowA, rowB, 'losses')
+    sortFunction: (rowA, rowB) => Utils.sortFunction(rowA, rowB, 'losses')
   },
   {
     name: 'Beaten/Losses',
     selector: 'killdeath',
     sortable: true,
     right: true,
-    sortFunction: (rowA, rowB) => sortFunction(rowA, rowB, 'killdeath')
+    sortFunction: (rowA, rowB) => Utils.sortFunction(rowA, rowB, 'killdeath')
   },
   {
     name: 'Rank',
     selector: 'rank',
     sortable: true,
     right: true,
-    sortFunction: (rowA, rowB) => sortFunction(rowA, rowB, 'rank')
+    sortFunction: (rowA, rowB) => Utils.sortFunction(rowA, rowB, 'rank')
   }
 ];
 
@@ -118,24 +112,24 @@ class Leaderboard extends React.Component {
   }
 
   loadLeaderboards(){
-    var state = store.getState()
+    var state = store.getState();
     if(state.logIn.user?.loggedIn){
-      var p1 = this.getLeaderboard('wins');
-      var p2 = this.getLeaderboard('losses');
-      var p3 = this.getLeaderboard('kills');
-      var p4 = this.getLeaderboard('beaten');
-      var p5 = this.getLeaderboard('rank');
-      Promise.all([p1, p2, p3, p4, p5]).then(() => {
-        this.setState({leaderboardsArray:this.convertLeaderboardsToArray()});
-      })
+      this.getLeaderboard('wins').then(() => {
+        this.getLeaderboard('losses').then(() => {
+          this.getLeaderboard('kills').then(() => {
+            this.getLeaderboard('beaten').then(() => {
+              this.getLeaderboard('rank').then(() => {
+                this.setState({leaderboardsArray:this.convertLeaderboardsToArray()});
+              })
+            })
+          })
+        })
+      });
     }
   }
 
   componentDidMount() {
-    this.loadLeaderboards()
-    store.subscribe(() => {
-      this.loadLeaderboards();
-    })
+    this.loadLeaderboards();
   }
 
   render() {

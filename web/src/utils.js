@@ -23,5 +23,12 @@ export default {
           x -= ctx.measureText(text).width;
         });
         ctx.restore();
+    },
+
+    sortFunction(rowA, rowB, selector) {
+      if(rowA[selector] === undefined || rowB[selector] === undefined){
+        return -1;
+      }
+      return rowA[selector] - rowB[selector];
     }
 }
