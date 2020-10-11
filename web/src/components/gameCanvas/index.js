@@ -139,7 +139,6 @@ class GameCanvas extends React.Component {
         this.drawGameCountdown();
         this.drawGameMode(lastWinner);
         this.props.updatePlayers(players);
-        //this.drawScores(players, lastWinner);
         this.drawEvents();
         if(players.filter(p => p.name === name).length == 0 && this.state.joining){
             this.drawNotification();
