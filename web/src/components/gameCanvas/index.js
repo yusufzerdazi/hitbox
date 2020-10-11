@@ -1,23 +1,25 @@
 import React from 'react';
+import { connect } from 'react-redux';
 import Utils from '../../utils';
 import styles from './styles.module.css';
 import actualise from '../../assets/images/actualise.png';
 import { RunningForward, RunningBackward, Standing } from './animation';
-import star from '../../assets/images/star.png';
+import { FOLLOWING } from '../../constants/cameraTypes';
 
-const FONT = "FR73PixelW00-Regular";
+const FONT = "'Roboto Mono'";
 const HEIGHT = 540;
 const WIDTH = 960;
 const ACTUALISE = new Image();
 ACTUALISE.src = actualise;
-const STAR = new Image();
-STAR.src = star;
 
-const cameraType = {
-    STATIC: "static",
-    FOLLOWING: "following",
-    DRAG: "drag"
-}
+const mapDispatchToProps = dispatch => ({
+});
+
+const mapStateToProps = state => {
+    return {
+        cameraType: state.options.cameraType
+    }
+};
 
 class GameCanvas extends React.Component {
     constructor(props) {
@@ -33,7 +35,6 @@ class GameCanvas extends React.Component {
                 yEased: 0
             },
             scale: 1,
-            cameraType: cameraType.FOLLOWING,
             gameMode: {title:null,subtitle:null},
             zoomRate: 1,
             players: {},
@@ -84,17 +85,6 @@ class GameCanvas extends React.Component {
         }, false);
     }
 
-    toggleCamera(){
-        switch(this.state.cameraType){
-            case(cameraType.FOLLOWING):
-                this.setState({cameraType: cameraType.DRAG});
-                break;
-            case(cameraType.DRAG):
-                this.setState({cameraType: cameraType.FOLLOWING});
-                break;
-        }
-    }
-
     analogScale(axisChange){
         this.setState({zoomRate: ((50 + axisChange)/50)});
     }
@@ -107,7 +97,7 @@ class GameCanvas extends React.Component {
     }
 
     draw(players, level, name, lastWinner) {
-        if(this.state.cameraType == cameraType.FOLLOWING){
+        if(this.props.cameraType == FOLLOWING){
             var you = players.filter(p => p.name === name && p.alive && !p.orb);
             if(you.length == 0){
                 you = players.filter(p => p.alive && !p.orb);
@@ -171,7 +161,7 @@ class GameCanvas extends React.Component {
         if(this.state.maxDistance){
             this.ctx.save()
             this.ctx.fillStyle = 'black';
-            this.ctx.font = (20/this.state.scale)+"px " + FONT;
+            this.ctx.font = "bold " + (20/this.state.scale)+"px " + FONT;
             this.ctx.shadowColor = "white";
             this.ctx.shadowOffsetX = 1;
             this.ctx.shadowOffsetY = 1;
@@ -399,7 +389,7 @@ class GameCanvas extends React.Component {
         var healthProportion = 255 * (player.health / 100);
         var nameColour = 'rgb(255,' + healthProportion + ',' + healthProportion + ')';
         this.ctx.fillStyle = nameColour;
-        this.ctx.font = Math.max(12,(12*(1/this.state.scale))) + "px " + FONT;
+        this.ctx.font = "bold " + Math.max(12,(12*(1/this.state.scale))) + "px " + FONT;
         this.ctx.textAlign = "center";
 
         this.ctx.shadowColor = "black";
@@ -462,7 +452,7 @@ class GameCanvas extends React.Component {
         this.ctx.fill();
         this.ctx.beginPath();
         this.ctx.fillStyle = "white"
-        this.ctx.font = 15*(1/this.state.scale) + "px " + FONT;
+        this.ctx.font = "bold " + 15*(1/this.state.scale) + "px " + FONT;
         this.ctx.fillText(
             "Stamina",
             (this.ctx.canvas.width / 2 - 210) / this.state.scale,
@@ -486,25 +476,11 @@ class GameCanvas extends React.Component {
         this.ctx.fill();
         this.ctx.beginPath();
         this.ctx.fillStyle = "white"
-        this.ctx.font = 15*(1/this.state.scale) + "px " + FONT;
+        this.ctx.font = "bold " + 15*(1/this.state.scale) + "px " + FONT;
         this.ctx.fillText(
             "Health",
             (this.ctx.canvas.width / 2 - 435) / this.state.scale,
             (this.ctx.canvas.height / 2 - 29) / this.state.scale
-        );
-        this.ctx.fill();
-
-        this.ctx.beginPath();
-        this.ctx.textAlign = 'right'
-        this.ctx.shadowColor = "black";
-        this.ctx.shadowOffsetX = 0.7;
-        this.ctx.shadowOffsetY = 0.7;
-        this.ctx.shadowBlur = 1;
-        this.ctx.font = 15*(1/this.state.scale) + "px " + FONT;
-        this.ctx.fillText(
-            "Name: " + player.name,
-            (this.ctx.canvas.width / 2 - 15) / this.state.scale,
-            (this.ctx.canvas.height / 2 - 70) / this.state.scale
         );
         this.ctx.fill();
         this.ctx.restore();
@@ -522,7 +498,7 @@ class GameCanvas extends React.Component {
         var events = this.state.events.filter(d => Utils.millis() < d.timestamp + 5000);
         this.setState({events});
         this.ctx.save();
-        this.ctx.font = 15*(1/this.state.scale) + "px " + FONT;
+        this.ctx.font = "bold " + 15*(1/this.state.scale) + "px " + FONT;
         this.ctx.textAlign = "right";
 
         this.ctx.shadowColor = "black";
@@ -571,7 +547,7 @@ class GameCanvas extends React.Component {
     drawScores(players, lastWinner){
         this.ctx.save();
         this.ctx.fillStyle = 'white';
-        this.ctx.font = 15*(1/this.state.scale) + "px " + FONT;
+        this.ctx.font = "bold " + 15*(1/this.state.scale) + "px " + FONT;
         this.ctx.textAlign = "left";
 
         this.ctx.shadowColor = "black";
@@ -696,7 +672,7 @@ class GameCanvas extends React.Component {
     drawStartingTimer() {
         this.ctx.save()
         this.ctx.fillStyle = 'black';
-        this.ctx.font = (50/this.state.scale)+"px " + FONT;
+        this.ctx.font = "bold " + (50/this.state.scale)+"px " + FONT;
         this.ctx.shadowColor = "white";
         this.ctx.shadowOffsetX = 1;
         this.ctx.shadowOffsetY = 1;
@@ -716,7 +692,7 @@ class GameCanvas extends React.Component {
         if(this.state.gameCountdown){
             this.ctx.save()
             this.ctx.fillStyle = 'black';
-            this.ctx.font = (20/this.state.scale)+"px " + FONT;
+            this.ctx.font = "bold " + (20/this.state.scale)+"px " + FONT;
             this.ctx.shadowColor = "white";
             this.ctx.shadowOffsetX = 1;
             this.ctx.shadowOffsetY = 1;
@@ -731,7 +707,7 @@ class GameCanvas extends React.Component {
         if(this.state.gameMode.title == "Collect the Boxes"){
             this.ctx.save()
             this.ctx.fillStyle = 'black';
-            this.ctx.font = (20/this.state.scale)+"px " + FONT;
+            this.ctx.font = "bold " + (20/this.state.scale)+"px " + FONT;
             this.ctx.shadowColor = "white";
             this.ctx.shadowOffsetX = 1;
             this.ctx.shadowOffsetY = 1;
@@ -757,14 +733,14 @@ class GameCanvas extends React.Component {
         }
         this.ctx.save()
         this.ctx.fillStyle = 'black';
-        this.ctx.font = titleFontSize+"px " + FONT;
+        this.ctx.font = "bold " + titleFontSize+"px " + FONT;
         this.ctx.shadowColor = "white";
         this.ctx.shadowOffsetX = 1;
         this.ctx.shadowOffsetY = 1;
         this.ctx.shadowBlur = 1;
         this.ctx.textAlign = "center";
         this.ctx.fillText(this.state.gameMode.title || "", 0, (yPosition) / this.state.scale);
-        this.ctx.font = subtitleFontSize+"px " + FONT;
+        this.ctx.font = "bold " + subtitleFontSize+"px " + FONT;
         this.ctx.fillText(this.state.gameMode.subtitle || "", 0, (yPosition + subtitleDiff) / this.state.scale);
         this.ctx.restore()
     }
@@ -796,4 +772,4 @@ class GameCanvas extends React.Component {
         );
     }
 }
-export default GameCanvas;
+export default connect(mapStateToProps, mapDispatchToProps, null, {forwardRef:true})(GameCanvas);

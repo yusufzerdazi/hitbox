@@ -69,29 +69,3 @@
 .red {
     background-color: red;
 }
-
-.nameInput {
-    outline: none;
-    border: none;
-    background-color: white;
-}
-
-.loggingIn {
-    background-color: black;
-    opacity: 0.8;
-    position: relative;
-    top: 0;
-    margin: 200px;
-    padding: 10px 30px;
-    left: -50%;
-    width: 300px; 
-}
-
-.loggingInContainer {
-    position: absolute;
-    left: 50%;
-}
-
-.textLogin {
-    padding-bottom: 20px;
-}

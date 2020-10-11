@@ -139,7 +139,7 @@ class GameService {
 
         this.socket.on('gameMode', (gameMode) => {
             if(this.mounted){
-                this.canvasRef.current.gameMode(gameMode);
+                //this.canvasRef.current.gameMode(gameMode);
             }
         });
 

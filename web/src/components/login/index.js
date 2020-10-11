@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { connect } from 'react-redux';
-import { LOG_IN } from '../../constants/actionTypes';
+import { LOG_IN, CAMERA } from '../../constants/actionTypes';
 import styles from './styles.module.css';
 
 const mapDispatchToProps = dispatch => ({
