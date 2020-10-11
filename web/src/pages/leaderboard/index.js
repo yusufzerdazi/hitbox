@@ -67,11 +67,18 @@ const columns = [
     sortFunction: (rowA, rowB) => sortFunction(rowA, rowB, 'losses')
   },
   {
-    name: 'Score',
+    name: 'Beaten/Losses',
     selector: 'killdeath',
     sortable: true,
     right: true,
     sortFunction: (rowA, rowB) => sortFunction(rowA, rowB, 'killdeath')
+  },
+  {
+    name: 'Rank',
+    selector: 'rank',
+    sortable: true,
+    right: true,
+    sortFunction: (rowA, rowB) => sortFunction(rowA, rowB, 'rank')
   }
 ];
 
@@ -87,7 +94,7 @@ class Leaderboard extends React.Component {
     var leaderboardsArray = [];
     for (var key in this.state.consolidatedLeaderboards) {
       var value = this.state.consolidatedLeaderboards[key];
-      value.killdeath = value.losses && value.beaten ? (value.beaten - value.losses) : undefined;
+      value.killdeath = value.losses && value.beaten ? Math.round((value.beaten / value.losses) * 100) / 100 : undefined;
       leaderboardsArray.push(value);
     }
     return leaderboardsArray
@@ -117,7 +124,8 @@ class Leaderboard extends React.Component {
       var p2 = this.getLeaderboard('losses');
       var p3 = this.getLeaderboard('kills');
       var p4 = this.getLeaderboard('beaten');
-      Promise.all([p1, p2, p3, p4]).then(() => {
+      var p5 = this.getLeaderboard('rank');
+      Promise.all([p1, p2, p3, p4, p5]).then(() => {
         this.setState({leaderboardsArray:this.convertLeaderboardsToArray()});
       })
     }

@@ -183,6 +183,13 @@ class GameService {
             });
         })
 
+        this.socket.on('death', () => {
+            if (this.mounted) window.PlayFabClientSDK.ExecuteCloudScript({
+                FunctionName: "playerDies",
+                GeneratePlayStreamEvent: true
+            });
+        })
+
         this.socket.on('loss', () => {
             if (this.mounted) window.PlayFabClientSDK.ExecuteCloudScript({
                 FunctionName: "playerLoses",
@@ -190,9 +197,23 @@ class GameService {
             });
         });
 
+        this.socket.on('rank', (rank) => {
+            if (this.mounted) window.PlayFabClientSDK.ExecuteCloudScript({
+                FunctionName: "playerRankUpdated",
+                GeneratePlayStreamEvent: true,
+                FunctionParameter: rank
+            });
+        });
+
         this.socket.on('event', (event) => {
             if(this.mounted){
                 this.canvasRef.current.event(event);
+            }
+        });
+
+        this.socket.on('joining', (joining) => {
+            if(this.mounted){
+                this.canvasRef.current.joining(joining);
             }
         });
 
@@ -286,9 +307,9 @@ class GameService {
         this.socket.emit('removeAi');
     }
 
-    play(name, room) {
+    play(user, room, rank) {
         this.bgMusic.play();
-        this.socket.emit('play', { name: name, room: room });
+        this.socket.emit('play', { user: user, room: room, rank: rank });
     }
 
     spectate(room){
@@ -296,6 +317,7 @@ class GameService {
     }
 
     quit() {
+        
         this.socket.emit('quit');
     }
 
