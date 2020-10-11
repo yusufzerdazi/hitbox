@@ -1,3 +1,5 @@
+var EloRating = require('elo-rating');
+
 var Player = require('./players/player');
 var SimpleAi = require('./players/simpleAi');
 var CleverAi = require('./players/cleverAi');
@@ -22,6 +24,7 @@ const state = {
 class Game {
     constructor(){
         this.clients = [];
+        this.newClients = [];
         this.spectators = [];
         this.state = state.STARTING;
         this.aiEnabled = true;
@@ -30,6 +33,7 @@ class Game {
         this.ticks = 0;
         this.gameMode = new GameModes[Math.floor(Math.random() * GameModes.length)](this.clients, this.ticks, (v1, v2) =>this.emitToAllClients(v1,v2,this));
 
+        this.players = () => { return this.clients.filter(c => !c.player.orb) }
         this.humanPlayers = () => { return this.clients.filter(c => c.player && !c.player.ai) }
         this.aiPlayers = () => { return this.clients.filter(c => c.player.ai && !c.player.orb) }
         this.livingPlayers = () => { return this.clients.filter(c => c.player.alive); }
@@ -55,19 +59,27 @@ class Game {
     }
 
     addClient(player, client){
-        var existingClient = this.clients.filter(c => c.player.name == player.name);
+        var existingClient = this.clients.filter(c => c.player.name == player.user.name);
         if(existingClient.length !== 0){
             return;
         }
         client.player = new Player(
             Utils.randomColor(),
-            player.name);
+            player.user.name, null, null, false,
+            player.user.id,
+            player.rank);
         client.player.respawn(this.clients, this.gameMode.level);
         this.clients.push(client);
         client.emit("level", this.gameMode.level.platforms);
         client.emit("gameMode", {title:this.gameMode.title, subtitle:this.gameMode.subtitle});
         this.addClientListeners(client);
         this.gameMode.updateClients(this.clients);
+    }
+
+    spawnNewClients(){
+        var newClients = this.newClients;
+        this.clients = this.clients.concat(newClients);
+        this.newClients = [];
     }
 
     removeClientListeners(client){
@@ -165,7 +177,7 @@ class Game {
     }
 
     emitToAllClients(event, eventData, context = this){
-        var clients = context.humanPlayers().concat(context.spectators);
+        var clients = context.humanPlayers().concat(context.spectators).concat(context.newClients).filter(c => !c.player || !c.player.ai);
         clients.forEach(client => {
             client.emit(event, eventData);
         });
@@ -326,7 +338,8 @@ class Game {
                     if(clientSpeed < otherClientSpeed){
                         if(this.gameMode.damageEnabled) client.player.health = Math.max(client.player.health - (this.gameMode.playerDamage ? this.gameMode.playerDamage : otherClientSpeed), 0);
                         if(client.player.health == 0){
-                            if(!client.player.ai && !otherClient.player.ai){
+                            if(!client.player.ai && !otherClient.player.ai && !client.player.orb && !otherClient.player.orb){
+                                client.emit("death");
                                 otherClient.emit("kill");
                             }
                             this.emitToAllClients("event", {
@@ -407,6 +420,25 @@ class Game {
         var endStatus = this.gameMode.endCondition(this.ticks);
         if(endStatus.end){
             if(endStatus.winner){
+                if(this.aiPlayers().length == 0){
+                    var eloRatingChanges = {};
+                    var beatenPlayers = this.players().filter(c => c.player.name != endStatus.winner.player.name);
+                    endStatus.winner.emit("beaten", beatenPlayers.length);
+                    endStatus.winner.emit("win");
+                    beatenPlayers.forEach(c => {
+                        var newElo = EloRating.calculate(endStatus.winner.player.rank, c.player.rank);
+                        eloRatingChanges[endStatus.winner.player.name] = (eloRatingChanges[endStatus.winner.player.name] || 0) + (newElo.playerRating - endStatus.winner.player.rank);
+                        eloRatingChanges[c.player.name] = (newElo.opponentRating - c.player.rank);
+                        console.log(c);
+                        c.emit("loss");
+                    });
+                    for(var key in eloRatingChanges){
+                        var client = this.clients.filter(c => c.player.name == key)[0];
+                        client.player.rank += eloRatingChanges[key];
+                        client.emit("rank", client.player.rank);
+                    }
+                }
+
                 endStatus.winner.player.score += 1;
                 this.emitToAllClients('winner', endStatus.winner.player);
             }
@@ -419,7 +451,7 @@ class Game {
     reset() {
         var positions = [];
         this.gameMode = new GameModes[Math.floor(Math.random() * GameModes.length)](this.clients, this.ticks, (v1, v2) =>this.emitToAllClients(v1,v2,this));
-
+        this.spawnNewClients();
         var aiPlayers = this.aiPlayers().filter(c => !c.player.orb);
         var orb = this.aiPlayers().filter(c => c.player.orb);
         if(this.gameMode.title == "Death Wall"){
@@ -540,7 +572,8 @@ class Game {
                     invincibility: socket.player.invincibility,
                     colour: socket.player.colour,
                     score: socket.player.score,
-                    orb: socket.player.orb
+                    orb: socket.player.orb,
+                    id: socket.player.id
                 };
             }));
             this.ticks++;

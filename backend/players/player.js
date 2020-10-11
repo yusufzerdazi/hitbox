@@ -2,9 +2,10 @@ var Constants = require('../constants');
 var Utils = require('../utils');
 
 class Player {
-    constructor(colour, name, x, y, ai = false){
+    constructor(colour, name, x, y, ai = false, id = null, rank = 1000){
         this.colour = colour;
         this.name = name;
+        this.id = id;
         this.x = x;
         this.y = y;
         this.ai = ai;
@@ -22,6 +23,7 @@ class Player {
         this.invincibility = 0;
         this.boostCooldown = 20;
         this.score = 0;
+        this.rank = rank;
     }
 
     reset(x, y){

@@ -22,17 +22,7 @@ class BattleRoyale extends GameMode {
             }
         }
         if(alive == 1){
-            if(this.clients.filter(x => x.player.ai).length == 0){
-                this.clients.forEach(client => {
-                    if(client == alivePlayers[0]){
-                        client.emit('win');
-                        client.emit('beaten', this.clients.filter(c => c.player).length - 1);
-                    } else if(this.clients.filter(c => c.player).length >= 2){
-                        client.emit('loss');
-                    }
-                })
-            }
-            return {winner:alivePlayers[0], end:true};
+            return { winner:alivePlayers[0], end:true };
         }
         if(alive == 0){
             return {end:true};
