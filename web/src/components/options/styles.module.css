@@ -1,0 +1,171 @@
+.footerImage {
+    height: 40px;
+}
+
+.footerImage:hover{
+    opacity: 0.7;
+}
+
+.footerContainer {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background-color: black;
+    opacity: 0.7;
+    margin: 15px;
+    text-align: left;
+}
+
+.profile {
+    height: 50px;
+}
+
+.profileImage {
+    height: 40px;
+}
+
+.profileImageContainer {
+    height: 40px;
+    margin: 5px;
+}
+
+.profileName {
+    margin: 5px;
+    color: white;
+    height: 32px;
+    padding: 8px 0px 0px;
+}
+
+.score {
+    margin: 5px;
+    height: 32px;
+    padding: 8px 10px 0px;
+    color: white    ;
+    background-color: darkslategray;
+    vertical-align: top;
+}
+
+.options {
+    margin: 5px 5px 5px 0px;
+    color: white    ;
+    cursor: pointer;
+    height: 32px;
+    padding: 8px 10px 0px;
+    background-color: darkslategray;
+}
+
+.play {
+    margin: 5px;
+    color: white;
+    cursor: pointer;
+    height: 32px;
+    padding: 8px 10px 0px;
+    background-color: darkslategray;
+}
+
+.play:hover {
+    opacity: 0.7;
+}
+
+.optionsDetails {
+    font-size: small;
+    color: white;
+    opacity: 1;
+    padding: 0px 5px 5px;
+}
+
+.option {
+    padding: 2px 4px;
+    width: 100% - 5px;
+    background-color: slateblue;
+    cursor: pointer;
+}
+
+.playOption {
+    background-color: green;
+}
+
+.quitOption {
+    background-color: darkred;
+}
+
+.option:hover {
+    opacity: 0.7;
+}
+
+.options:hover {
+    opacity: 0.7;
+}
+
+.option:not(:first-child) {
+    margin: 5px 0px 0px;
+}
+
+.nameInput {
+    width: 100%;
+    outline: none;
+    border: none;
+    padding: 0;
+    font-size: large;
+    background-color: white;
+}
+
+.nameErrors {
+    color: red;
+    padding: 0px 5px 5px;
+    font-size: small;
+    width: 223px;
+}
+
+.name {
+    margin: 0px 5px;
+    padding: 3px;
+    background-color: white;
+}
+
+.loggingIn {
+    background-color: black;
+    opacity: 0.8;
+    position: relative;
+    top: 0;
+    margin: 200px;
+    padding: 10px 30px;
+    left: -50%;
+    width: 300px; 
+}
+
+.loggingInContainer {
+    position: absolute;
+    left: 50%;
+}
+
+.textLogin {
+    padding-bottom: 5px;
+}
+
+.usernameUpdate {
+    padding: 10px 0px 5px;
+}
+
+.updateUsernameButton {
+    padding: 3px 5px;
+    background-color: green;
+    cursor: pointer;
+    margin: 5px 5px 0px 5px;
+}
+
+.playButton {
+    text-align: center;
+    padding: 8px 4px;
+    background-color: green;
+    cursor: pointer;
+}
+
+.playButton:hover {
+    opacity: 0.7;
+}
+
+.or {
+    text-align: center;
+    font-weight: bold;
+}

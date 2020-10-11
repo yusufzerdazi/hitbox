@@ -5,7 +5,7 @@ import React from 'react';
 import Game from './pages/game';
 import Leaderboard from './pages/leaderboard';
 import Instructions from './pages/instructions';
-import Header from './components/header';
+import Options from './components/options';
 import Footer from './components/footer';
 import { store } from './redux/store';
 
@@ -27,6 +27,7 @@ class App extends React.Component {
               <Instructions />
             </Route>
           </Switch>
+          <Options/>
           <Footer/>
         </Router>
       </Provider>
