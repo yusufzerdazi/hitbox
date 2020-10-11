@@ -75,9 +75,9 @@ class Footer extends React.Component {
       window.PlayFabClientSDK.GetPlayerProfile({
         ProfileConstraints: { ShowDisplayName: true },
         PlayFabId: response.data.PlayFabId
-      }, (response) => {
+      }).then((response) => {
         if(!response.data.PlayerProfile.DisplayName){
-          this.setName();
+          this.setName(true);
         }
         this.props.logIn(response.data.PlayerProfile);
         window.PlayFabClientSDK.GetPlayerStatistics({
@@ -138,8 +138,8 @@ class Footer extends React.Component {
     return true;
   }
 
-  setName() {
-    if(!this.validateUserName()){
+  setName(signUp = false) {
+    if(!signUp && !this.validateUserName()){
       return;
     }
     var name = this.state.updatedUsername || "Hitboxer" + Math.floor(Math.random() * 10000);
@@ -149,11 +149,11 @@ class Footer extends React.Component {
       this.props.updateName(name);
     }).catch((error) => {
       if(error.error == "NameNotAvailable"){
-        this.setState({updatedUsername: null, usernameError: "The name '" + this.state.updatedUsername + "' is already in use."}, () => {
-          if(!this.props.user?.name){
-            this.setName();
-          }
-        });
+        this.setState({updatedUsername: null, usernameError: "The name '" + this.state.updatedUsername + "' is already in use."});
+      } else {
+        if(!this.props.user?.name){
+          this.setName();
+        }
       }
     });
   }
