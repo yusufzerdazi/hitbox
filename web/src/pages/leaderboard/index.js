@@ -140,7 +140,7 @@ class Leaderboard extends React.Component {
 
   render() {
     return (
-      <div className={styles.tableContainer}>
+      <div className={styles.tableContainer} onClick={this.props.click}>
         {this.state.leaderboardsArray ? <DataTable
           theme="dark"
           noHeader={true}

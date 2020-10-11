@@ -81,6 +81,14 @@
     cursor: pointer;
 }
 
+.playOption {
+    background-color: green;
+}
+
+.quitOption {
+    background-color: darkred;
+}
+
 .option:hover {
     opacity: 0.7;
 }

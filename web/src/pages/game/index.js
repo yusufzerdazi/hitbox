@@ -31,13 +31,12 @@ class Game extends React.Component {
         let params = new URLSearchParams(search);
         let room = params.get('room');
         this.state = {
-            nameClass: styles.name,
-            nameInputClass: styles.nameInput,
             lastWinner: null,
             editingUsername: true,
             soundEnabled: true,
             room: room,
-            playing: false
+            playing: false,
+            name: null
         };
         this.canvasRef = React.createRef();
         this.gameService = new GameService();
@@ -51,14 +50,17 @@ class Game extends React.Component {
 
     getUsername() {
         var state = store.getState();
-        if(state.logIn?.user?.name && !this.state.playing && state.options?.playing){
+        if(state.logIn?.user?.name && state.logIn.user.name != this.state.name){
             this.gameService.changeName(state.logIn.user.name);
+            this.setState({name: state.logIn.user.name});
+        }
+        if(state.logIn?.user?.name && !this.state.playing && state.options?.playing){
             window.PlayFabClientSDK.GetPlayerStatistics({
                 StatisticNames: ["rank"]
             }).then(s => {
                 var rank = s.data?.Statistics[0]?.Value || 1000;
                 this.gameService.play(state.logIn.user, null, rank);
-                this.setState({playing: true});
+                this.setState({playing: true, name: state.logIn.user.name});
             });
         }
         if(!state.options?.playing && this.state.playing){

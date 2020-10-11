@@ -10,15 +10,15 @@ table, th, td {
 }
 
 .tableContainer {
+    background-color: black;
     text-align: center;
-    margin: 0 auto;
-    margin: 50px auto;
-    opacity: 0.9;
-    max-width: 1200px;
+    margin: 0px auto;
+    opacity: 0.8;
+    width: 100%;
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
-    height: calc(100% - 150px);
+    height: 100%;
     overflow: auto;
 }

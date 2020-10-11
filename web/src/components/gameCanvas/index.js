@@ -468,14 +468,15 @@ class GameCanvas extends React.Component {
     drawPlayerStats(player){
         this.ctx.save()
         this.ctx.beginPath();
-        this.ctx.fillStyle = 'white';
+        this.ctx.fillStyle = 'black';
+        this.ctx.globalAlpha = 0.7;
         this.ctx.rect((this.ctx.canvas.width / 2 - 225) / this.state.scale,
             (this.ctx.canvas.height / 2 - 55) / this.state.scale,
             210 / this.state.scale,
             40 / this.state.scale);
         this.ctx.fill();
         this.ctx.beginPath();
-        this.ctx.fillStyle = 'blue';
+        this.ctx.fillStyle = 'lightblue';
         this.ctx.rect((this.ctx.canvas.width / 2 - 220) / this.state.scale,
             (this.ctx.canvas.height / 2 - 50) / this.state.scale,
             (200 - 2 * player.boostCooldown) / this.state.scale,
@@ -492,7 +493,7 @@ class GameCanvas extends React.Component {
         this.ctx.fill();
 
         this.ctx.beginPath();
-        this.ctx.fillStyle = 'white';
+        this.ctx.fillStyle = 'black';
         this.ctx.rect((this.ctx.canvas.width / 2 - 450) / this.state.scale,
             (this.ctx.canvas.height / 2 - 55) / this.state.scale,
             210 / this.state.scale,

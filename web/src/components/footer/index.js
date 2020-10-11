@@ -83,7 +83,6 @@ class Footer extends React.Component {
         window.PlayFabClientSDK.GetPlayerStatistics({
           StatisticNames: ["rank"]
         }).then(s => {
-          console.log(s);
           var rank = s.data?.Statistics[0]?.Value || 1000;
           this.setState({score: rank});
         });
@@ -183,7 +182,6 @@ class Footer extends React.Component {
     axios.post("https://hitboxfunctions.azurewebsites.net/api/UploadAvatar?code=CPb1i3KdhSwsewc2mWSM4SbeTdvCTq1Rrn5B3X7PaKjP2hehNEdtDQ==", data, {})
     .then(res => {
       this.setState({etag: Utils.uuidv4()});
-      console.log(this.state);
     })
     .catch(err => {
 
@@ -232,8 +230,8 @@ class Footer extends React.Component {
             <div className={styles.option} onClick={() => this.props.camera(this.props.cameraType == FOLLOWING ? DRAG : FOLLOWING)}>Camera mode: {this.props.cameraType}</div>
             <div className={styles.option} onClick={() => this.openModal("leaderboard")}>Leaderboard</div>
             <div className={styles.option} onClick={() => this.openModal("controls")}>Controls</div>
-            {this.props.isPlaying ? <div className={styles.option} onClick={() => this.props.playing(false)}>Quit</div> : <></>}
-            {!this.props.isPlaying ? <div className={styles.option} onClick={() => this.props.playing(true)}>Play</div> : <></>}
+            {this.props.isPlaying ? <div className={styles.option + " " + styles.quitOption} onClick={() => this.props.playing(false)}>Quit</div> : <></>}
+            {!this.props.isPlaying ? <div className={styles.option + " " + styles.playOption} onClick={() => this.props.playing(true)}>Join</div> : <></>}
           </div>
         </Collapsible>
       </div> : 
@@ -251,14 +249,11 @@ class Footer extends React.Component {
           </div>
         </Collapsible>
       </div> } 
-        <Modal show={this.state.openModal == 'leaderboard'} 
-          onHide={() => this.openLeaderboard(false)}>
-          <Leaderboard />
+        <Modal show={this.state.openModal == 'leaderboard'}>
+          <Leaderboard click={() => this.openModal("leaderboard")} />
         </Modal>
-        <Modal show={this.state.openModal == 'controls'} 
-          onClick={() => this.openInstructions()}
-          onHide={() => this.openInstructions(false)}>
-          <Instructions />
+        <Modal show={this.state.openModal == 'controls'}>
+          <Instructions click={() => this.openModal("controls")} />
         </Modal>
       </>
     );
