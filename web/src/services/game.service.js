@@ -211,9 +211,9 @@ class GameService {
             }
         });
 
-        this.socket.on('joining', (joining) => {
+        this.socket.on('newGame', (players) => {
             if(this.mounted){
-                this.canvasRef.current.joining(joining);
+                this.canvasRef.current.newGame(players);
             }
         });
 
