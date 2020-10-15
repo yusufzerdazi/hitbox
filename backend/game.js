@@ -442,9 +442,13 @@ class Game {
                 endStatus.winner.player.score += 1;
                 this.emitToAllClients('winner', endStatus.winner.player);
             }
+            else {
+                this.emitToAllClients('winner', null);
+            }
             this.state = state.STARTING;
             this.startingTicks = this.ticks;
             this.reset();
+            this.emitToAllClients('newGame', this.clients.map(socket => this.mapSocketToPlayer(socket)));
         }
     }
     
@@ -523,6 +527,27 @@ class Game {
             this.startingTicks = this.ticks;
         }
     }
+
+    mapSocketToPlayer(socket){
+        return {
+            name: socket.player.name,
+            x: socket.player.x,
+            y: socket.player.y,
+            xVelocity: socket.player.xVelocity,
+            yVelocity: socket.player.yVelocity,
+            it: socket.player.it,
+            lives: socket.player.lives,
+            health: socket.player.health,
+            boostCooldown: socket.player.boostCooldown,
+            alive: socket.player.alive,
+            ducked: socket.player.ducked,
+            invincibility: socket.player.invincibility,
+            colour: socket.player.colour,
+            score: socket.player.score,
+            orb: socket.player.orb,
+            id: socket.player.id
+        }
+    }
     
     gameLoop() {
         setInterval(() => {
@@ -556,26 +581,7 @@ class Game {
             if(this.gameMode.title == "Tag"){
                 this.emitToAllClients("gameCountdown", (this.gameMode.startingTicks + this.gameMode.gameLength) - this.ticks);
             }
-            this.emitToAllClients("allPlayers", this.clients.map(socket => {
-                return {
-                    name: socket.player.name,
-                    x: socket.player.x,
-                    y: socket.player.y,
-                    xVelocity: socket.player.xVelocity,
-                    yVelocity: socket.player.yVelocity,
-                    it: socket.player.it,
-                    lives: socket.player.lives,
-                    health: socket.player.health,
-                    boostCooldown: socket.player.boostCooldown,
-                    alive: socket.player.alive,
-                    ducked: socket.player.ducked,
-                    invincibility: socket.player.invincibility,
-                    colour: socket.player.colour,
-                    score: socket.player.score,
-                    orb: socket.player.orb,
-                    id: socket.player.id
-                };
-            }));
+            this.emitToAllClients("allPlayers", this.clients.map(socket => this.mapSocketToPlayer(socket)));
             this.ticks++;
         }, 1000 / 60);
     }
