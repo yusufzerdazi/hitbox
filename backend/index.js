@@ -1,6 +1,12 @@
 var app = require('express')();
 var http = require('http').createServer(app);
-var io = require('socket.io')(http);
+var io = require('socket.io')(http, {
+    cors: {
+        origin: "https://hitbox.online",
+        methods: ["GET", "POST"]
+    },
+    cookie: false
+});
 
 var Game = require('./game');
 var games = {};
