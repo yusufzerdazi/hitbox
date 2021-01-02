@@ -5,6 +5,9 @@ class Orb extends Player {
     constructor(){
         super("yellow", "", 0, 0, true);
         this.orb = true;
+
+        this.width = Constants.PLAYERWIDTH;
+        this.height = Constants.PLAYERHEIGHT;
     }
 
     move(players, ticks){

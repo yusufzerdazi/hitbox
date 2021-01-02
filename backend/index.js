@@ -18,7 +18,7 @@ io.on('connection', (socket) => {
             room = '';
         }
         if(!games[room]){
-            games[room] = new Game();
+            games[room] = new Game(room);
             games[room].gameLoop();
         }
         games[room].addSpectator(socket);
@@ -31,7 +31,7 @@ io.on('connection', (socket) => {
             player.room = '';
         }
         if(!games[player.room]){
-            games[player.room] = new Game();
+            games[player.room] = new Game(player.room);
             games[player.room].gameLoop();
         }
         if(!socket.player || socket.player.disconnected){

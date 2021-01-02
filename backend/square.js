@@ -1,10 +1,11 @@
 class Square {
-    constructor(x, y, width, height, border = false){
+    constructor(x, y, width, height, type = null, colour = null){
         this.x = x;
         this.y = y;
         this.width = width;
         this.height = height;
-        this.border = border;
+        this.type = type;
+        this.colour = colour;
     }
 
     leftX(){

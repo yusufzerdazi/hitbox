@@ -10,11 +10,14 @@ var Tag = require('./game/tag');
 var FreeForAll = require('./game/freeForAll');
 var DeathWall = require('./game/deathWall');
 var CollectTheBoxes = require('./game/collectTheBoxes');
+var Football = require('./game/football');
 var Square = require('./square');
 var Constants = require('./constants');
 
-var GameModes = [CollectTheBoxes, DeathWall, BattleRoyale, Tag, BattleRoyale, BattleRoyale];
-//GameModes = [DeathWall];
+var GameModes = {
+    generic: [CollectTheBoxes, DeathWall, BattleRoyale, Tag, BattleRoyale, BattleRoyale, Football],
+    football: [Football]
+};
 
 const state = {
     STARTED: "started",
@@ -22,7 +25,8 @@ const state = {
 };
 
 class Game {
-    constructor(){
+    constructor(room){
+        this.room = room;
         this.clients = [];
         this.newClients = [];
         this.spectators = [];
@@ -31,11 +35,12 @@ class Game {
         this.maxPlayers = 100;
         this.startingTicks = 0;
         this.ticks = 0;
-        this.gameMode = new GameModes[Math.floor(Math.random() * GameModes.length)](this.clients, this.ticks, (v1, v2) =>this.emitToAllClients(v1,v2,this));
+        
+        this.gameMode = new GameModes[this.room ? this.room : "generic"][Math.floor(Math.random() * GameModes[this.room ? this.room : "generic"].length)](this.clients, this.ticks, (v1, v2) =>this.emitToAllClients(v1,v2,this));
 
-        this.players = () => { return this.clients.filter(c => !c.player.orb) }
+        this.players = () => { return this.clients.filter(c => !c.player.orb && c.player.type != "ball") }
         this.humanPlayers = () => { return this.clients.filter(c => c.player && !c.player.ai) }
-        this.aiPlayers = () => { return this.clients.filter(c => c.player.ai && !c.player.orb) }
+        this.aiPlayers = () => { return this.clients.filter(c => c.player.ai && !c.player.orb && c.player.type != "ball") }
         this.livingPlayers = () => { return this.clients.filter(c => c.player.alive); }
         this.movingPlayers = () => { return this.livingPlayers().filter(c => !c.player.ducked); }
         this.vulnerablePlayers = () => { return this.livingPlayers().filter(c => c.player.invincibility == 0); }
@@ -253,13 +258,24 @@ class Game {
             if(!client.player.right && !client.player.left){
                 var velSign = Math.sign(client.player.xVelocity);
                 var magnitude = Math.abs(client.player.xVelocity);
-                var newMagnitude = Math.max(0, magnitude - Constants.ACCELERATION);
+                switch(client.player.type){
+                    case("ball"):
+                        var newMagnitude = Math.max(0, magnitude - Constants.BALLACCELERATION);
+                        break;
+                    default:
+                        var newMagnitude = Math.max(0, magnitude - Constants.ACCELERATION);
+                        break;
+                }
                 client.player.xVelocity = newMagnitude * velSign;
             }
             if(client.player.y != Constants.PLATFORMHEIGHT || client.player.x + Constants.PLAYERHEIGHT < 100 || client.player.x > 860 || client.player.yVelocity < 0) {
                 client.player.yVelocity += Constants.VERTICALACCELERATION * this.gameMode.level.gravity;
             } else {
                 client.player.yVelocity = 0;
+            }
+
+            if(client.player.angularVelocity){
+                client.player.angularVelocity = client.player.angularVelocity * 0.99;
             }
         })
     }
@@ -268,38 +284,42 @@ class Game {
         this.movingPlayers().forEach(client => {
             var previouslyOnSurface = client.player.onSurface.includes(true);
             client.player.onSurface = [];
-            this.gameMode.level.platforms.forEach(platform => {
+            this.gameMode.level.platforms.filter(x => x.type != "goal").forEach(platform => {
                 if(client.player.x >= platform.rightX() &&
                         client.player.x + client.player.xVelocity < platform.rightX() && 
                         client.player.y + client.player.yVelocity > platform.topY() && 
-                        client.player.y + client.player.yVelocity < (platform.bottomY() + Constants.PLAYERHEIGHT)) {
+                        client.player.y + client.player.yVelocity < (platform.bottomY() + client.player.height)) {
                     client.player.x = platform.rightX();
                     client.player.xVelocity = -client.player.xVelocity * Constants.WALLDAMPING;
                     this.emitToAllClients('hitWall');
                 }
 
-                if(client.player.x <= (platform.leftX() - Constants.PLAYERWIDTH) &&
-                        client.player.x + client.player.xVelocity > (platform.leftX() - Constants.PLAYERWIDTH) && 
+                if(client.player.x <= (platform.leftX() - client.player.width) &&
+                        client.player.x + client.player.xVelocity > (platform.leftX() - client.player.width) && 
                         client.player.y + client.player.yVelocity > platform.topY() && 
-                        client.player.y + client.player.yVelocity < (platform.bottomY() + Constants.PLAYERHEIGHT)) {
-                    client.player.x = platform.leftX() - Constants.PLAYERWIDTH;
+                        client.player.y + client.player.yVelocity < (platform.bottomY() + client.player.height)) {
+                    client.player.x = platform.leftX() - client.player.width;
                     client.player.xVelocity = -client.player.xVelocity * Constants.WALLDAMPING;;
                     this.emitToAllClients('hitWall');
                 }
-                if(client.player.y >= (platform.bottomY() + Constants.PLAYERHEIGHT) && // Currently above platform
-                        client.player.y + client.player.yVelocity <= (platform.bottomY() + Constants.PLAYERHEIGHT) && // Will be below on next time step
+                if(client.player.y >= (platform.bottomY() + client.player.height) && // Currently above platform
+                        client.player.y + client.player.yVelocity <= (platform.bottomY() + client.player.height) && // Will be below on next time step
                         client.player.x + client.player.xVelocity <= platform.rightX() &&
-                        client.player.x + client.player.xVelocity >= (platform.leftX() - Constants.PLAYERWIDTH)) {
-                    client.player.y = (platform.bottomY() + Constants.PLAYERHEIGHT);
+                        client.player.x + client.player.xVelocity >= (platform.leftX() - client.player.width)) {
+                    client.player.y = (platform.bottomY() + client.player.height);
                     client.player.yVelocity = 0;
                     this.emitToAllClients('hitWall');
                 }
                 if(client.player.y <= platform.topY() && // Currently above platform
                         client.player.y + client.player.yVelocity >= platform.topY() && // Will be below on next time step
                         client.player.x + client.player.xVelocity <= platform.rightX() &&
-                        client.player.x + client.player.xVelocity >= (platform.leftX() - Constants.PLAYERWIDTH)) {
+                        client.player.x + client.player.xVelocity >= (platform.leftX() - client.player.width)) {
                     client.player.y = platform.topY();
-                    client.player.yVelocity = 0;
+                    if(client.player.type == "ball"){
+                        client.player.yVelocity = -Math.floor(client.player.yVelocity * Constants.WALLDAMPING);
+                    } else {
+                        client.player.yVelocity = 0;
+                    }
                     client.player.onSurface.push(true);
                     if(!previouslyOnSurface){
                         this.emitToAllClients('hitWall');
@@ -307,7 +327,11 @@ class Game {
                 } else {
                     client.player.onSurface.push(false);
                 }
-            })
+
+                if(client.player.angularVelocity){
+                    client.player.angle += client.player.angularVelocity;
+                }
+            });
         });
         this.movingPlayers().forEach(client => {
             client.player.x += client.player.xVelocity;
@@ -336,7 +360,9 @@ class Game {
                     var speedDifference = Math.abs(clientSpeed - otherClientSpeed);
                     
                     if(clientSpeed < otherClientSpeed){
-                        if(this.gameMode.damageEnabled) client.player.health = Math.max(client.player.health - (this.gameMode.playerDamage ? this.gameMode.playerDamage : otherClientSpeed), 0);
+                        if(this.gameMode.damageEnabled && client.player.type != "ball" && otherClient.player.type != "ball") {
+                            client.player.health = Math.max(client.player.health - (this.gameMode.playerDamage ? this.gameMode.playerDamage : otherClientSpeed), 0);
+                        }
                         if(client.player.health == 0){
                             if(!client.player.ai && !otherClient.player.ai && !client.player.orb && !otherClient.player.orb){
                                 client.emit("death");
@@ -429,7 +455,6 @@ class Game {
                         var newElo = EloRating.calculate(endStatus.winner.player.rank, c.player.rank);
                         eloRatingChanges[endStatus.winner.player.name] = (eloRatingChanges[endStatus.winner.player.name] || 0) + (newElo.playerRating - endStatus.winner.player.rank);
                         eloRatingChanges[c.player.name] = (newElo.opponentRating - c.player.rank);
-                        console.log(c);
                         c.emit("loss");
                     });
                     for(var key in eloRatingChanges){
@@ -441,6 +466,32 @@ class Game {
 
                 endStatus.winner.player.score += 1;
                 this.emitToAllClients('winner', endStatus.winner.player);
+            }
+            if(endStatus.winners){
+                if(this.aiPlayers().length == 0){
+                    var eloRatingChanges = {};
+                    endStatus.winners.forEach(w => {
+                        endStatus.losers.forEach(l => {
+                            var newElo = EloRating.calculate(w.player.rank, l.player.rank);
+                            eloRatingChanges[w.player.name] = (eloRatingChanges[w.player.name] || 0) + (newElo.playerRating - w.player.rank);
+                            eloRatingChanges[l.player.name] = (eloRatingChanges[l.player.name] || 0) + (newElo.opponentRating - l.player.rank);
+                        });
+                    });
+                    endStatus.winners.forEach(w => {
+                        w.player.rank += eloRatingChanges[w.player.name] / endStatus.losers.length;
+                        w.emit("rank", w.player.rank);
+                        w.emit("win");
+                    });
+                    endStatus.losers.forEach(l => {
+                        l.player.rank += eloRatingChanges[l.player.name] / endStatus.winners.length;
+                        l.emit("rank", l.player.rank);
+                        l.emit("loss");
+                    });
+                }
+                endStatus.winners.forEach(w => {
+                    w.player.score += 1;
+                });
+                this.emitToAllClients('winner', {name: endStatus.winningTeam + " team"});
             }
             else {
                 this.emitToAllClients('winner', null);
@@ -454,10 +505,9 @@ class Game {
     
     reset() {
         var positions = [];
-        this.gameMode = new GameModes[Math.floor(Math.random() * GameModes.length)](this.clients, this.ticks, (v1, v2) =>this.emitToAllClients(v1,v2,this));
+        this.gameMode = new GameModes[this.room ? this.room : "generic"][Math.floor(Math.random() * GameModes[this.room ? this.room : "generic"].length)](this.clients, this.ticks, (v1, v2) =>this.emitToAllClients(v1,v2,this));
         this.spawnNewClients();
         var aiPlayers = this.aiPlayers().filter(c => !c.player.orb);
-        var orb = this.aiPlayers().filter(c => c.player.orb);
         if(this.gameMode.title == "Death Wall"){
             for(var i = 0; i<aiPlayers.length; i++){
                 var score = aiPlayers[i].player.score;
@@ -545,7 +595,12 @@ class Game {
             colour: socket.player.colour,
             score: socket.player.score,
             orb: socket.player.orb,
-            id: socket.player.id
+            id: socket.player.id,
+            type: socket.player.type,
+            team: socket.player.team,
+            angle: socket.player.angle,
+            width: socket.player.width,
+            height: socket.player.height
         }
     }
     
