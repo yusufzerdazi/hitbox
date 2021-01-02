@@ -5,3 +5,6 @@ export const CAMERA = 'CAMERA';
 export const PLAYING = 'PLAYING';
 
 export const PLAYERS = 'PLAYERS';
+
+export const ADDAI = 'ADDAI';
+export const REMOVEAI = 'REMOVEAI';

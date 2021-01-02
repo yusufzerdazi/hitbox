@@ -30,13 +30,15 @@ class Game extends React.Component {
         let search = window.location.search;
         let params = new URLSearchParams(search);
         let room = params.get('room');
+        console.log(room);
         this.state = {
             lastWinner: null,
             editingUsername: true,
             soundEnabled: true,
             room: room,
             playing: false,
-            name: null
+            name: null,
+            ai: 0
         };
         this.canvasRef = React.createRef();
         this.gameService = new GameService();
@@ -59,13 +61,21 @@ class Game extends React.Component {
                 StatisticNames: ["rank"]
             }).then(s => {
                 var rank = s.data?.Statistics[0]?.Value || 1000;
-                this.gameService.play(state.logIn.user, null, rank);
+                this.gameService.play(state.logIn.user, this.state.room, rank);
                 this.setState({playing: true, name: state.logIn.user.name});
             });
         }
         if(!state.options?.playing && this.state.playing){
             this.gameService.quit();
             this.setState({playing: false});
+        }
+        if(this.state.ai != undefined && state.options.ai > this.state.ai){
+            this.gameService.addAi();
+            this.setState({ai: state.options.ai});
+        }
+        if(this.state.ai != undefined && state.options.ai < this.state.ai){
+            this.gameService.removeAi();
+            this.setState({ai: state.options.ai});
         }
     }
 

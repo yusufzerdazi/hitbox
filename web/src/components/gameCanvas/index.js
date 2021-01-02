@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 import Utils from '../../utils';
 import styles from './styles.module.css';
 import actualise from '../../assets/images/actualise.png';
+import ball from '../../assets/images/football.png';
 import { RunningForward, RunningBackward, Standing } from './animation';
 import { FOLLOWING } from '../../constants/cameraTypes';
 import { PLAYERS } from '../../constants/actionTypes';
@@ -10,8 +11,12 @@ import { PLAYERS } from '../../constants/actionTypes';
 const FONT = "'Roboto Mono'";
 const HEIGHT = 540;
 const WIDTH = 960;
+
 const ACTUALISE = new Image();
 ACTUALISE.src = actualise;
+
+const BALL = new Image();
+BALL.src = ball;
 
 const mapDispatchToProps = dispatch => ({
     updatePlayers: x => dispatch({
@@ -130,7 +135,8 @@ class GameCanvas extends React.Component {
         this.drawWater();
 
         this.drawDeathWall();
-        players.forEach(player => this.drawPlayer(player, name));
+        players.filter(p => p.type != "ball").forEach(player => this.drawPlayer(player, name));
+        players.filter(p => p.type == "ball").forEach(player => this.drawBall(player));
         players.filter(p => p.name === name).forEach(player => {
             this.drawPlayerStats(player);
             this.drawPlayerScore(player);
@@ -139,6 +145,7 @@ class GameCanvas extends React.Component {
         this.drawGameCountdown();
         this.drawGameMode(lastWinner);
         this.drawEvents();
+        this.drawFootballScores();
         if(players.filter(p => p.name === name).length == 0 && this.state.joining){
             this.drawNotification();
         }
@@ -203,6 +210,19 @@ class GameCanvas extends React.Component {
         }
     }
 
+    drawFootballScores() {
+        if(this.state.gameMode.title == "Football" && this.state.footballScores){
+            this.ctx.font = "bold " + (20/this.state.scale)+"px " + FONT;
+            this.ctx.save()
+            var text = [];
+            text.push({text: this.state.footballScores.red, fillStyle: "red"});
+            text.push({text: "-", fillStyle: "black"});
+            text.push({text: this.state.footballScores.blue, fillStyle: "blue"});
+            Utils.fillMixedText(this.ctx, text, 0, - (this.ctx.canvas.height / 2 - 100) / this.state.scale);
+            this.ctx.restore()
+        }
+    }
+
     updateDeathWall(deathWall){
         this.setState({
             deathWallX: deathWall.deathWallX,
@@ -220,10 +240,14 @@ class GameCanvas extends React.Component {
     drawLevelPlatform(level, colour){
         this.ctx.save();
         this.ctx.fillStyle = colour || "#1a1001";
+        if(level.type == "goal"){
+            this.ctx.fillStyle = level.colour;
+            this.ctx.globalAlpha = 0.5;
+        }
         this.ctx.beginPath();
         this.drawRectangle(level.x, level.y, level.width, level.height);
         this.ctx.fill();
-        if(!colour){
+        if(!colour && level.type != "goal"){
             this.ctx.beginPath();
             this.ctx.fillStyle = colour || "green";
             this.drawRectangle(level.x - 5, level.y, level.width + 10, 20);
@@ -370,8 +394,12 @@ class GameCanvas extends React.Component {
                 players[player.name].damage = newPolygon;
                 this.setState({players});
             }
-            this.drawPolygon(player, this.state.players[player.name].damage, xOffset, yOffset);
+            this.drawPolygon(player, this.state.players[player.name].damage, xOffset, yOffset, player.team);
             this.ctx.clip();
+
+            if(player.team){
+                this.ctx.globalAlpha = 0.5;
+            }
 
             if(!this.state.players[player.name].image){
                 const playerImage = new Image();
@@ -577,6 +605,9 @@ class GameCanvas extends React.Component {
                 text.push({text: " collected a box", fillStyle: "yellow"});
                 text.push({text: d.player.name, fillStyle: d.player.colour});
             }
+            if(d.type == "goal"){
+                text.push({text: d.colour + " team conceded a goal.", fillStyle: d.colour});
+            }
             Utils.fillMixedText(this.ctx, text, (this.ctx.canvas.width / 2 - 15) / this.state.scale, (this.ctx.canvas.height / 2 - 60 - 20 * (1+i)) / this.state.scale);
         })
         this.ctx.restore();
@@ -707,6 +738,16 @@ class GameCanvas extends React.Component {
         this.ctx.globalAlpha = 1;
     }
 
+    drawBall(player) {
+        this.ctx.save();
+        this.ctx.translate(player.x + player.width/2 - this.state.camera.x, player.y - player.height/2 - this.state.camera.y);              //translate to center of shape
+        this.ctx.rotate(player.angle);  //rotate 25 degrees.
+        this.ctx.translate(-(player.x  + player.width/2 - this.state.camera.x), -(player.y - player.height/2 - this.state.camera.y));            //translate center back to 0,0
+
+        this.ctx.drawImage(BALL, player.x - this.state.camera.x, player.y - 200 - this.state.camera.y, 200, 200);
+        this.ctx.restore();
+    }
+
     drawStartingTimer() {
         this.ctx.save()
         this.ctx.fillStyle = 'black';
@@ -803,6 +844,10 @@ class GameCanvas extends React.Component {
         event.timestamp = Utils.millis();
         events.push(event);
         this.setState({events});
+
+        if(event.type == "goal"){
+            this.setState({footballScores: event.scores});
+        }
     }
 
     fullScreen() {

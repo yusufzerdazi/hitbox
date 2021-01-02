@@ -10,7 +10,7 @@ import { connect } from "react-redux";
 import Collapsible from 'react-collapsible';
 import axios from 'axios';
 
-import { LOG_IN, CAMERA, USERNAME_UPDATED, PLAYING } from '../../constants/actionTypes';
+import { LOG_IN, CAMERA, USERNAME_UPDATED, PLAYING, ADDAI, REMOVEAI } from '../../constants/actionTypes';
 import { FOLLOWING, DRAG } from '../../constants/cameraTypes';
 
 const mapStateToProps = state => {
@@ -37,6 +37,12 @@ const mapDispatchToProps = dispatch => ({
     playing: x => dispatch({
       type: PLAYING,
       playing: x
+    }),
+    addAI: x => dispatch({
+      type: ADDAI
+    }),
+    removeAI: x => dispatch({
+      type: REMOVEAI
     })
 });
 
@@ -233,6 +239,8 @@ class Options extends React.Component {
             <div className={styles.option} onClick={() => this.openModal("controls")}>Controls</div>
             {this.props.isPlaying ? <div className={styles.option + " " + styles.quitOption} onClick={() => this.props.playing(false)}>Quit</div> : <></>}
             {!this.props.isPlaying ? <div className={styles.option + " " + styles.playOption} onClick={() => this.props.playing(true)}>Join</div> : <></>}
+            {this.props.user?.name == "yusuf" ? <div className={styles.option} onClick={() => this.props.addAI()}>Add AI</div> : <></>}
+            {this.props.user?.name == "yusuf" ? <div className={styles.option} onClick={() => this.props.removeAI()}>Remove AI</div> : <></>}
           </div>
         </Collapsible>
       </div> : 
