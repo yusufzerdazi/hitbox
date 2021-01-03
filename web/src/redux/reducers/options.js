@@ -21,7 +21,7 @@ export default (state = {cameraType: FOLLOWING, playing: false, ai: 0}, action) 
         case REMOVEAI:
             return {
                 ...state,
-                ai: Math.max(state.ai - 1, 0)
+                ai: state.ai - 1
             }
         default:
             return state;
