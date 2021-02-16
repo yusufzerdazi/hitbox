@@ -16,8 +16,36 @@ namespace Hitbox
 {
     public static class UploadAvatar
     {
+        [FunctionName("SelectAvatar")]
+        public static async Task<IActionResult> Select(
+            [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = "SelectAvatar/{playerId}")] HttpRequest req, string playerId,
+            ILogger log)
+        {
+            string connectionString = Environment.GetEnvironmentVariable("StorageAccountConnectionString");
+
+            // Create a BlobServiceClient object which will be used to create a container client
+            BlobServiceClient blobServiceClient = new BlobServiceClient(connectionString);
+
+            //Create a unique name for the container
+            var avatarContainerName = "avatars";
+            var optionsContainerName = "options";
+
+            // Create the container and return a container client object
+            BlobContainerClient sourceContainerClient = blobServiceClient.GetBlobContainerClient(optionsContainerName);
+            BlobContainerClient destContainerClient = blobServiceClient.GetBlobContainerClient(avatarContainerName);
+
+            var sourceBlob = sourceContainerClient.GetBlobClient($"{req.Query["option"]}.svg");
+            var destBlob = destContainerClient.GetBlobClient($"{playerId.ToString()}.svg");
+
+            log.LogInformation(sourceBlob.Uri.ToString());
+
+            await destBlob.StartCopyFromUriAsync(sourceBlob.Uri, new Azure.Storage.Blobs.Models.BlobCopyFromUriOptions());
+
+            return new OkResult();
+        }
+
         [FunctionName("UploadAvatar")]
-        public static async Task<IActionResult> Run(
+        public static async Task<IActionResult> Upload(
             [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] HttpRequest req,
             ILogger log)
         {
