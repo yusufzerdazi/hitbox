@@ -41,7 +41,7 @@ namespace Hitbox
 
             await destBlob.StartCopyFromUriAsync(sourceBlob.Uri, new Azure.Storage.Blobs.Models.BlobCopyFromUriOptions());
 
-            return new OkResult();
+            return new OkObjectResult(new {url = destBlob.Uri});
         }
 
         [FunctionName("UploadAvatar")]
