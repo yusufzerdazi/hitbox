@@ -76,10 +76,21 @@ class Game {
             player.rank);
         client.player.respawn(this.clients, this.gameMode.level);
         this.clients.push(client);
+
+        this.addLonelyAiPlayer();
+
         client.emit("level", this.gameMode.level.platforms);
         client.emit("gameMode", {title:this.gameMode.title, subtitle:this.gameMode.subtitle});
         this.addClientListeners(client);
         this.gameMode.updateClients(this.clients);
+    }
+
+    addLonelyAiPlayer(){
+        if(this.humanPlayers().length == 1 && this.aiPlayers().length == 0){
+            this.addAiPlayer();
+        } else if(this.humanPlayers().length > 1 && this.aiPlayers().length > 0){
+            this.removeAiPlayer();
+        }
     }
 
     spawnNewClients(){
@@ -156,37 +167,45 @@ class Game {
         
         // Game actions
         client.on('addAi', () =>{
-            if(this.clients.filter(c => c.player).length == this.maxPlayers) {
-                return;
-            }
-            var ai = null;
-            if(this.gameMode.title == "Death Wall"){
-                ai = new RunningAi(Utils.randomColor(),
-                Utils.generateName())
-            } else if(Math.random() > 0.5){
-                ai = new SimpleAi(Utils.randomColor(),
-                    Utils.generateName())
-            } else {
-                ai = new CleverAi(Utils.randomColor(),
-                    Utils.generateName());
-            }
-            this.clients.push({
-                player: ai
-            });
-            ai.respawn(this.clients, this.gameMode.level);
-            this.gameMode.updateClients(this.clients);
+            this.addAiPlayer();
         });
     
         client.on('removeAi', () =>{
-            var aiClients = this.aiPlayers();
-            if(aiClients.length){
-                aiClients[0].player.disconnected = true;
-            }
+            this.removeAiPlayer();
         })
     
         client.on('toggleAi', function() {
             this.aiEnabled = !this.aiEnabled;
         });
+    }
+
+    addAiPlayer(){
+        if(this.clients.filter(c => c.player).length == this.maxPlayers) {
+            return;
+        }
+        var ai = null;
+        if(this.gameMode.title == "Death Wall"){
+            ai = new RunningAi(Utils.randomColor(),
+            Utils.generateName())
+        } else if(Math.random() > 0.5){
+            ai = new SimpleAi(Utils.randomColor(),
+                Utils.generateName())
+        } else {
+            ai = new CleverAi(Utils.randomColor(),
+                Utils.generateName());
+        }
+        this.clients.push({
+            player: ai
+        });
+        ai.respawn(this.clients, this.gameMode.level);
+        this.gameMode.updateClients(this.clients);
+    }
+
+    removeAiPlayer(){
+        var aiClients = this.aiPlayers();
+        if(aiClients.length){
+            aiClients[0].player.disconnected = true;
+        }
     }
 
     emitToAllClients(event, eventData, context = this){
@@ -597,6 +616,9 @@ class Game {
     removeDisconnectedPlayers() {
         var disconnectedHumans = this.humanPlayers().filter(client => client.player.disconnected);
         this.clients = this.clients.filter(client => !client.player.disconnected);
+        if(disconnectedHumans.length > 0){
+            this.addLonelyAiPlayer();
+        }
         this.spectators = this.spectators.concat(disconnectedHumans);
         this.gameMode.updateClients(this.clients);
     }
