@@ -23,7 +23,7 @@ class Instructions extends React.Component {
               <thead>
                 <tr>
                   <th>
-                    Button
+                    <b>Button</b>
                   </th>
                   <th>
                     Action

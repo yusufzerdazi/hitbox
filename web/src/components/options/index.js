@@ -10,7 +10,7 @@ import { connect } from "react-redux";
 import Collapsible from 'react-collapsible';
 import axios from 'axios';
 
-import { LOG_IN, CAMERA, USERNAME_UPDATED, PLAYING, ADDAI, REMOVEAI } from '../../constants/actionTypes';
+import { LOG_IN, CAMERA, USERNAME_UPDATED, IMAGE_UPDATED, PLAYING, ADDAI, REMOVEAI } from '../../constants/actionTypes';
 import { FOLLOWING, DRAG } from '../../constants/cameraTypes';
 import Avatars from '../avatars';
 
@@ -30,6 +30,10 @@ const mapDispatchToProps = dispatch => ({
     updateName: x => dispatch({
         type: USERNAME_UPDATED,
         name: x
+    }),
+    updateImage: x => dispatch({
+        type: IMAGE_UPDATED,
+        image: x
     }),
     camera: x => dispatch({
       type: CAMERA,
@@ -80,13 +84,16 @@ class Options extends React.Component {
   onPlayFabResponse(response, error) {
     if (response)
       window.PlayFabClientSDK.GetPlayerProfile({
-        ProfileConstraints: { ShowDisplayName: true },
+        ProfileConstraints: { ShowDisplayName: true, ShowAvatarUrl: true },
         PlayFabId: response.data.PlayFabId
-      }).then((response) => {
-        if(!response.data.PlayerProfile.DisplayName){
+      }).then((response2) => {
+        if(!response2.data.PlayerProfile.DisplayName){
           this.setName(true);
         }
-        this.props.logIn(response.data.PlayerProfile);
+        if(!response2.data.PlayerProfile.AvatarUrl){
+          this.selectRandomAvatar(response.data.PlayFabId);
+        }
+        this.props.logIn(response2.data.PlayerProfile);
         setInterval(() => {
           window.PlayFabClientSDK.GetPlayerStatistics({
             StatisticNames: ["rank"]
@@ -197,8 +204,21 @@ class Options extends React.Component {
     })
   }
 
-  onAvatarChange(){
-    this.setState({etag: Utils.uuidv4()});
+  selectRandomAvatar(playerId){
+    fetch(`${process.env.REACT_APP_FUNCTION_URL}/api/SelectAvatar/${playerId}?option=${Math.floor(Math.random()*40 + 1)}&code=eBvuZ/g3HtoMqsreW6JpIYeYTOfvxiATIlM8q4l3wwMF/ogBFa3dXw==`)
+    .then((response) => response.json())
+    .then((json) => {
+      this.onAvatarChange(json.url)
+    });
+  }
+
+  onAvatarChange(url){
+    var etag = Utils.uuidv4();
+    this.setState({etag: etag});
+    this.props.updateImage(`${url}?etag=${etag}`);
+    window.PlayFabClientSDK.UpdateAvatarUrl({
+      ImageUrl: `${url}?etag=${etag}`
+    });
   }
 
   render() {
@@ -208,17 +228,19 @@ class Options extends React.Component {
       <div className={styles.footerContainer}>
         <div className={styles.profile}>
           <div className={styles.profileImageContainer} style={{float: "left"}}>
-            <img className={styles.profileImage} src={`https://hitbox.blob.core.windows.net/avatars/${this.props.user.id}.svg?etag=${this.state.etag}`} onError={(ev) => ev.target.src=`https://hitbox.blob.core.windows.net/avatars/${this.props.user.id}.jpg?etag=${this.state.etag}`}/>
+            <img className={styles.profileImage} src={this.props.user.image} />
           </div>
           <div style={{float: "left"}} className={styles.profileName}>
             {this.props.user?.name}
           </div>
-          <div style={{float: "left"}} className={styles.score}>Rank: {this.state?.score}</div>
-          <div style={{float: "left"}} className={styles.options}  onClick={() => this.toggleState("optionsOpen")}>Options</div>
+          <div style={{float: "left"}} className={styles.score}>Rank: {this.state?.score || "?"}</div>
+          <div style={{float: "left"}} className={styles.options}  onClick={() => this.toggleState("optionsOpen")}>Options {this.state.optionsOpen ? ' ᐃ' : ' ᐁ'}</div>
+          {this.props.isPlaying ? <div style={{float: "left"}} className={styles.options + " " + styles.quitOption} onClick={() => this.props.playing(false)}>Quit</div> : <></>}
+          {!this.props.isPlaying ? <div style={{float: "left"}} className={styles.options + " " + styles.playOption} onClick={() => this.props.playing(true)}>Join</div> : <></>}
         </div>
         <Collapsible easing="ease-in-out" open={this.state.optionsOpen} >
           <div className={styles.optionsDetails}>
-            <div className={styles.option} onClick={() => this.toggleState("updatingUsername")}>Change username</div>
+            <div className={styles.option} onClick={() => this.toggleState("updatingUsername")}>Change username {this.state.updatingUsername ? ' ᐃ' : ' ᐁ'}</div>
             <Collapsible easing="ease-in-out" open={this.state.updatingUsername} >
               <div className={styles.usernameUpdate}>
                 <div className={styles.name}>
@@ -231,15 +253,13 @@ class Options extends React.Component {
                 <span>{this.state.usernameError}</span>
               </div> : <></> }
             </Collapsible>
-            <div className={styles.option} onClick={() => this.toggleState("uploadingAvatar")}>Choose an avatar</div>
+            <div className={styles.option} onClick={() => this.toggleState("uploadingAvatar")}>Choose an avatar {this.state.uploadingAvatar ? ' ᐃ' : ' ᐁ'}</div>
             <Collapsible easing="ease-in-out" open={this.state.uploadingAvatar} >
               <Avatars playerId={this.props.user.id} onChange={this.onAvatarChange}></Avatars>
             </Collapsible>
             <div className={styles.option} onClick={() => this.props.camera(this.props.cameraType == FOLLOWING ? DRAG : FOLLOWING)}>Camera mode: {this.props.cameraType}</div>
             <div className={styles.option} onClick={() => this.openModal("leaderboard")}>Leaderboard</div>
             <div className={styles.option} onClick={() => this.openModal("controls")}>Controls</div>
-            {this.props.isPlaying ? <div className={styles.option + " " + styles.quitOption} onClick={() => this.props.playing(false)}>Quit</div> : <></>}
-            {!this.props.isPlaying ? <div className={styles.option + " " + styles.playOption} onClick={() => this.props.playing(true)}>Join</div> : <></>}
             {this.props.user?.name == "yusuf" ? <div className={styles.option} onClick={() => this.props.addAI()}>Add AI</div> : <></>}
             {this.props.user?.name == "yusuf" ? <div className={styles.option} onClick={() => this.props.removeAI()}>Remove AI</div> : <></>}
           </div>

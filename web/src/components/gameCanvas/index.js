@@ -2,11 +2,9 @@ import React from 'react';
 import { connect } from 'react-redux';
 import Utils from '../../utils';
 import styles from './styles.module.css';
-import actualise from '../../assets/images/actualise.png';
-import collision from '../../assets/images/collision.svg';
-import bigcollision from '../../assets/images/bigcollision.svg';
 import ball from '../../assets/images/football.png';
-import { RunningForward, RunningBackward, Standing, BigCollision, Collision } from './animation';
+import grass from '../../assets/images/grass.svg';
+import { RunningForward, RunningBackward, Standing, BigCollision, Collision, Splash, WhooshRight, WhooshLeft, WhooshDown } from './animation';
 import { FOLLOWING } from '../../constants/cameraTypes';
 import { PLAYERS } from '../../constants/actionTypes';
 
@@ -14,15 +12,16 @@ const FONT = "'Roboto Mono'";
 const HEIGHT = 540;
 const WIDTH = 960;
 
-const COLLISION = new Image();
-COLLISION.src = collision;
-const BIGCOLLISION = new Image();
-BIGCOLLISION.src = bigcollision;
-
 const BALL = new Image();
 BALL.src = ball;
+const GRASS = new Image();
+GRASS.src = grass;
 
+const PLATFORMRADIUS = 25;
 const ANIMATIONLENGTH = 500;
+const SPLASHANIMATIONLENGTH = 800;
+const WHOOSHANIMATIONLENGTH = 300;
+const HIDDENEVENTS = ["collision", "boost"];
 
 const mapDispatchToProps = dispatch => ({
     updatePlayers: x => dispatch({
@@ -57,7 +56,9 @@ class GameCanvas extends React.Component {
             players: {},
             events: [],
             joining: false,
-            collisions: []
+            collisions: [],
+            deaths: [],
+            boosts: []
         };
 
         this.canvasRef = React.createRef();
@@ -117,9 +118,9 @@ class GameCanvas extends React.Component {
 
     draw(players, level, name, lastWinner) {
         if(this.props.cameraType == FOLLOWING){
-            var you = players.filter(p => p.name === name && p.alive && !p.orb);
-            if(you.length == 0){
-                you = players.filter(p => p.alive && !p.orb);
+            var you = players.filter(p => p.name === name && !p.orb && p.alive);
+            if(you.length == 0 && this.state.gameMode.title == "Death Wall"){
+                you = players.filter(p => !p.orb && p.alive);
             }
             if(you.length > 0){
                 var xDelta = you[0].xVelocity * 5;
@@ -148,12 +149,28 @@ class GameCanvas extends React.Component {
             this.drawPlayerStats(player);
             this.drawPlayerScore(player);
         });
+
         var currentCollisions = this.state.collisions;
         var newCollisions = currentCollisions.filter(c => Utils.millis() - ANIMATIONLENGTH < c.timestamp);
         if(newCollisions.length != currentCollisions.length){
             this.setState({collisions: newCollisions});
         }
+
+        var currentDeaths = this.state.deaths;
+        var newDeaths = currentDeaths.filter(c => Utils.millis() - SPLASHANIMATIONLENGTH < c.timestamp);
+        if(newDeaths.length != currentDeaths.length){
+            this.setState({deaths: newDeaths});
+        }
+        
+        var currentBoosts = this.state.boosts;
+        var newBoosts = currentBoosts.filter(c => Utils.millis() - WHOOSHANIMATIONLENGTH < c.timestamp);
+        if(newBoosts.length != currentBoosts.length){
+            this.setState({boosts: newBoosts});
+        }
+
         this.state.collisions.forEach(c => this.drawCollision(c));
+        this.state.deaths.forEach(d => this.drawDeath(d));
+        this.state.boosts.forEach(b => this.drawBoost(b, players.filter(p => p.name == b.name)[0]));
         this.drawStartingTimer();
         this.drawGameCountdown();
         this.drawGameMode(lastWinner);
@@ -186,21 +203,28 @@ class GameCanvas extends React.Component {
     }
 
     drawWater(){
+        var grd = this.ctx.createLinearGradient(0, HEIGHT - this.state.camera.y, 0, 7 * HEIGHT - this.state.camera.y);
+        grd.addColorStop(0, "#064273");
+        grd.addColorStop(1, "#00022e");
+        this.ctx.fillStyle = grd;
+
         this.drawLevelPlatform({
             x: -((this.ctx.canvas.width) / 2)/this.state.scale + this.state.camera.x,
             y:HEIGHT,
             width:this.ctx.canvas.width/this.state.scale,
             height: ((this.ctx.canvas.height) / 2)/this.state.scale + this.state.camera.y
-        },
-        "#064273");
+        }, "#064273", true);
 
-        this.drawLevelPlatform({
-            x: -((this.ctx.canvas.width) / 2)/this.state.scale + this.state.camera.x,
-            y:HEIGHT * 2,
-            width:this.ctx.canvas.width/this.state.scale,
-            height: ((this.ctx.canvas.height) / 2)/this.state.scale + this.state.camera.y
-        },
-        "#002138");
+        var grd2 = this.ctx.createLinearGradient(0, HEIGHT * 2 - this.state.camera.y / 0.8, 0, 9 * HEIGHT - this.state.camera.y / 0.8);
+        grd2.addColorStop(0, "#002138");
+        grd2.addColorStop(1, "#00022e");
+        this.ctx.fillStyle = grd2;
+        this.drawPolygon({x:0, y: 0}, [
+            {x: -((this.ctx.canvas.width) / 2)/this.state.scale, y: HEIGHT * 2 - this.state.camera.y / 0.8},
+            {x: (this.ctx.canvas.width / 2)/this.state.scale, y: -20 + HEIGHT * 2 - this.state.camera.y / 0.8},
+            {x: (this.ctx.canvas.width / 2)/this.state.scale, y: HEIGHT * 10 + ((this.ctx.canvas.height) / 2)/this.state.scale},
+            {x: -((this.ctx.canvas.width) / 2)/this.state.scale, y: HEIGHT * 10 + ((this.ctx.canvas.height) / 2)/this.state.scale}
+        ], 0, 0, "#002138", false, true);
     }
 
     drawDeathWall(){
@@ -249,20 +273,30 @@ class GameCanvas extends React.Component {
         });
     }
 
-    drawLevelPlatform(level, colour){
+    drawLevelPlatform(level, colour, useExistingFillStyle = false){
         this.ctx.save();
-        this.ctx.fillStyle = colour || "#1a1001";
+        if(!useExistingFillStyle){
+            this.ctx.fillStyle = colour || "#1a1001";
+        }
         if(level.type == "goal"){
             this.ctx.fillStyle = level.colour;
             this.ctx.globalAlpha = 0.5;
         }
         this.ctx.beginPath();
-        this.drawRectangle(level.x, level.y, level.width, level.height);
+        Utils.roundRect(this.ctx, level.x - this.state.camera.x, level.y - this.state.camera.y, level.width, level.height, useExistingFillStyle ? 0 : PLATFORMRADIUS, true, false);
         this.ctx.fill();
-        if(!colour && level.type != "goal"){
+
+        if(!colour && level.type != "goal" && !useExistingFillStyle){
             this.ctx.beginPath();
             this.ctx.fillStyle = colour || "green";
-            this.drawRectangle(level.x - 5, level.y, level.width + 10, 20);
+            Utils.roundRect(this.ctx, level.x - 5 - this.state.camera.x, level.y - this.state.camera.y, level.width + 10, 20, 10, true, false);
+            this.ctx.fill();
+
+            var pat = this. ctx.createPattern(GRASS, "repeat-x");
+            this.ctx.translate(level.x - this.state.camera.x - 5, level.y - this.state.camera.y - 22);
+            this.ctx.rect(0, 0, level.width + 10, 31);
+            this.ctx.fillStyle = pat;
+            this.ctx.scale(0.7, 0.7);
             this.ctx.fill();
         }
         this.ctx.restore();
@@ -274,22 +308,20 @@ class GameCanvas extends React.Component {
     }
 
     drawBackground() {
-        this.ctx.fillStyle = "#ebf0fe";
+        var grd = this.ctx.createLinearGradient(0, -this.ctx.canvas.height/this.state.scale, 0, 0);
+        grd.addColorStop(0, "#b9d7fd");
+        grd.addColorStop(1, "#ebf0fe");
+
+        this.ctx.fillStyle = grd;
         this.ctx.beginPath();
         this.ctx.rect(-this.ctx.canvas.width/this.state.scale, -this.ctx.canvas.height/this.state.scale,
             2*this.ctx.canvas.width/this.state.scale, 2*this.ctx.canvas.height/this.state.scale);
         this.ctx.fill();
 
-        this.ctx.fillStyle = "#b9d7fd";
-        this.ctx.beginPath();
-        this.ctx.rect(-this.ctx.canvas.width/this.state.scale, -1500 - this.state.camera.y / 4,
-            2*this.ctx.canvas.width/this.state.scale, -this.ctx.canvas.height/this.state.scale);
-        this.ctx.fill();
-
         this.ctx.fillStyle = "#fbff91";
         this.ctx.beginPath();
-        this.ctx.rect(-200 - this.state.camera.x / 4, -1000 - this.state.camera.y / 4,
-            400, 400);
+        Utils.roundRect(this.ctx, -200 - this.state.camera.x / 4, -1000 - this.state.camera.y / 4,
+            400, 400, PLATFORMRADIUS, true, false);
         this.ctx.fill();
 
         this.drawHills();
@@ -360,24 +392,27 @@ class GameCanvas extends React.Component {
     }
 
     drawClouds(){
+        this.ctx.save();
+        this.ctx.globalAlpha = 0.7;
         this.ctx.fillStyle = "white";
         this.ctx.beginPath();
         var cloudRepeatDistance = 15000;
-        this.ctx.rect( - ((this.state.camera.x + cloudRepeatDistance) / 2) % cloudRepeatDistance + cloudRepeatDistance / 2 - WIDTH * 2.5, -this.state.camera.y / 2 - 2200,
-            900, 400);
-        this.ctx.rect( - ((this.state.camera.x + cloudRepeatDistance) / 2) % cloudRepeatDistance + cloudRepeatDistance / 2 - WIDTH, -this.state.camera.y / 2 - 1200,
-            900, 400);
-        this.ctx.rect( - ((this.state.camera.x + cloudRepeatDistance) / 2) % cloudRepeatDistance + cloudRepeatDistance / 2 + WIDTH + 4, -this.state.camera.y / 2 - 2200,
-            900, 400);
+        Utils.roundRect(this.ctx, - ((this.state.camera.x + cloudRepeatDistance) / 2) % cloudRepeatDistance + cloudRepeatDistance / 2 - WIDTH * 2.5, -this.state.camera.y / 2 - 2200,
+            900, 400, PLATFORMRADIUS, true, false);
+        Utils.roundRect(this.ctx, - ((this.state.camera.x + cloudRepeatDistance) / 2) % cloudRepeatDistance + cloudRepeatDistance / 2 - WIDTH, -this.state.camera.y / 2 - 1200,
+            900, 400, PLATFORMRADIUS, true, false);
+        Utils.roundRect(this.ctx, - ((this.state.camera.x + cloudRepeatDistance) / 2) % cloudRepeatDistance + cloudRepeatDistance / 2 + WIDTH + 4, -this.state.camera.y / 2 - 2200,
+            900, 400, PLATFORMRADIUS, true, false);
 
-        this.ctx.rect( - ((this.state.camera.x) / 2) % cloudRepeatDistance + cloudRepeatDistance / 2 - WIDTH * 2.5, -this.state.camera.y / 2 - 1200,
-            900, 400);
-        this.ctx.rect( - ((this.state.camera.x) / 2) % cloudRepeatDistance + cloudRepeatDistance / 2 - WIDTH, -this.state.camera.y / 2 - 2200,
-            900, 400);
-        this.ctx.rect( - ((this.state.camera.x) / 2) % cloudRepeatDistance + cloudRepeatDistance / 2 + WIDTH + 4, -this.state.camera.y / 2 - 1200,
-            900, 400);
+        Utils.roundRect(this.ctx, - ((this.state.camera.x) / 2) % cloudRepeatDistance + cloudRepeatDistance / 2 - WIDTH * 2.5, -this.state.camera.y / 2 - 1200,
+            900, 400, PLATFORMRADIUS, true, false);
+        Utils.roundRect(this.ctx, - ((this.state.camera.x) / 2) % cloudRepeatDistance + cloudRepeatDistance / 2 - WIDTH, -this.state.camera.y / 2 - 2200,
+            900, 400, PLATFORMRADIUS, true, false);
+        Utils.roundRect(this.ctx, - ((this.state.camera.x) / 2) % cloudRepeatDistance + cloudRepeatDistance / 2 + WIDTH + 4, -this.state.camera.y / 2 - 1200,
+            900, 400, PLATFORMRADIUS, true, false);
 
-        this.ctx.fill();
+        this.ctx.fill(); 
+        this.ctx.restore();
     }
 
     drawPulsingOrb(player, xOffset, yOffset){
@@ -407,12 +442,11 @@ class GameCanvas extends React.Component {
             this.ctx.fill();
         }
         else {
+            var players = this.state.players;
             if(!(player.name in this.state.players) || player.health === 100){
-                var players = this.state.players;
                 players[player.name] = {damage: [{x: 0, y: 0},{x: width, y: 0},{x: width, y: -height}, {x: 0, y: -height}], image: players[player.name]?.image};
                 this.setState({players});
             }
-            var players = this.state.players;
             while((players[player.name].damage.length - 4) < (100 - player.health) / 2){
                 var newPolygon = this.addDamageVertices(players[player.name].damage);
                 players[player.name].damage = newPolygon;
@@ -421,26 +455,17 @@ class GameCanvas extends React.Component {
             this.drawPolygon(player, this.state.players[player.name].damage, xOffset, yOffset, player.team);
             this.ctx.clip();
 
-            if(player.team && players[player.name].image && !players[player.name].image.src.endsWith('.svg')){
+            if(player.team && players[player.name].image && !players[player.name].image.src.includes('.svg')){
                 this.ctx.globalAlpha = 0.5;
             }
             
-            if(!this.state.players[player.name].image){
+            if(!this.state.players[player.name].image && !player.id){
                 const playerImage = new Image();
-                playerImage.onerror = (ev) => {
-                    if(ev.target.src && ev.target.src.endsWith('.svg')){
-                        ev.target.src = "https://hitbox.blob.core.windows.net/avatars/" + player.id + ".jpg";
-                    }
-                };
-                if(player.id){
-                    playerImage.src = "https://hitbox.blob.core.windows.net/avatars/" + player.id + ".svg";
-                } else {
-                    playerImage.src = "https://hitbox.blob.core.windows.net/options/" + Math.floor(Math.random() * 40 + 1) + ".svg";
-                }
+                playerImage.src = "https://hitbox.blob.core.windows.net/options/" + Math.floor(Math.random() * 40 + 1) + ".svg";
                 players[player.name].image = playerImage
                 this.setState({players});
             }
-            if(this.state.players[player.name].image.height != 0){
+            if(this.state.players[player.name]?.image && this.state.players[player.name]?.image.height != 0){
                 this.ctx.drawImage(this.state.players[player.name].image, playerX - this.state.camera.x, playerY - height - this.state.camera.y, width, height);
             }
         }
@@ -448,8 +473,10 @@ class GameCanvas extends React.Component {
         this.ctx.restore()
     }
 
-    drawPolygon(player, polygon, xOffset, yOffset, colour = null, addCamera = true){
-        this.ctx.fillStyle = colour|| player.colour;
+    drawPolygon(player, polygon, xOffset, yOffset, colour = null, addCamera = true, useExistingFillStyle = false){
+        if(!useExistingFillStyle){
+            this.ctx.fillStyle = colour|| player.colour;
+        }
         this.ctx.beginPath();
         var cameraX = (addCamera ? this.state.camera.x : 0);
         var cameraY = (addCamera ? this.state.camera.y : 0);
@@ -596,8 +623,9 @@ class GameCanvas extends React.Component {
     }
 
     drawEvents(){
-        var events = this.state.events.filter(d => d.type != "collision" && Utils.millis() < d.timestamp + 5000);
+        var events = this.state.events.filter(d => !HIDDENEVENTS.includes(d.type) && Utils.millis() < d.timestamp + 5000);
         this.setState({events});
+
         this.ctx.save();
         this.ctx.font = "bold " + 15*(1/this.state.scale) + "px " + FONT;
         this.ctx.textAlign = "right";
@@ -744,13 +772,70 @@ class GameCanvas extends React.Component {
         var sizeProportion = 1 + 0.5 * time;
         var maxSize = 2 * collision.speed * (collision.speed > 30 ? 1.3 : 1);
         var collisionImage = collision.speed < 30 ? 
-            Collision[Math.floor(time * Collision.length)] : 
-            BigCollision[Math.floor(time * BigCollision.length)];
+            Collision[Math.min(Math.floor(time * Collision.length), Collision.length - 1)] : 
+            BigCollision[Math.min(Math.floor(time * BigCollision.length), BigCollision.length - 1)];
         
         this.ctx.globalAlpha = transparency;
         this.ctx.drawImage(collisionImage, collision.location.x - (sizeProportion * maxSize / 2) - this.state.camera.x, 
             collision.location.y - (sizeProportion * maxSize / 2) - this.state.camera.y, sizeProportion * maxSize, sizeProportion * maxSize);
         this.ctx.fill();
+        this.ctx.restore();
+    }
+
+    drawDeath(death){
+        this.ctx.save();
+        var time = (Utils.millis() - death.timestamp) / SPLASHANIMATIONLENGTH;
+        var splashImage = Splash[Math.min(Math.floor(time * Splash.length), Splash.length - 1)];
+        
+        this.ctx.drawImage(splashImage, death.location.x - 231 - this.state.camera.x, HEIGHT - 145 - this.state.camera.y, 
+            512, 198);
+
+        this.ctx.restore();
+    }
+
+    drawBoost(boost, player){
+        if(!player){
+            return;
+        }
+        this.ctx.save();
+        var time = (Utils.millis() - boost.timestamp) / WHOOSHANIMATIONLENGTH;
+        var transparency = 0.7 * (1 - Math.pow(time,4));
+        this.ctx.globalAlpha = transparency;
+        var whooshAnimation = boost.direction == 'right' ? WhooshRight : boost.direction == 'left' ? WhooshLeft : WhooshDown;
+        var image = whooshAnimation[Math.min(Math.floor(time * whooshAnimation.length), whooshAnimation.length - 1)];
+        var imageWidth = 302;
+        var imageHeight = 100;
+        var xOffset = 0;
+        var yOffset = - 25;
+        switch(boost.direction){
+            case 'right':
+                if(player.xVelocity <= 10){
+                    this.ctx.restore();
+                    return;
+                }
+                xOffset = - imageWidth - 15;
+                break;
+            case 'left':
+                if(player.xVelocity >= 10){
+                    this.ctx.restore();
+                    return;
+                }
+                xOffset = player.width + 15;
+                break;
+            case 'down':
+                if(player.yVelocity <= 10){
+                    this.ctx.restore();
+                    return;
+                }
+                xOffset = - 28;
+                yOffset = - imageWidth - 25;
+                imageWidth = [imageHeight, imageHeight = imageWidth][0];
+                break;
+        }
+
+        this.ctx.drawImage(image, player.x + xOffset - this.state.camera.x, player.y - player.height + yOffset - this.state.camera.y, 
+            imageWidth, imageHeight);
+
         this.ctx.restore();
     }
 
@@ -857,6 +942,7 @@ class GameCanvas extends React.Component {
         var subtitleFontSize = 20/this.state.scale;
         var centerTitle = this.state.countdown;
         var showWinner = this.state.countdown > 60;
+        
         var yPosition = centerTitle ? - 100 : -(this.ctx.canvas.height / 2 - 40)
         var subtitleDiff = 30;
         if(centerTitle){
@@ -908,6 +994,29 @@ class GameCanvas extends React.Component {
             collisions.push(event);
             this.setState({collisions: collisions});
         }
+
+        if(event.type == "death" && event.causeOfDeath == "water"){
+            var deaths = this.state.deaths;
+            deaths.push(event);
+            this.setState({deaths: deaths});
+        }
+
+        if(event.type == "boost"){
+            var boosts = this.state.boosts;
+            boosts.push(event);
+            this.setState({boosts: boosts});
+        }
+    }
+
+    changeAvatar(avatar){
+        var players = this.state.players;
+        var image = new Image();
+        image.src = Utils.updateQueryStringParameter(avatar.url, 'etag', Utils.uuidv4());
+        players[avatar.name] = {
+            ...players[avatar.name],
+            image: image
+        };
+        this.setState({players});
     }
 
     fullScreen() {

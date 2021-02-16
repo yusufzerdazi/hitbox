@@ -37,7 +37,8 @@ class Game extends React.Component {
             room: room,
             playing: false,
             name: null,
-            ai: 0
+            ai: 0,
+            avatar: null
         };
         this.canvasRef = React.createRef();
         this.gameService = new GameService();
@@ -64,6 +65,10 @@ class Game extends React.Component {
                 this.setState({playing: true, name: state.logIn.user.name});
             });
         }
+        if(state.logIn?.user?.image && state.logIn?.user?.image != this.avatar){
+            this.setState({avatar: state.logIn?.user?.image});
+            this.gameService.changeAvatar(state.logIn?.user?.image, state.logIn?.user?.name);
+        }
         if(!state.options?.playing && this.state.playing){
             this.gameService.quit();
             this.setState({playing: false});
@@ -88,10 +93,12 @@ class Game extends React.Component {
         this.gameService
             .setCanvas(this.canvasRef)
             .setMounted(true)
-            .onWin(winner => this.setState({lastWinner: winner}));
+            .onWin(winner => {
+                this.setState({lastWinner: winner});
+            });
         
         this.gameService.spectate(this.state.room);
-
+        
         setInterval(() => {
             if (this.mounted && this.gameService.level){
                 this.canvasRef.current.draw(this.gameService.players, this.gameService.level, this.props.user?.name || this.state.name, this.state.lastWinner);
@@ -184,9 +191,9 @@ class Game extends React.Component {
             }
             case ('RightStickY'): {
                 if(Math.abs(value) > 0.2){
-                    this.current.current.analogScale(value);
+                    this.canvasRef.current.analogScale(value);
                 } else {
-                    this.current.current.analogScale(0);
+                    this.canvasRef.current.analogScale(0);
                 }
                 break;
             }

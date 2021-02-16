@@ -15,6 +15,7 @@ import wall from '../assets/sounds/wall.mp3';
 import box from '../assets/sounds/box.mp3';
 import football from '../assets/sounds/football.mp3';
 import bigFootball from '../assets/sounds/football2.mp3';
+import splash from '../assets/sounds/splash.mp3';
 
 import hitbox from '../assets/sounds/hitbox.mp3';
 import Utils from '../utils';
@@ -42,8 +43,9 @@ class GameService {
         this.bgMusic = new THREE.Audio(this.listener);
         this.boxSound = new THREE.Audio(this.listener);
         this.footballSound = new THREE.Audio(this.listener);
+        this.splashSound = [new THREE.Audio(this.listener), new THREE.Audio(this.listener), new THREE.Audio(this.listener)];
         this.bigFootballSound = new THREE.Audio(this.listener);
-        this.whoosh = [new THREE.Audio(this.listener), new THREE.Audio(this.listener), new THREE.Audio(this.listener)];
+        this.whooshSound = [new THREE.Audio(this.listener), new THREE.Audio(this.listener), new THREE.Audio(this.listener)];
         this.runningSound = [new THREE.Audio(this.listener), new THREE.Audio(this.listener), new THREE.Audio(this.listener)];
         this.audioLoader = new THREE.AudioLoader();
 
@@ -58,6 +60,14 @@ class GameService {
             $this.footballSound.setBuffer(buffer);
             $this.footballSound.setVolume(0.1);
         });
+
+        this.splashSound.forEach((w, i) => {
+            this.audioLoader.load(splash, function(buffer){
+                w.setBuffer(buffer);
+                w.setVolume(0.1);
+                w.playbackRate = 0.9 + i * 0.1;
+            });
+        });
         
         this.audioLoader.load(bigFootball, function(buffer){
             $this.bigFootballSound.setBuffer(buffer);
@@ -69,7 +79,7 @@ class GameService {
             $this.thwackSound.setVolume(0.1);
         });
 
-        this.whoosh.forEach((w, i) => {
+        this.whooshSound.forEach((w, i) => {
             this.audioLoader.load(whoosh, function(buffer){
                 w.setBuffer(buffer);
                 w.setVolume(0.05);
@@ -138,21 +148,18 @@ class GameService {
         this.socket.on('collision', (collision) => {
             if (this.soundEnabled && this.mounted) {
                 var collisionEvent = {
-                    type: "collision",
-                    collisionType: collision.type,
-                    location: collision.location,
-                    timestamp: Utils.millis(),
-                    speed: collision.speed
+                    ...collision,
+                    type: "collision"
                 };
                 
                 switch(collision.type){
                     case "player":
-                        if(collision.speed < 30 ? this.playerHit() : this.thwackHit()){
+                        if(collision.speed < 30 ? this.playerHit() : this.playSound(this.thwackSound)){
                             this.canvasRef.current.event(collisionEvent);
                         }
                         break;
                     case "box":
-                        if(this.boxHit()){
+                        if(this.playSound(this.boxSound)){
                             this.canvasRef.current.event(collisionEvent);
                         }
                         break;
@@ -167,13 +174,18 @@ class GameService {
 
         this.socket.on('hitWall', () => {
             if (this.soundEnabled && this.mounted) {
-                this.wallHit();
+                this.playSound(this.wallSound);
             }
         });
 
-        this.socket.on('boost', () => {
+        this.socket.on('boost', (boost) => {
+            var boostEvent = {
+                ...boost,
+                type: "boost"
+            };
             if (this.soundEnabled && this.mounted) {
-                this.boost();
+                this.playSound(this.whooshSound);
+                this.canvasRef.current.event(boostEvent);
             }
         });
 
@@ -260,12 +272,22 @@ class GameService {
         this.socket.on('event', (event) => {
             if(this.mounted){
                 this.canvasRef.current.event(event);
+                if(event.type == "death" && event.causeOfDeath == "water"){
+                    this.playSound(this.splashSound);
+                }
             }
         });
 
         this.socket.on('newGame', (players) => {
             if(this.mounted){
                 this.canvasRef.current.newGame(players);
+            }
+        });
+
+        this.socket.on('changeAvatar', (avatar) => {
+            if(this.mounted){
+                this.canvasRef.current.changeAvatar(avatar);
+                console.log("test")
             }
         });
 
@@ -390,6 +412,10 @@ class GameService {
         this.socket.emit("nameChange", name);
     }
 
+    changeAvatar(url, name){
+        this.socket.emit("changeAvatar", {url:url, name:name});
+    }
+
     playerHit(){
         var soundToPlay = this.playerSound[Math.floor(Math.random() * this.playerSound.length)];
         var soundToPlay2 = this.owSound[Math.floor(Math.random() * this.owSound.length)];
@@ -406,24 +432,20 @@ class GameService {
         return soundPlayed;
     }
 
-    wallHit(){
-        var soundToPlay = this.wallSound[Math.floor(Math.random() * this.wallSound.length)];
-        if(!soundToPlay.isPlaying){
-            soundToPlay.play();
+    playSound(sound){
+        if(Array.isArray(sound)){
+            var nonPlayingSounds = sound.filter(s => !s.isPlaying);
+            if(nonPlayingSounds.length == 0){
+                return false;
+            }
+            var soundToPlay = nonPlayingSounds[Math.floor(Math.random() * nonPlayingSounds.length)];
+            if(!soundToPlay.isPlaying){
+                soundToPlay.play();
+                return true
+            }
         }
-    }
-
-    boxHit(){
-        if(!this.boxSound.isPlaying){
-            this.boxSound.play();
-            return true;
-        }
-        return false;
-    }
-
-    thwackHit(){
-        if(!this.thwackSound.isPlaying){
-            this.thwackSound.play();
+        else if(!sound.isPlaying){
+            sound.play();
             return true;
         }
         return false;
@@ -439,13 +461,6 @@ class GameService {
             return true;
         }
         return false;
-    }
-
-    boost(){
-        var soundToPlay = this.whoosh[Math.floor(Math.random() * this.whoosh.length)];
-        if(!soundToPlay.isPlaying){
-            soundToPlay.play();
-        }
     }
 
     updateRunning(count){

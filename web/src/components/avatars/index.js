@@ -30,10 +30,11 @@ class Avatars extends React.Component {
   }
 
   selectAvatar(option){
-    fetch(`${process.env.REACT_APP_FUNCTION_URL}/api/SelectAvatar/${this.props.playerId}?option=${encodeURIComponent(option)}&code=eBvuZ/g3HtoMqsreW6JpIYeYTOfvxiATIlM8q4l3wwMF/ogBFa3dXw==`, {
-      method: 'GET',
-      mode: 'no-cors'
-    }).then(() => this.props.onChange());
+    fetch(`${process.env.REACT_APP_FUNCTION_URL}/api/SelectAvatar/${this.props.playerId}?option=${encodeURIComponent(option)}&code=eBvuZ/g3HtoMqsreW6JpIYeYTOfvxiATIlM8q4l3wwMF/ogBFa3dXw==`)
+    .then((response) => response.json())
+    .then((json) => {
+      this.props.onChange(json.url)
+    });
   }
 
   render() {
