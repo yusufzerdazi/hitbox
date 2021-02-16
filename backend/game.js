@@ -31,7 +31,7 @@ class Game {
         this.newClients = [];
         this.spectators = [];
         this.state = state.STARTING;
-        this.aiEnabled = true;
+        this.aiEnabled = false;
         this.maxPlayers = 100;
         this.startingTicks = 0;
         this.ticks = 0;
@@ -342,19 +342,50 @@ class Game {
     isDamaged(player1, player2) {
         return !player1.ducked || player2.yVelocity > 0;
     }
+
+    getCollisionType(collision){
+        var collisionType = "player";
+        collision.forEach(client => {
+            if(client.player.orb || client.player.it){
+                collisionType = "box";
+            }
+            if(client.player.type == "ball"){
+                collisionType = "football";
+            }
+        })
+        return collisionType;
+    }
+
+    getCollisionLocation(collision){
+        var ball = collision.filter(c => c.player.type == "ball");
+        var notBall = collision.filter(c => c.player.type != "ball");
+        if(ball[0]){
+            var ballCenter = {
+                x: ball[0].player.x + Constants.BALLWIDTH / 2,
+                y: ball[0].player.y - Constants.BALLWIDTH / 2,
+            };
+            var playerCenter = {
+                x: notBall[0].player.x + Constants.PLAYERWIDTH / 2,
+                y: notBall[0].player.y - Constants.PLAYERHEIGHT / 2,
+            };
+            var angle = Math.atan2(playerCenter.y - ballCenter.y, playerCenter.x - ballCenter.x);
+            return {
+                x: ballCenter.x + Math.cos(angle) * Constants.BALLWIDTH / 2,
+                y: ballCenter.y + Math.sin(angle) * Constants.BALLWIDTH / 2
+            }
+        } else {
+            return {
+                x: (collision[0].player.x + collision[1].player.x + Constants.PLAYERWIDTH) / 2,
+                y: (collision[0].player.y + collision[1].player.y - Constants.PLAYERHEIGHT) / 2
+            }
+        }
+    }
     
     calculateCollision() {
-        var wasCollision = false;
         var collisions = [];
         this.vulnerablePlayers().forEach(client => {
             this.movingPlayers().filter(c => c != client && c.player.invincibility == 0).forEach(otherClient=> {
                 if(client.player.isCollision(otherClient.player) && this.isDamaged(client.player, otherClient.player)) {
-                    if(client.player.orb || client.player.it || otherClient.player.it){
-                        wasCollision = "box";
-                    } else {
-                        wasCollision = wasCollision || "player";
-                    }
-
                     var clientSpeed = client.player.speed();
                     var otherClientSpeed = otherClient.player.speed();
                     var speedDifference = Math.abs(clientSpeed - otherClientSpeed);
@@ -414,6 +445,12 @@ class Game {
         });
         collisions.forEach(c => {
             this.gameMode.onCollision(c[0], c[1]);
+            
+            this.emitToAllClients("collision", {
+                type: this.getCollisionType(c),
+                location: this.getCollisionLocation(c),
+                speed: Math.max(c[0].player.speed(), c[1].player.speed())
+            });
         });
         this.livingPlayers().forEach(client => {
             if(client.player.newXVelocity){
@@ -439,7 +476,6 @@ class Game {
         this.invulnerablePlayers().forEach((client, i) => {
             client.player.invincibility -= 20;
         });
-        return wasCollision;
     }
     
     calculateEnd() {
@@ -452,14 +488,14 @@ class Game {
                     endStatus.winner.emit("beaten", beatenPlayers.length);
                     endStatus.winner.emit("win");
                     beatenPlayers.forEach(c => {
-                        var newElo = EloRating.calculate(endStatus.winner.player.rank, c.player.rank);
-                        eloRatingChanges[endStatus.winner.player.name] = (eloRatingChanges[endStatus.winner.player.name] || 0) + (newElo.playerRating - endStatus.winner.player.rank);
-                        eloRatingChanges[c.player.name] = (newElo.opponentRating - c.player.rank);
+                        var newElo = EloRating.calculate(endStatus.winner.player.rank || 1000, c.player.rank || 1000);
+                        eloRatingChanges[endStatus.winner.player.name] = (eloRatingChanges[endStatus.winner.player.name] || 0) + (newElo.playerRating - (endStatus.winner.player.rank || 1000));
+                        eloRatingChanges[c.player.name] = (newElo.opponentRating - c.player.rank || 1000);
                         c.emit("loss");
                     });
                     for(var key in eloRatingChanges){
                         var client = this.clients.filter(c => c.player.name == key)[0];
-                        client.player.rank += eloRatingChanges[key];
+                        client.player.rank = (client.player.rank || 1000) + eloRatingChanges[key];
                         client.emit("rank", client.player.rank);
                     }
                 }
@@ -472,18 +508,18 @@ class Game {
                     var eloRatingChanges = {};
                     endStatus.winners.forEach(w => {
                         endStatus.losers.forEach(l => {
-                            var newElo = EloRating.calculate(w.player.rank, l.player.rank);
-                            eloRatingChanges[w.player.name] = (eloRatingChanges[w.player.name] || 0) + (newElo.playerRating - w.player.rank);
-                            eloRatingChanges[l.player.name] = (eloRatingChanges[l.player.name] || 0) + (newElo.opponentRating - l.player.rank);
+                            var newElo = EloRating.calculate(w.player.rank || 1000, l.player.rank || 1000);
+                            eloRatingChanges[w.player.name] = (eloRatingChanges[w.player.name] || 0) + (newElo.playerRating - (w.player.rank || 1000));
+                            eloRatingChanges[l.player.name] = (eloRatingChanges[l.player.name] || 0) + (newElo.opponentRating - (l.player.rank || 1000));
                         });
                     });
                     endStatus.winners.forEach(w => {
-                        w.player.rank += eloRatingChanges[w.player.name] / endStatus.losers.length;
+                        w.player.rank = (w.player.rank || 1000) + eloRatingChanges[w.player.name] / endStatus.losers.length;
                         w.emit("rank", w.player.rank);
                         w.emit("win");
                     });
                     endStatus.losers.forEach(l => {
-                        l.player.rank += eloRatingChanges[l.player.name] / endStatus.winners.length;
+                        l.player.rank = (l.player.rank || 1000) + eloRatingChanges[l.player.name] / endStatus.winners.length;
                         l.emit("rank", l.player.rank);
                         l.emit("loss");
                     });
@@ -610,10 +646,7 @@ class Game {
             if(this.state == state.STARTED){
                 this.calculateSpeed();
                 this.calculateMovement();
-                var wasCollision = this.calculateCollision();
-                if(wasCollision){
-                    this.emitToAllClients("collision", wasCollision);
-                }
+                this.calculateCollision();
                 if(this.aiEnabled){
                     this.moveAi();
                 }
@@ -636,7 +669,13 @@ class Game {
             if(this.gameMode.title == "Tag"){
                 this.emitToAllClients("gameCountdown", (this.gameMode.startingTicks + this.gameMode.gameLength) - this.ticks);
             }
-            this.emitToAllClients("allPlayers", this.clients.map(socket => this.mapSocketToPlayer(socket)));
+            var runningPlayers = this.movingPlayers().reduce((acc, cur) => {
+                return acc + (cur.player.type != "ball" && cur.player.onSurface.includes(true) && cur.player.xVelocity != 0)
+            }, 0);
+            this.emitToAllClients("allPlayers", {
+                running: runningPlayers,
+                players: this.clients.map(socket => this.mapSocketToPlayer(socket))
+            });
             this.ticks++;
         }, 1000 / 60);
     }

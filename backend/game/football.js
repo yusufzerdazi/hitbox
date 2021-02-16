@@ -1,6 +1,7 @@
 var GameMode = require('./gameMode');
 var Levels = require('../levels');
 var Ball = require('../players/ball');
+var Constants = require('../constants');
 
 class Football extends GameMode {
     constructor(clients, ticks, emitToAllClients){
@@ -19,24 +20,24 @@ class Football extends GameMode {
         this.allocateTeams();
 
         this.scores = {
-            red: 0,
-            blue: 0
+            team1: 0,
+            team2: 0
         }
     }
 
     allocateTeams(){
         while(this.clients.filter(c => c.player.type == null && c.player.team == null) != 0){
             var unselectedPlayers = this.clients.filter(c => c.player.type == null && c.player.team == null);
-            var redPlayers = this.clients.filter(c => c.player.team == "red");
-            var bluePlayers = this.clients.filter(c => c.player.team == "blue");
-            var teamToChoose = redPlayers.length < bluePlayers.length ? "red" : "blue";
+            var team1Players = this.clients.filter(c => c.player.team == Constants.TEAM1);
+            var team2Players = this.clients.filter(c => c.player.team == Constants.TEAM2);
+            var teamToChoose = team1Players.length < team2Players.length ? Constants.TEAM1 : Constants.TEAM2;
             var randomPlayer = Math.floor(Math.random() * unselectedPlayers.length);
             unselectedPlayers[randomPlayer].player.team = teamToChoose;
         }
     }
 
     endCondition(ticks){
-        var winningTeam = this.scores.red == 3 ? "red" : this.scores.blue === 3 ? "blue" : null
+        var winningTeam = this.scores.team1 == 3 ? Constants.TEAM1 : this.scores.team2 === 3 ? Constants.TEAM2 : null
         if(!winningTeam){
             return {end: false};
         }
@@ -74,7 +75,7 @@ class Football extends GameMode {
             this.level.platforms.filter(x => x.type == "goal").forEach(goal => {
                 if(client.player.x >= goal.leftX() && client.player.x + client.player.width <= goal.rightX() &&
                     client.player.y >= goal.topY() && client.player.y + client.player.height <= goal.bottomY()){
-                        var scorerColour = goal.colour === "red" ? "blue" : "red";
+                        var scorerColour = goal.colour === Constants.TEAM1 ? "team2" : "team1";
                         this.scores[scorerColour] += 1;
                         this.emitToAllClients("event", {
                             type: "goal",

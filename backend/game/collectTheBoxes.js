@@ -8,7 +8,7 @@ class CollectTheBoxes extends GameMode {
         var possibleLevels = [Levels.Space, Levels.Complex, Levels.Towers, Levels.Island, Levels.Maze];
         this.level = possibleLevels[Math.floor(possibleLevels.length * Math.random())];
         this.title = "Collect the Boxes";
-        this.subtitle = "First to 10!";
+        this.subtitle = "First to 5!";
         this.finished = false;
         this.clients.forEach(c => {
             c.player.lives = 0;
@@ -20,7 +20,7 @@ class CollectTheBoxes extends GameMode {
     }
 
     endCondition(ticks){
-        var winner = this.clients.filter(c => c.player.lives === 10);
+        var winner = this.clients.filter(c => c.player.lives === 5);
         if(winner.length === 1){
             this.finished = true;
             return {end: true, winner: this.clients.filter(c => !c.player.orb).length > 1 ? winner[0] : null};

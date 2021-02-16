@@ -54,8 +54,8 @@ module.exports = {
         new Square(-2000, -9 * Constants.HEIGHT / 2 - 500, Constants.WIDTH + 4000, 500, "border"),
     ], new Square(-1500, -3 * Constants.HEIGHT / 2, Constants.WIDTH + 3000, 2 * Constants.HEIGHT), null, null, 0.6),
     LongIsland: new Level([
-        new Square(-3000, - Constants.HEIGHT, 500, 2 * Constants.HEIGHT, "goal", "red"),
-        new Square(Constants.WIDTH + 2500, - Constants.HEIGHT, 500, 2 * Constants.HEIGHT, "goal", "blue"),
+        new Square(-3000, - Constants.HEIGHT, 500, 2 * Constants.HEIGHT, "goal", Constants.TEAM1),
+        new Square(Constants.WIDTH + 2500, - Constants.HEIGHT, 500, 2 * Constants.HEIGHT, "goal", Constants.TEAM2),
         new Square(-3000, Constants.HEIGHT / 2, Constants.WIDTH + 6000, Constants.HEIGHT / 2)
     ], new Square(-3000, -3 * Constants.HEIGHT / 2, Constants.WIDTH + 6000, 2 * Constants.HEIGHT), 0.5, null),
 }

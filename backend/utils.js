@@ -17,7 +17,7 @@ class Utils {
         const threshold = 50;
         // Generate three color parts randomly
         const parts = Array.from(Array(3), _ => 
-                Math.floor(Math.random()*256)
+                50 + Math.floor(Math.random()*206)
             ).sort( (a, b) => a-b );
         
         // Check whether they are too close to the same value:
