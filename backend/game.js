@@ -13,6 +13,7 @@ var CollectTheBoxes = require('./game/collectTheBoxes');
 var Football = require('./game/football');
 var Square = require('./square');
 var Constants = require('./constants');
+var Utils = require('./utils');
 
 var GameModes = {
     generic: [CollectTheBoxes, DeathWall, BattleRoyale, Tag, BattleRoyale, BattleRoyale, Football],
@@ -31,7 +32,7 @@ class Game {
         this.newClients = [];
         this.spectators = [];
         this.state = state.STARTING;
-        this.aiEnabled = false;
+        this.aiEnabled = true;
         this.maxPlayers = 100;
         this.startingTicks = 0;
         this.ticks = 0;
@@ -138,6 +139,13 @@ class Game {
             if(client.player) client.player.name = name;
         });
 
+        client.on('changeAvatar', (avatar) => {
+            this.emitToAllClients('changeAvatar', {
+                name: avatar.name,
+                url: avatar.url
+            });
+        });
+
         client.on('quit', function() {
             if(client.player) client.player.disconnected = true;
         });
@@ -195,15 +203,15 @@ class Game {
             } else if(client.player.boostRight && client.player.boostCooldown + Constants.BOOSTCOST <= 100){
                 client.player.xVelocity = Constants.BOOSTSPEED;
                 client.player.boostCooldown += Constants.BOOSTCOST;
-                this.emitToAllClients("boost");
+                this.emitToAllClients("boost", {name: client.player.name, direction: 'right'});
             } else if(client.player.boostLeft && client.player.boostCooldown + Constants.BOOSTCOST <= 100){
                 client.player.xVelocity = -Constants.BOOSTSPEED;
                 client.player.boostCooldown += Constants.BOOSTCOST;
-                this.emitToAllClients("boost");
+                this.emitToAllClients("boost", {name: client.player.name, direction: 'left'});
             } else if(client.player.clicked && client.player.boostRight == 0 && client.player.xVelocity != 0 && client.player.boostCooldown + Constants.BOOSTCOST <= 100){
                 client.player.xVelocity = Constants.BOOSTSPEED * Math.sign(client.player.xVelocity);
                 client.player.boostCooldown += Constants.BOOSTCOST;
-                this.emitToAllClients("boost");
+                this.emitToAllClients("boost", {name: client.player.name, direction: client.player.xVelocity > 0 ? 'right' : 'left'});
             }
 
             if(client.player.down && client.player.onSurface.includes(true) && client.player.yVelocity >= 0){
@@ -217,7 +225,7 @@ class Game {
             if(client.player.down && client.player.boostCooldown + Constants.BOOSTCOST <= 100 && !client.player.onSurface.includes(true)){
                 client.player.yVelocity = Constants.BOOSTSPEED;
                 client.player.boostCooldown += Constants.BOOSTCOST;
-                this.emitToAllClients("boost");
+                this.emitToAllClients("boost", {name: client.player.name, direction: 'down', timestamp: Utils.millis()});
             }
             else if(Math.abs(client.player.xVelocity) <= Constants.TERMINAL){
                 if(client.player.right){
@@ -268,7 +276,7 @@ class Game {
                 }
                 client.player.xVelocity = newMagnitude * velSign;
             }
-            if(client.player.y != Constants.PLATFORMHEIGHT || client.player.x + Constants.PLAYERHEIGHT < 100 || client.player.x > 860 || client.player.yVelocity < 0) {
+            if((client.player.health != 0) && (client.player.y != Constants.PLATFORMHEIGHT || client.player.x + Constants.PLAYERHEIGHT < 100 || client.player.x > 860 || client.player.yVelocity < 0)) {
                 client.player.yVelocity += Constants.VERTICALACCELERATION * this.gameMode.level.gravity;
             } else {
                 client.player.yVelocity = 0;
@@ -399,12 +407,19 @@ class Game {
                                 client.emit("death");
                                 otherClient.emit("kill");
                             }
+                            client.player.death();
                             this.emitToAllClients("event", {
                                 type: "death",
+                                timestamp: Utils.millis(),
+                                causeOfDeath: "murder",
                                 method: Constants.DEATHMETHODS[Math.floor(Math.random() * Constants.DEATHMETHODS.length)],
                                 killed: {
                                     name: client.player.name,
                                     colour: client.player.colour
+                                },
+                                location: {
+                                    x: client.player.x,
+                                    y: client.player.y
                                 },
                                 killer: {
                                     name: otherClient.player.name,
@@ -444,13 +459,12 @@ class Game {
             })
         });
         collisions.forEach(c => {
-            this.gameMode.onCollision(c[0], c[1]);
-            
             this.emitToAllClients("collision", {
                 type: this.getCollisionType(c),
                 location: this.getCollisionLocation(c),
                 speed: Math.max(c[0].player.speed(), c[1].player.speed())
             });
+            this.gameMode.onCollision(c[0], c[1]);
         });
         this.livingPlayers().forEach(client => {
             if(client.player.newXVelocity){
@@ -462,12 +476,18 @@ class Game {
                 client.player.newYVelocity = null;
             }
             if(client.player.y >= Constants.HEIGHT + Constants.PLAYERHEIGHT){
-                client.player.health = 0;
+                client.player.death();
                 this.emitToAllClients("event", {
                     type: "death",
+                    timestamp: Utils.millis(),
+                    causeOfDeath: "water",
                     killed: {
                         name: client.player.name,
                         colour: client.player.colour
+                    },
+                    location: {
+                        x: client.player.x,
+                        y: client.player.y
                     },
                     method: Constants.SUICIDEMETHODS[Math.floor(Math.random() * Constants.SUICIDEMETHODS.length)]
                 });
@@ -482,7 +502,7 @@ class Game {
         var endStatus = this.gameMode.endCondition(this.ticks);
         if(endStatus.end){
             if(endStatus.winner){
-                if(this.aiPlayers().length == 0){
+                if(this.aiPlayers().length == 0 && this.clients.filter(c => c.player.name == endStatus.winner.player.name).length > 0){
                     var eloRatingChanges = {};
                     var beatenPlayers = this.players().filter(c => c.player.name != endStatus.winner.player.name);
                     endStatus.winner.emit("beaten", beatenPlayers.length);
@@ -499,11 +519,10 @@ class Game {
                         client.emit("rank", client.player.rank);
                     }
                 }
-
                 endStatus.winner.player.score += 1;
                 this.emitToAllClients('winner', endStatus.winner.player);
             }
-            if(endStatus.winners){
+            else if(endStatus.winners){
                 if(this.aiPlayers().length == 0){
                     var eloRatingChanges = {};
                     endStatus.winners.forEach(w => {

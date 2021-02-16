@@ -100,6 +100,12 @@ class Player {
     speed(){
         return Math.sqrt(Math.pow(this.xVelocity, 2) + Math.pow(this.yVelocity, 2));
     }
+
+    death(){
+        this.health = 0;
+        this.xVelocity = 0;
+        this.yVelocity = 0;
+    }
 }
 
 module.exports = Player;

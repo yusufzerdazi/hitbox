@@ -8,7 +8,8 @@ class Football extends GameMode {
         super(clients, true, emitToAllClients);
         var possibleLevels = [Levels.LongIsland];
         this.level = possibleLevels[Math.floor(possibleLevels.length * Math.random())];
-
+        
+        this.finished = false;
         this.title = "Football";
         this.subtitle = "First team to 3 goals!";
         
@@ -41,7 +42,7 @@ class Football extends GameMode {
         if(!winningTeam){
             return {end: false};
         }
-
+        this.finished = true;
         var winningPlayers = this.clients.filter(c => c.player.team == winningTeam && c.player.type == null);
         var losingPlayers = this.clients.filter(c => c.player.team != winningTeam && c.player.type == null);
         

@@ -2,6 +2,7 @@ var GameMode = require('./gameMode');
 var Levels = require('../levels');
 var Constants = require('../constants');
 var Square = require('../square');
+var Utils = require('../utils');
 
 class DeathWall extends GameMode {
     constructor(clients, ticks, emitToAllClients){
@@ -59,13 +60,19 @@ class DeathWall extends GameMode {
         this.maxDistance = Math.max(farthestRightPlayer, this.maxDistance);
         this.clients.forEach(c => {
             if(c.player.x < this.deathWallX && c.player.health > 0){
-                c.player.health = 0;
+                c.player.death();
                 this.emitToAllClients("event", {
                     type: "death",
+                    timestamp: Utils.millis(),
+                    causeOfDeath: "wall",
                     colour: "orange",
                     killed: {
                         name: c.player.name,
                         colour: c.player.colour
+                    },
+                    location: {
+                        x: c.player.x,
+                        y: c.player.y
                     },
                     method: " was consumed by the wall"
                 })
