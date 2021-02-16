@@ -9,8 +9,12 @@ import ow4 from '../assets/sounds/ow4.mp3';
 import ow5 from '../assets/sounds/ow5.mp3';
 import whoosh from '../assets/sounds/whoosh.mp3';
 import hit from '../assets/sounds/hit.mp3';
+import thwack from '../assets/sounds/thwack.mp3';
+import running from '../assets/sounds/running.mp3';
 import wall from '../assets/sounds/wall.mp3';
 import box from '../assets/sounds/box.mp3';
+import football from '../assets/sounds/football.mp3';
+import bigFootball from '../assets/sounds/football2.mp3';
 
 import hitbox from '../assets/sounds/hitbox.mp3';
 import Utils from '../utils';
@@ -33,10 +37,14 @@ class GameService {
 
         this.wallSound = [new THREE.Audio(this.listener), new THREE.Audio(this.listener), new THREE.Audio(this.listener)];
         this.playerSound = [new THREE.Audio(this.listener), new THREE.Audio(this.listener), new THREE.Audio(this.listener)];
+        this.thwackSound = new THREE.Audio(this.listener);
         this.owSound = [new THREE.Audio(this.listener), new THREE.Audio(this.listener), new THREE.Audio(this.listener), new THREE.Audio(this.listener)];
         this.bgMusic = new THREE.Audio(this.listener);
         this.boxSound = new THREE.Audio(this.listener);
+        this.footballSound = new THREE.Audio(this.listener);
+        this.bigFootballSound = new THREE.Audio(this.listener);
         this.whoosh = [new THREE.Audio(this.listener), new THREE.Audio(this.listener), new THREE.Audio(this.listener)];
+        this.runningSound = [new THREE.Audio(this.listener), new THREE.Audio(this.listener), new THREE.Audio(this.listener)];
         this.audioLoader = new THREE.AudioLoader();
 
         var $this = this;
@@ -45,11 +53,35 @@ class GameService {
             $this.boxSound.setBuffer(buffer);
             $this.boxSound.setVolume(0.1);
         });
+        
+        this.audioLoader.load(football, function(buffer){
+            $this.footballSound.setBuffer(buffer);
+            $this.footballSound.setVolume(0.1);
+        });
+        
+        this.audioLoader.load(bigFootball, function(buffer){
+            $this.bigFootballSound.setBuffer(buffer);
+            $this.bigFootballSound.setVolume(0.1);
+        });
+
+        this.audioLoader.load(thwack, function(buffer){
+            $this.thwackSound.setBuffer(buffer);
+            $this.thwackSound.setVolume(0.1);
+        });
 
         this.whoosh.forEach((w, i) => {
             this.audioLoader.load(whoosh, function(buffer){
                 w.setBuffer(buffer);
                 w.setVolume(0.05);
+                w.playbackRate = 0.9 + i * 0.1;
+            });
+        });
+
+        this.runningSound.forEach((w, i) => {
+            this.audioLoader.load(running, function(buffer){
+                w.setBuffer(buffer);
+                w.setVolume(0.3);
+                w.setLoop(true);
                 w.playbackRate = 0.9 + i * 0.1;
             });
         });
@@ -96,19 +128,39 @@ class GameService {
             this.level = level;
         })
 
-        this.socket.on('allPlayers', players => {
+        this.socket.on('allPlayers', state => {
             if(this.mounted){
-                this.players = players;
+                this.players = state.players;
+                this.updateRunning(state.running);
             }
         });
 
-        this.socket.on('collision', (type) => {
+        this.socket.on('collision', (collision) => {
             if (this.soundEnabled && this.mounted) {
-                if(type === "player"){
-                    this.playerHit();
-                }
-                if(type == "box"){
-                    this.boxHit();
+                var collisionEvent = {
+                    type: "collision",
+                    collisionType: collision.type,
+                    location: collision.location,
+                    timestamp: Utils.millis(),
+                    speed: collision.speed
+                };
+                
+                switch(collision.type){
+                    case "player":
+                        if(collision.speed < 30 ? this.playerHit() : this.thwackHit()){
+                            this.canvasRef.current.event(collisionEvent);
+                        }
+                        break;
+                    case "box":
+                        if(this.boxHit()){
+                            this.canvasRef.current.event(collisionEvent);
+                        }
+                        break;
+                    case "football":
+                        if(this.footballHit(collision.speed >= 30)){
+                            this.canvasRef.current.event(collisionEvent);
+                        }
+                        break;
                 }
             }
         });
@@ -341,12 +393,17 @@ class GameService {
     playerHit(){
         var soundToPlay = this.playerSound[Math.floor(Math.random() * this.playerSound.length)];
         var soundToPlay2 = this.owSound[Math.floor(Math.random() * this.owSound.length)];
+        var soundPlayed = false;
+
         if(!soundToPlay.isPlaying){
             soundToPlay.play();
+            soundPlayed = true;
         }
         if(!soundToPlay2.isPlaying){
             soundToPlay2.play();
+            soundPlayed = true;
         }
+        return soundPlayed;
     }
 
     wallHit(){
@@ -359,7 +416,29 @@ class GameService {
     boxHit(){
         if(!this.boxSound.isPlaying){
             this.boxSound.play();
+            return true;
         }
+        return false;
+    }
+
+    thwackHit(){
+        if(!this.thwackSound.isPlaying){
+            this.thwackSound.play();
+            return true;
+        }
+        return false;
+    }
+    
+    footballHit(big = false){
+        if(!this.footballSound.isPlaying && !big){
+            this.footballSound.play();
+            return true;
+        }
+        else if(!this.bigFootballSound.isPlaying && big){
+            this.bigFootballSound.play();
+            return true;
+        }
+        return false;
     }
 
     boost(){
@@ -367,6 +446,21 @@ class GameService {
         if(!soundToPlay.isPlaying){
             soundToPlay.play();
         }
+    }
+
+    updateRunning(count){
+        var soundsToPlay = this.runningSound.slice(0, count);
+        var soundsToStop = this.runningSound.slice(count, this.runningSound.length);
+        soundsToPlay.forEach(s => {
+            if(!s.isPlaying){
+                s.play();
+            }
+        });
+        soundsToStop.forEach(s => {
+            if(s.isPlaying){
+                s.pause();
+            }
+        });
     }
 
     onWin(callback) {

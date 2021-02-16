@@ -22,6 +22,7 @@
 
 .profileImage {
     height: 40px;
+    background-color: white;
 }
 
 .profileImageContainer {
@@ -39,7 +40,7 @@
 .score {
     margin: 5px;
     height: 32px;
-    padding: 8px 10px 0px;
+    padding: 8px 10px 32px;
     color: white    ;
     background-color: darkslategray;
     vertical-align: top;
@@ -50,7 +51,7 @@
     color: white    ;
     cursor: pointer;
     height: 32px;
-    padding: 8px 10px 0px;
+    padding: 8px 10px 32px;
     background-color: darkslategray;
 }
 

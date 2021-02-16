@@ -1,0 +1,15 @@
+.avatarContainer {
+    max-width: 350px;
+    max-height: 350px;
+    overflow-y: scroll;
+}
+
+.avatar {
+    background-color: white;
+    margin-bottom: 10px;
+}
+
+.avatar:hover{
+    opacity: 0.7;
+    cursor: pointer;
+}

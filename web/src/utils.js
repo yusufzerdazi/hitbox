@@ -30,5 +30,17 @@ export default {
         return -1;
       }
       return rowA[selector] - rowB[selector];
+    },
+
+    getFilename(url) {
+      if (url)
+      {
+          var m = url.toString().match(/.*\/(.+?)\./);
+          if (m && m.length > 1)
+          {
+            return m[1];
+          }
+      }
+      return "";
     }
 }

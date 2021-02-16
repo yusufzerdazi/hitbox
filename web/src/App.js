@@ -10,6 +10,7 @@ import Footer from './components/footer';
 import Scores from './components/scores';
 import { store } from './redux/store';
 
+import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 
 class App extends React.Component {

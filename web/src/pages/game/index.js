@@ -30,7 +30,6 @@ class Game extends React.Component {
         let search = window.location.search;
         let params = new URLSearchParams(search);
         let room = params.get('room');
-        console.log(room);
         this.state = {
             lastWinner: null,
             editingUsername: true,

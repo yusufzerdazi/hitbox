@@ -12,6 +12,7 @@ import axios from 'axios';
 
 import { LOG_IN, CAMERA, USERNAME_UPDATED, PLAYING, ADDAI, REMOVEAI } from '../../constants/actionTypes';
 import { FOLLOWING, DRAG } from '../../constants/cameraTypes';
+import Avatars from '../avatars';
 
 const mapStateToProps = state => {
     return {
@@ -61,6 +62,7 @@ class Options extends React.Component {
     this.validateUserName = this.validateUserName.bind(this);
     this.onFileUpload = this.onFileUpload.bind(this);
     this.uploadAvatar = this.uploadAvatar.bind(this);
+    this.onAvatarChange = this.onAvatarChange.bind(this);
   }
 
   componentDidMount(){
@@ -186,13 +188,17 @@ class Options extends React.Component {
     const data = new FormData() 
     data.append('file', this.state.file);
     data.append('playerId', this.props.user.id);
-    axios.post("https://hitboxfunctions.azurewebsites.net/api/UploadAvatar?code=CPb1i3KdhSwsewc2mWSM4SbeTdvCTq1Rrn5B3X7PaKjP2hehNEdtDQ==", data, {})
+    axios.post(`${process.env.REACT_APP_FUNCTION_URL}/api/UploadAvatar?code=CPb1i3KdhSwsewc2mWSM4SbeTdvCTq1Rrn5B3X7PaKjP2hehNEdtDQ==`, data, {})
     .then(res => {
       this.setState({etag: Utils.uuidv4()});
     })
     .catch(err => {
 
     })
+  }
+
+  onAvatarChange(){
+    this.setState({etag: Utils.uuidv4()});
   }
 
   render() {
@@ -202,7 +208,7 @@ class Options extends React.Component {
       <div className={styles.footerContainer}>
         <div className={styles.profile}>
           <div className={styles.profileImageContainer} style={{float: "left"}}>
-            <img className={styles.profileImage} src={"https://hitbox.blob.core.windows.net/avatars/" + this.props.user.id + ".jpg?etag=" + this.state.etag}/>
+            <img className={styles.profileImage} src={`https://hitbox.blob.core.windows.net/avatars/${this.props.user.id}.svg?etag=${this.state.etag}`} onError={(ev) => ev.target.src=`https://hitbox.blob.core.windows.net/avatars/${this.props.user.id}.jpg?etag=${this.state.etag}`}/>
           </div>
           <div style={{float: "left"}} className={styles.profileName}>
             {this.props.user?.name}
@@ -225,14 +231,9 @@ class Options extends React.Component {
                 <span>{this.state.usernameError}</span>
               </div> : <></> }
             </Collapsible>
-            <div className={styles.option} onClick={() => this.toggleState("uploadingAvatar")}>Upload custom avatar</div>
+            <div className={styles.option} onClick={() => this.toggleState("uploadingAvatar")}>Choose an avatar</div>
             <Collapsible easing="ease-in-out" open={this.state.uploadingAvatar} >
-              <div className={styles.usernameUpdate}>
-                <div className={styles.name}>
-                  <input type="file" name="file" onChange={this.onFileUpload}/>
-                </div>
-                {this.state.file ? <div className={styles.updateUsernameButton} onClick={this.uploadAvatar}>Upload</div> : <></> }
-              </div>
+              <Avatars playerId={this.props.user.id} onChange={this.onAvatarChange}></Avatars>
             </Collapsible>
             <div className={styles.option} onClick={() => this.props.camera(this.props.cameraType == FOLLOWING ? DRAG : FOLLOWING)}>Camera mode: {this.props.cameraType}</div>
             <div className={styles.option} onClick={() => this.openModal("leaderboard")}>Leaderboard</div>

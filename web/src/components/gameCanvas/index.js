@@ -3,8 +3,10 @@ import { connect } from 'react-redux';
 import Utils from '../../utils';
 import styles from './styles.module.css';
 import actualise from '../../assets/images/actualise.png';
+import collision from '../../assets/images/collision.svg';
+import bigcollision from '../../assets/images/bigcollision.svg';
 import ball from '../../assets/images/football.png';
-import { RunningForward, RunningBackward, Standing } from './animation';
+import { RunningForward, RunningBackward, Standing, BigCollision, Collision } from './animation';
 import { FOLLOWING } from '../../constants/cameraTypes';
 import { PLAYERS } from '../../constants/actionTypes';
 
@@ -12,11 +14,15 @@ const FONT = "'Roboto Mono'";
 const HEIGHT = 540;
 const WIDTH = 960;
 
-const ACTUALISE = new Image();
-ACTUALISE.src = actualise;
+const COLLISION = new Image();
+COLLISION.src = collision;
+const BIGCOLLISION = new Image();
+BIGCOLLISION.src = bigcollision;
 
 const BALL = new Image();
 BALL.src = ball;
+
+const ANIMATIONLENGTH = 500;
 
 const mapDispatchToProps = dispatch => ({
     updatePlayers: x => dispatch({
@@ -50,7 +56,8 @@ class GameCanvas extends React.Component {
             zoomRate: 1,
             players: {},
             events: [],
-            joining: false
+            joining: false,
+            collisions: []
         };
 
         this.canvasRef = React.createRef();
@@ -141,6 +148,12 @@ class GameCanvas extends React.Component {
             this.drawPlayerStats(player);
             this.drawPlayerScore(player);
         });
+        var currentCollisions = this.state.collisions;
+        var newCollisions = currentCollisions.filter(c => Utils.millis() - ANIMATIONLENGTH < c.timestamp);
+        if(newCollisions.length != currentCollisions.length){
+            this.setState({collisions: newCollisions});
+        }
+        this.state.collisions.forEach(c => this.drawCollision(c));
         this.drawStartingTimer();
         this.drawGameCountdown();
         this.drawGameMode(lastWinner);
@@ -152,7 +165,6 @@ class GameCanvas extends React.Component {
     }
 
     newGame(players){
-        console.log("test")
         this.props.updatePlayers(players);
     }
 
@@ -215,9 +227,9 @@ class GameCanvas extends React.Component {
             this.ctx.font = "bold " + (20/this.state.scale)+"px " + FONT;
             this.ctx.save()
             var text = [];
-            text.push({text: this.state.footballScores.red, fillStyle: "red"});
+            text.push({text: this.state.footballScores.team1, fillStyle: "red"});
             text.push({text: "-", fillStyle: "black"});
-            text.push({text: this.state.footballScores.blue, fillStyle: "blue"});
+            text.push({text: this.state.footballScores.team2, fillStyle: "slateblue"});
             Utils.fillMixedText(this.ctx, text, 0, - (this.ctx.canvas.height / 2 - 100) / this.state.scale);
             this.ctx.restore()
         }
@@ -285,27 +297,33 @@ class GameCanvas extends React.Component {
     }
 
     drawHills(){
-        var hillRepeatDistance = 15000;
+        var hillRepeatDistance = 16000;
         this.ctx.fillStyle = "#4fefb8";
         this.ctx.beginPath();
 
         // Background hills
+        this.drawPolygon({x: - ((this.state.camera.x + 2 * hillRepeatDistance) / 4) % hillRepeatDistance + hillRepeatDistance / 2, y: -this.state.camera.y / 4}, [
+            {x: - WIDTH * 3.8, y: + 55},
+            {x: - WIDTH * 2.5, y: 0},
+            {x: - WIDTH * 1.5, y: - 50},
+            {x: 0, y: - 75},
+            {x: + WIDTH * 1.5, y: - 50},
+            {x: + WIDTH * 2.5, y: 0},
+            {x: + WIDTH * 3.8, y: + 55},
+        ], 0, 0, "#4fefb8", false)
+
+        this.drawPolygon({x: - ((this.state.camera.x) / 4) % hillRepeatDistance + hillRepeatDistance / 2, y: - this.state.camera.y / 4}, [
+            {x: - WIDTH * 3.8, y: + 55},
+            {x: - WIDTH * 2.5, y: 0},
+            {x: - WIDTH * 1.5, y: - 50},
+            {x: 0, y: - 75},
+            {x: + WIDTH * 1.5, y: - 50},
+            {x: + WIDTH * 2.5, y: 0},
+            {x: + WIDTH * 3.8, y: + 55},
+        ], 0, 0, "#4fefb8", false)
+
         this.ctx.rect(-this.ctx.canvas.width/this.state.scale, -this.state.camera.y / 4 + 50,
             2*this.ctx.canvas.width/this.state.scale, this.ctx.canvas.height/this.state.scale);
-
-        this.ctx.rect( - ((this.state.camera.x + 2 * hillRepeatDistance) / 4) % hillRepeatDistance + hillRepeatDistance / 2 - WIDTH * 2.5, -this.state.camera.y / 4,
-            WIDTH * 5, this.ctx.canvas.height/this.state.scale);
-        this.ctx.rect( - ((this.state.camera.x + 2 * hillRepeatDistance) / 4) % hillRepeatDistance + hillRepeatDistance / 2 - WIDTH * 1.5, -this.state.camera.y / 4 - 50,
-            WIDTH * 3, this.ctx.canvas.height/this.state.scale);
-        this.ctx.rect( - ((this.state.camera.x + 2 * hillRepeatDistance) / 4) % hillRepeatDistance + hillRepeatDistance / 2 - WIDTH / 2, -this.state.camera.y / 4 - 100,
-            WIDTH, this.ctx.canvas.height/this.state.scale);
-
-        this.ctx.rect( - ((this.state.camera.x) / 4) % hillRepeatDistance + hillRepeatDistance / 2 - WIDTH * 2.5, -this.state.camera.y / 4,
-            WIDTH * 5, this.ctx.canvas.height/this.state.scale);
-        this.ctx.rect( - ((this.state.camera.x) / 4) % hillRepeatDistance + hillRepeatDistance / 2 - WIDTH * 1.5, -this.state.camera.y / 4 - 50,
-            WIDTH * 3, this.ctx.canvas.height/this.state.scale);
-        this.ctx.rect( - ((this.state.camera.x) / 4) % hillRepeatDistance + hillRepeatDistance / 2 - WIDTH / 2, -this.state.camera.y / 4 - 100,
-            WIDTH, this.ctx.canvas.height/this.state.scale);
 
         this.ctx.fill();
 
@@ -314,22 +332,28 @@ class GameCanvas extends React.Component {
         this.ctx.fillStyle = "#44db6c";
         this.ctx.beginPath();
 
+        this.drawPolygon({x: - ((this.state.camera.x + 2 * hillRepeatDistance) / 2) % hillRepeatDistance + hillRepeatDistance / 2, y: - this.state.camera.y / 2}, [
+            {x: - WIDTH * 3.8, y: 105 + foregroundHillsOffset},
+            {x: - WIDTH * 2.5, y: foregroundHillsOffset},
+            {x: - WIDTH * 1.5, y: - 100 + foregroundHillsOffset},
+            {x: 0, y: - 150 + foregroundHillsOffset},
+            {x:   WIDTH * 1.5, y: - 100 + foregroundHillsOffset},
+            {x:   WIDTH * 2.5, y: foregroundHillsOffset},
+            {x:   WIDTH * 3.8, y: 105 + foregroundHillsOffset},
+        ], 0, 0, "#44db6c", false)
+
+        this.drawPolygon({x: - ((this.state.camera.x + hillRepeatDistance) / 2) % hillRepeatDistance + hillRepeatDistance / 2, y: - this.state.camera.y / 2}, [
+            {x: - WIDTH * 3.8, y: 105 + foregroundHillsOffset},
+            {x: - WIDTH * 2.5, y: foregroundHillsOffset},
+            {x: - WIDTH * 1.5, y: - 100 + foregroundHillsOffset},
+            {x: 0, y: - 150 + foregroundHillsOffset},
+            {x:   WIDTH * 1.5, y: - 100 + foregroundHillsOffset},
+            {x:   WIDTH * 2.5, y: foregroundHillsOffset},
+            {x:   WIDTH * 3.8, y: 105 + foregroundHillsOffset},
+        ], 0, 0, "#44db6c", false)
+
         this.ctx.rect(-this.ctx.canvas.width/this.state.scale, -this.state.camera.y / 2 + foregroundHillsOffset + 100,
             2 * this.ctx.canvas.width/this.state.scale, this.ctx.canvas.height/this.state.scale);
-
-        this.ctx.rect( - ((this.state.camera.x + hillRepeatDistance) / 2) % hillRepeatDistance + hillRepeatDistance / 2 - WIDTH * 2.5, -this.state.camera.y / 2 + foregroundHillsOffset,
-            WIDTH * 5, this.ctx.canvas.height/this.state.scale);
-        this.ctx.rect( - ((this.state.camera.x + hillRepeatDistance) / 2) % hillRepeatDistance + hillRepeatDistance / 2 - WIDTH * 1.5, -this.state.camera.y / 2 - 100 + foregroundHillsOffset,
-            WIDTH * 3, this.ctx.canvas.height/this.state.scale);
-        this.ctx.rect( - ((this.state.camera.x + hillRepeatDistance) / 2) % hillRepeatDistance + hillRepeatDistance / 2 - WIDTH / 2, -this.state.camera.y / 2 - 200 + foregroundHillsOffset,
-            WIDTH, this.ctx.canvas.height/this.state.scale);
-
-        this.ctx.rect( - ((this.state.camera.x) / 2) % hillRepeatDistance + hillRepeatDistance / 2 - WIDTH * 2.5, -this.state.camera.y / 2 + foregroundHillsOffset,
-            WIDTH * 5, this.ctx.canvas.height/this.state.scale);
-        this.ctx.rect( - ((this.state.camera.x) / 2) % hillRepeatDistance + hillRepeatDistance / 2 - WIDTH * 1.5, -this.state.camera.y / 2 - 100 + foregroundHillsOffset,
-            WIDTH * 3, this.ctx.canvas.height/this.state.scale);
-        this.ctx.rect( - ((this.state.camera.x) / 2) % hillRepeatDistance + hillRepeatDistance / 2 - WIDTH / 2, -this.state.camera.y / 2 - 200 + foregroundHillsOffset,
-            WIDTH, this.ctx.canvas.height/this.state.scale);
 
         this.ctx.fill();
 
@@ -397,31 +421,42 @@ class GameCanvas extends React.Component {
             this.drawPolygon(player, this.state.players[player.name].damage, xOffset, yOffset, player.team);
             this.ctx.clip();
 
-            if(player.team){
+            if(player.team && players[player.name].image && !players[player.name].image.src.endsWith('.svg')){
                 this.ctx.globalAlpha = 0.5;
             }
-
+            
             if(!this.state.players[player.name].image){
                 const playerImage = new Image();
-                playerImage.src = "https://hitbox.blob.core.windows.net/avatars/" + player.id + ".jpg";
+                playerImage.onerror = (ev) => {
+                    if(ev.target.src && ev.target.src.endsWith('.svg')){
+                        ev.target.src = "https://hitbox.blob.core.windows.net/avatars/" + player.id + ".jpg";
+                    }
+                };
+                if(player.id){
+                    playerImage.src = "https://hitbox.blob.core.windows.net/avatars/" + player.id + ".svg";
+                } else {
+                    playerImage.src = "https://hitbox.blob.core.windows.net/options/" + Math.floor(Math.random() * 40 + 1) + ".svg";
+                }
                 players[player.name].image = playerImage
                 this.setState({players});
             }
             if(this.state.players[player.name].image.height != 0){
-                this.ctx.drawImage(this.state.players[player.name].image, playerX - this.state.camera.x - 5, playerY - height - this.state.camera.y - 5, width + 10, height + 10);
+                this.ctx.drawImage(this.state.players[player.name].image, playerX - this.state.camera.x, playerY - height - this.state.camera.y, width, height);
             }
         }
         
         this.ctx.restore()
     }
 
-    drawPolygon(player, polygon, xOffset, yOffset, colour = null){
+    drawPolygon(player, polygon, xOffset, yOffset, colour = null, addCamera = true){
         this.ctx.fillStyle = colour|| player.colour;
         this.ctx.beginPath();
-        this.ctx.moveTo(player.x + polygon[0].x + xOffset - this.state.camera.x, player.y + yOffset + polygon[0].y - this.state.camera.y);
+        var cameraX = (addCamera ? this.state.camera.x : 0);
+        var cameraY = (addCamera ? this.state.camera.y : 0);
+        this.ctx.moveTo(player.x + polygon[0].x + xOffset - cameraX, player.y + yOffset + polygon[0].y - cameraY);
         polygon.forEach((p,i) => {
             if(i > 0){
-                this.ctx.lineTo(player.x + p.x + xOffset - this.state.camera.x, player.y + yOffset + p.y - this.state.camera.y);
+                this.ctx.lineTo(player.x + p.x + xOffset - cameraX, player.y + yOffset + p.y - cameraY);
             }
         });
         this.ctx.closePath();
@@ -561,7 +596,7 @@ class GameCanvas extends React.Component {
     }
 
     drawEvents(){
-        var events = this.state.events.filter(d => Utils.millis() < d.timestamp + 5000);
+        var events = this.state.events.filter(d => d.type != "collision" && Utils.millis() < d.timestamp + 5000);
         this.setState({events});
         this.ctx.save();
         this.ctx.font = "bold " + 15*(1/this.state.scale) + "px " + FONT;
@@ -697,6 +732,25 @@ class GameCanvas extends React.Component {
             - height - haloWidth + (player.ducked ? haloWidth : 0)
         );
         this.ctx.stroke();
+        this.ctx.restore();
+    }
+
+    drawCollision(collision){
+        this.ctx.save();
+        this.ctx.beginPath();
+
+        var time = (Utils.millis() - collision.timestamp) / ANIMATIONLENGTH;
+        var transparency = 1 - Math.pow(time,4);
+        var sizeProportion = 1 + 0.5 * time;
+        var maxSize = 2 * collision.speed * (collision.speed > 30 ? 1.3 : 1);
+        var collisionImage = collision.speed < 30 ? 
+            Collision[Math.floor(time * Collision.length)] : 
+            BigCollision[Math.floor(time * BigCollision.length)];
+        
+        this.ctx.globalAlpha = transparency;
+        this.ctx.drawImage(collisionImage, collision.location.x - (sizeProportion * maxSize / 2) - this.state.camera.x, 
+            collision.location.y - (sizeProportion * maxSize / 2) - this.state.camera.y, sizeProportion * maxSize, sizeProportion * maxSize);
+        this.ctx.fill();
         this.ctx.restore();
     }
 
@@ -847,6 +901,12 @@ class GameCanvas extends React.Component {
 
         if(event.type == "goal"){
             this.setState({footballScores: event.scores});
+        }
+
+        if(event.type == "collision"){
+            var collisions = this.state.collisions;
+            collisions.push(event);
+            this.setState({collisions: collisions});
         }
     }
 
