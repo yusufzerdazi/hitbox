@@ -37,7 +37,7 @@ class Game {
         this.startingTicks = 0;
         this.ticks = 0;
         
-        this.gameMode = new GameModes[this.room ? this.room : "generic"][Math.floor(Math.random() * GameModes[this.room ? this.room : "generic"].length)](this.clients, this.ticks, (v1, v2) =>this.emitToAllClients(v1,v2,this));
+        this.gameMode = new GameModes[GameModes[this.room] ? this.room : "generic"][Math.floor(Math.random() * GameModes[GameModes[this.room] ? this.room : "generic"].length)](this.clients, this.ticks, (v1, v2) =>this.emitToAllClients(v1,v2,this));
 
         this.players = () => { return this.clients.filter(c => !c.player.orb && c.player.type != "ball") }
         this.humanPlayers = () => { return this.clients.filter(c => c.player && !c.player.ai) }
@@ -219,15 +219,15 @@ class Game {
         this.clients.forEach(client => {
             if(client.player.boostRight && client.player.boostLeft){
                 // do nothing
-            } else if(client.player.boostRight && client.player.boostCooldown + Constants.BOOSTCOST <= 100){
+            } else if(client.player.boostRight && client.player.boostCooldown + Constants.BOOSTCOST <= 100 && client.player.alive){
                 client.player.xVelocity = Constants.BOOSTSPEED;
                 client.player.boostCooldown += Constants.BOOSTCOST;
                 this.emitToAllClients("boost", {name: client.player.name, direction: 'right'});
-            } else if(client.player.boostLeft && client.player.boostCooldown + Constants.BOOSTCOST <= 100){
+            } else if(client.player.boostLeft && client.player.boostCooldown + Constants.BOOSTCOST <= 100 && client.player.alive){
                 client.player.xVelocity = -Constants.BOOSTSPEED;
                 client.player.boostCooldown += Constants.BOOSTCOST;
                 this.emitToAllClients("boost", {name: client.player.name, direction: 'left'});
-            } else if(client.player.clicked && client.player.boostRight == 0 && client.player.xVelocity != 0 && client.player.boostCooldown + Constants.BOOSTCOST <= 100){
+            } else if(client.player.clicked && client.player.boostRight == 0 && client.player.xVelocity != 0 && client.player.boostCooldown + Constants.BOOSTCOST <= 100 && client.player.alive){
                 client.player.xVelocity = Constants.BOOSTSPEED * Math.sign(client.player.xVelocity);
                 client.player.boostCooldown += Constants.BOOSTCOST;
                 this.emitToAllClients("boost", {name: client.player.name, direction: client.player.xVelocity > 0 ? 'right' : 'left'});
@@ -236,12 +236,12 @@ class Game {
             if(client.player.down && client.player.onSurface.includes(true) && client.player.yVelocity >= 0){
                 client.player.ducked = true;
                 client.player.yVelocity = 0;
-                client.player.boostCooldown = Math.max(client.player.boostCooldown, 20);
+                client.player.boostCooldown = Math.max(client.player.boostCooldown, 50);
             } else {
                 client.player.ducked = false;
             }
     
-            if(client.player.down && client.player.boostCooldown + Constants.BOOSTCOST <= 100 && !client.player.onSurface.includes(true)){
+            if(client.player.down && client.player.boostCooldown + Constants.BOOSTCOST <= 100 && !client.player.onSurface.includes(true) && client.player.alive){
                 client.player.yVelocity = Constants.BOOSTSPEED;
                 client.player.boostCooldown += Constants.BOOSTCOST;
                 this.emitToAllClients("boost", {name: client.player.name, direction: 'down', timestamp: Utils.millis()});
@@ -274,11 +274,11 @@ class Game {
             client.player.boostDown = false;
             client.player.clicked = false;
     
-            if(client.player.space && client.player.onSurface.includes(true)){
+            if(client.player.space && client.player.onSurface.includes(true) && client.player.alive){
                 client.player.yVelocity = -Constants.JUMPSPEED;
                 client.player.space = false;
             }
-            if(client.player.space && client.player.y != Constants.PLATFORMHEIGHT && client.player.boostCooldown + Constants.BOOSTCOST <= 100){
+            if(client.player.space && client.player.y != Constants.PLATFORMHEIGHT && client.player.boostCooldown + Constants.BOOSTCOST <= 100 && client.player.alive){
                 client.player.yVelocity = -Constants.JUMPSPEED;
                 client.player.boostCooldown += Constants.BOOSTCOST;
             }
@@ -310,6 +310,7 @@ class Game {
     calculateMovement() {
         this.movingPlayers().forEach(client => {
             var previouslyOnSurface = client.player.onSurface.includes(true);
+            var currentSpeed = client.player.speed();
             client.player.onSurface = [];
             this.gameMode.level.platforms.filter(x => x.type != "goal").forEach(platform => {
                 if(client.player.x >= platform.rightX() &&
@@ -318,7 +319,15 @@ class Game {
                         client.player.y + client.player.yVelocity < (platform.bottomY() + client.player.height)) {
                     client.player.x = platform.rightX();
                     client.player.xVelocity = -client.player.xVelocity * Constants.WALLDAMPING;
-                    this.emitToAllClients('hitWall');
+                    this.emitToAllClients('hitWall', { 
+                        hitType: 'leftWall', 
+                        location: {x: client.player.x, y: client.player.y}, 
+                        speed: currentSpeed,
+                        size: {
+                            width: client.player.width,
+                            height: client.player.height
+                        }
+                    });
                 }
 
                 if(client.player.x <= (platform.leftX() - client.player.width) &&
@@ -327,7 +336,15 @@ class Game {
                         client.player.y + client.player.yVelocity < (platform.bottomY() + client.player.height)) {
                     client.player.x = platform.leftX() - client.player.width;
                     client.player.xVelocity = -client.player.xVelocity * Constants.WALLDAMPING;;
-                    this.emitToAllClients('hitWall');
+                    this.emitToAllClients('hitWall', { 
+                        hitType: 'rightWall', 
+                        location: {x: client.player.x, y: client.player.y}, 
+                        speed: currentSpeed,
+                        size: {
+                            width: client.player.width,
+                            height: client.player.height
+                        }
+                    });
                 }
                 if(client.player.y >= (platform.bottomY() + client.player.height) && // Currently above platform
                         client.player.y + client.player.yVelocity <= (platform.bottomY() + client.player.height) && // Will be below on next time step
@@ -335,7 +352,15 @@ class Game {
                         client.player.x + client.player.xVelocity >= (platform.leftX() - client.player.width)) {
                     client.player.y = (platform.bottomY() + client.player.height);
                     client.player.yVelocity = 0;
-                    this.emitToAllClients('hitWall');
+                    this.emitToAllClients('hitWall', { 
+                        hitType: 'ceiling', 
+                        location: {x: client.player.x, y: client.player.y}, 
+                        speed: currentSpeed,
+                        size: {
+                            width: client.player.width,
+                            height: client.player.height
+                        }
+                    });
                 }
                 if(client.player.y <= platform.topY() && // Currently above platform
                         client.player.y + client.player.yVelocity >= platform.topY() && // Will be below on next time step
@@ -349,7 +374,15 @@ class Game {
                     }
                     client.player.onSurface.push(true);
                     if(!previouslyOnSurface){
-                        this.emitToAllClients('hitWall');
+                        this.emitToAllClients('hitWall', { 
+                            hitType: 'floor', 
+                            location: {x: client.player.x, y: client.player.y}, 
+                            speed: currentSpeed,
+                            size: {
+                                width: client.player.width,
+                                height: client.player.height
+                            }
+                        });
                     }
                 } else {
                     client.player.onSurface.push(false);
