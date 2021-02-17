@@ -29,7 +29,6 @@ class Game extends React.Component {
         let params = new URLSearchParams(search);
         let room = params.get('room');
         this.state = {
-            lastWinner: null,
             editingUsername: true,
             soundEnabled: true,
             room: room,
@@ -90,18 +89,9 @@ class Game extends React.Component {
         
         this.gameService
             .setCanvas(this.canvasRef)
-            .setMounted(true)
-            .onWin(winner => {
-                this.setState({lastWinner: winner});
-            });
+            .setMounted(true);
         
         this.gameService.spectate(this.state.room);
-        
-        setInterval(() => {
-            if (this.mounted && this.gameService.level){
-                this.canvasRef.current.draw(this.gameService.players, this.gameService.level, this.props.user?.name || this.state.name, this.state.lastWinner);
-            }
-        }, 1000 / 60);
 
         document.addEventListener("keydown", e => {
             if (this.mounted){

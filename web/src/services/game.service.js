@@ -31,7 +31,6 @@ class GameService {
         this.ePressed = false;
         this.aMillis = 0;
         this.eMillis = 0;
-        this.winCallback = function(){};
         this.addListeners();
 
         this.wallSound = [new THREE.Audio(this.listener), new THREE.Audio(this.listener), new THREE.Audio(this.listener)];
@@ -138,8 +137,8 @@ class GameService {
 
         this.socket.on('allPlayers', state => {
             if(this.mounted){
-                this.players = state.players;
                 this.updateRunning(state.running);
+                this.canvasRef.current.draw(state.players, this.level, this.name, this.lastWinner);
             }
         });
 
@@ -196,7 +195,7 @@ class GameService {
 
         this.socket.on('winner', (winner) => {
             if (this.mounted){
-                this.winCallback(winner);
+                this.lastWinner = winner;
             }
         });
 
@@ -387,6 +386,7 @@ class GameService {
 
     play(user, room, rank) {
         this.bgMusic.play();
+        this.name = user.name;
         this.socket.emit('play', { user: user, room: room, rank: rank });
     }
 
@@ -413,6 +413,7 @@ class GameService {
     }
 
     changeName(name){
+        this.name = name;
         this.socket.emit("nameChange", name);
     }
 
@@ -480,10 +481,6 @@ class GameService {
                 s.pause();
             }
         });
-    }
-
-    onWin(callback) {
-        this.winCallback = callback;
     }
 }
 
