@@ -44,7 +44,7 @@ class Avatars extends React.Component {
           <Row xs={3}>
             { this.state.blobs ? this.state.blobs.map((blob, i) => {
               return <Col key={i}>
-                  <img onClick={() => this.selectAvatar(blob.title)} className={styles.avatar} src={blob.url} />
+                  <img alt={`Avatar ${i + 1}`} onClick={() => this.selectAvatar(blob.title)} className={styles.avatar} src={blob.url} />
                 </Col>
             }) : <Col></Col>}
           </Row>

@@ -4,7 +4,6 @@ import * as THREE from 'three';
 
 import ow1 from '../assets/sounds/ow1.mp3';
 import ow2 from '../assets/sounds/ow2.mp3';
-import ow3 from '../assets/sounds/ow3.mp3';
 import ow4 from '../assets/sounds/ow4.mp3';
 import ow5 from '../assets/sounds/ow5.mp3';
 import whoosh from '../assets/sounds/whoosh.mp3';
@@ -17,7 +16,6 @@ import football from '../assets/sounds/football.mp3';
 import bigFootball from '../assets/sounds/football2.mp3';
 import splash from '../assets/sounds/splash.mp3';
 
-import hitbox from '../assets/sounds/hitbox.mp3';
 import Utils from '../utils';
 
 const OW = [ow1, ow2, ow4, ow5];
@@ -168,13 +166,20 @@ class GameService {
                             this.canvasRef.current.event(collisionEvent);
                         }
                         break;
+                    default:
+                        break;
                 }
             }
         });
 
-        this.socket.on('hitWall', () => {
+        this.socket.on('hitWall', (hit) => {
             if (this.soundEnabled && this.mounted) {
                 this.playSound(this.wallSound);
+                var hitEvent = {
+                    ...hit,
+                    type: "hit"
+                };
+                this.canvasRef.current.event(hitEvent);
             }
         });
 
@@ -272,7 +277,7 @@ class GameService {
         this.socket.on('event', (event) => {
             if(this.mounted){
                 this.canvasRef.current.event(event);
-                if(event.type == "death" && event.causeOfDeath == "water"){
+                if(event.type === "death" && event.causeOfDeath === "water"){
                     this.playSound(this.splashSound);
                 }
             }
@@ -287,7 +292,6 @@ class GameService {
         this.socket.on('changeAvatar', (avatar) => {
             if(this.mounted){
                 this.canvasRef.current.changeAvatar(avatar);
-                console.log("test")
             }
         });
 
@@ -435,7 +439,7 @@ class GameService {
     playSound(sound){
         if(Array.isArray(sound)){
             var nonPlayingSounds = sound.filter(s => !s.isPlaying);
-            if(nonPlayingSounds.length == 0){
+            if(nonPlayingSounds.length === 0){
                 return false;
             }
             var soundToPlay = nonPlayingSounds[Math.floor(Math.random() * nonPlayingSounds.length)];

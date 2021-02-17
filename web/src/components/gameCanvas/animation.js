@@ -85,15 +85,35 @@ import whooshd10 from '../../assets/images/whooshdown/10.svg';
 import whooshd11 from '../../assets/images/whooshdown/11.svg';
 import whooshd12 from '../../assets/images/whooshdown/12.svg';
 
-var forwardImageSources = [ runningf1, runningf2, runningf3, runningf4, runningf5, runningf6, runningf7, runningf8, runningf9 ]
-var backwardImageSources = [ runningr1, runningr2, runningr3, runningr4, runningr5, runningr6, runningr7, runningr8, runningr9 ]
-var standingImageSources = [ standing1, standing2, standing3, standing4 ]
-var bigCollisionImageSources = [ bigcollision1, bigcollision2, bigcollision3, bigcollision4, bigcollision5 ]
-var collisionImageSources = [ collision1, collision2, collision3 ]
-var splashImageSources = [ splash1, splash2, splash3, splash4, splash5, splash6, splash7, splash8, splash9, splash10, splash11, splash12 ]
-var whooshImageSources = [ whoosh1, whoosh2, whoosh3, whoosh4, whoosh5, whoosh6, whoosh7, whoosh8, whoosh9, whoosh10, whoosh11, whoosh12 ]
-var whooshLeftImageSources = [ whooshl1, whooshl2, whooshl3, whooshl4, whooshl5, whooshl6, whooshl7, whooshl8, whooshl9, whooshl10, whooshl11, whooshl12 ]
-var whooshDownImageSources = [ whooshd1, whooshd2, whooshd3, whooshd4, whooshd5, whooshd6, whooshd7, whooshd8, whooshd9, whooshd10, whooshd11, whooshd12 ]
+import landing1  from '../../assets/images/landing/1.svg';
+import landing2  from '../../assets/images/landing/2.svg';
+import landing3  from '../../assets/images/landing/3.svg';
+import landing4  from '../../assets/images/landing/4.svg';
+import landing5  from '../../assets/images/landing/5.svg';
+import landing6  from '../../assets/images/landing/6.svg';
+import landing7  from '../../assets/images/landing/7.svg';
+import landing8  from '../../assets/images/landing/8.svg';
+import landing9  from '../../assets/images/landing/9.svg';
+import landing10 from '../../assets/images/landing/10.svg';
+import landing11 from '../../assets/images/landing/11.svg';
+import landing12 from '../../assets/images/landing/12.svg';
+import landing13 from '../../assets/images/landing/13.svg';
+import landing14 from '../../assets/images/landing/14.svg';
+import landing15 from '../../assets/images/landing/15.svg';
+import landing16 from '../../assets/images/landing/16.svg';
+import landing17 from '../../assets/images/landing/17.svg';
+import landing18 from '../../assets/images/landing/18.svg';
+
+var forwardImageSources = [ runningf1, runningf2, runningf3, runningf4, runningf5, runningf6, runningf7, runningf8, runningf9 ];
+var backwardImageSources = [ runningr1, runningr2, runningr3, runningr4, runningr5, runningr6, runningr7, runningr8, runningr9 ];
+var standingImageSources = [ standing1, standing2, standing3, standing4 ];
+var bigCollisionImageSources = [ bigcollision1, bigcollision2, bigcollision3, bigcollision4, bigcollision5 ];
+var collisionImageSources = [ collision1, collision2, collision3 ];
+var splashImageSources = [ splash1, splash2, splash3, splash4, splash5, splash6, splash7, splash8, splash9, splash10, splash11, splash12 ];
+var whooshImageSources = [ whoosh1, whoosh2, whoosh3, whoosh4, whoosh5, whoosh6, whoosh7, whoosh8, whoosh9, whoosh10, whoosh11, whoosh12 ];
+var whooshLeftImageSources = [ whooshl1, whooshl2, whooshl3, whooshl4, whooshl5, whooshl6, whooshl7, whooshl8, whooshl9, whooshl10, whooshl11, whooshl12 ];
+var whooshDownImageSources = [ whooshd1, whooshd2, whooshd3, whooshd4, whooshd5, whooshd6, whooshd7, whooshd8, whooshd9, whooshd10, whooshd11, whooshd12 ];
+var landingImageSources = [ landing1, landing2, landing3, landing4, landing5, landing6, landing7, landing8, landing9, landing10, landing11, landing12, landing13, landing14, landing15, landing16, landing17, landing18 ];
 
 var RunningForward = buildAnimation(forwardImageSources);
 var RunningBackward = buildAnimation(backwardImageSources);
@@ -104,6 +124,7 @@ var Splash = buildAnimation(splashImageSources);
 var WhooshRight = buildAnimation(whooshImageSources);
 var WhooshLeft = buildAnimation(whooshLeftImageSources);
 var WhooshDown = buildAnimation(whooshDownImageSources);
+var Landing = buildAnimation(landingImageSources);
 
 function buildAnimation(images){
     return images.map(f => {
@@ -122,5 +143,6 @@ export {
     Splash,
     WhooshRight,
     WhooshLeft,
-    WhooshDown
+    WhooshDown,
+    Landing
 };

@@ -3,10 +3,8 @@ import React from 'react';
 import styles from './styles.module.css';
 import { connect } from "react-redux";
 import Collapsible from 'react-collapsible';
-import DataTable, { createTheme } from 'react-data-table-component';
+import DataTable from 'react-data-table-component';
 import Utils from '../../utils';
-
-import { PLAYERS } from '../../constants/actionTypes';
 
 const mapStateToProps = state => {
     return {

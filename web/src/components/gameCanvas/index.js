@@ -4,7 +4,7 @@ import Utils from '../../utils';
 import styles from './styles.module.css';
 import ball from '../../assets/images/football.png';
 import grass from '../../assets/images/grass.svg';
-import { RunningForward, RunningBackward, Standing, BigCollision, Collision, Splash, WhooshRight, WhooshLeft, WhooshDown } from './animation';
+import { RunningForward, RunningBackward, Standing, BigCollision, Collision, Splash, WhooshRight, WhooshLeft, WhooshDown, Landing } from './animation';
 import { FOLLOWING } from '../../constants/cameraTypes';
 import { PLAYERS } from '../../constants/actionTypes';
 
@@ -21,7 +21,7 @@ const PLATFORMRADIUS = 25;
 const ANIMATIONLENGTH = 500;
 const SPLASHANIMATIONLENGTH = 800;
 const WHOOSHANIMATIONLENGTH = 300;
-const HIDDENEVENTS = ["collision", "boost"];
+const HIDDENEVENTS = ["collision", "boost", "hit"];
 
 const mapDispatchToProps = dispatch => ({
     updatePlayers: x => dispatch({
@@ -56,11 +56,12 @@ class GameCanvas extends React.Component {
             players: {},
             events: [],
             joining: false,
-            collisions: [],
-            deaths: [],
-            boosts: []
+            animations: []
         };
-
+        this.drawCollision = this.drawCollision.bind(this);
+        this.drawBoost = this.drawBoost.bind(this);
+        this.drawDeath = this.drawDeath.bind(this);
+        this.drawLanding = this.drawLanding.bind(this);
         this.canvasRef = React.createRef();
     }
 
@@ -117,9 +118,9 @@ class GameCanvas extends React.Component {
     }
 
     draw(players, level, name, lastWinner) {
-        if(this.props.cameraType == FOLLOWING){
+        if(this.props.cameraType === FOLLOWING){
             var you = players.filter(p => p.name === name && !p.orb && p.alive);
-            if(you.length == 0 && this.state.gameMode.title == "Death Wall"){
+            if(you.length === 0 && this.state.gameMode.title === "Death Wall"){
                 you = players.filter(p => !p.orb && p.alive);
             }
             if(you.length > 0){
@@ -143,40 +144,26 @@ class GameCanvas extends React.Component {
         this.drawWater();
 
         this.drawDeathWall();
-        players.filter(p => p.type != "ball").forEach(player => this.drawPlayer(player, name));
-        players.filter(p => p.type == "ball").forEach(player => this.drawBall(player));
+        players.filter(p => p.type !== "ball").forEach(player => this.drawPlayer(player, name));
+        players.filter(p => p.type === "ball").forEach(player => this.drawBall(player));
         players.filter(p => p.name === name).forEach(player => {
             this.drawPlayerStats(player);
             this.drawPlayerScore(player);
         });
 
-        var currentCollisions = this.state.collisions;
-        var newCollisions = currentCollisions.filter(c => Utils.millis() - ANIMATIONLENGTH < c.timestamp);
-        if(newCollisions.length != currentCollisions.length){
-            this.setState({collisions: newCollisions});
+        var currentAnimations = this.state.animations;
+        var newAnimations = currentAnimations.filter(c => Utils.millis() - c.animationLength < c.timestamp);
+        if(newAnimations.length !== currentAnimations.length){
+            this.setState({animations: newAnimations});
         }
 
-        var currentDeaths = this.state.deaths;
-        var newDeaths = currentDeaths.filter(c => Utils.millis() - SPLASHANIMATIONLENGTH < c.timestamp);
-        if(newDeaths.length != currentDeaths.length){
-            this.setState({deaths: newDeaths});
-        }
-        
-        var currentBoosts = this.state.boosts;
-        var newBoosts = currentBoosts.filter(c => Utils.millis() - WHOOSHANIMATIONLENGTH < c.timestamp);
-        if(newBoosts.length != currentBoosts.length){
-            this.setState({boosts: newBoosts});
-        }
-
-        this.state.collisions.forEach(c => this.drawCollision(c));
-        this.state.deaths.forEach(d => this.drawDeath(d));
-        this.state.boosts.forEach(b => this.drawBoost(b, players.filter(p => p.name == b.name)[0]));
+        this.state.animations.forEach(c => c.drawAnimation(c, c.name ? players.filter(p => p.name === c.name)[0] : undefined));
         this.drawStartingTimer();
         this.drawGameCountdown();
         this.drawGameMode(lastWinner);
         this.drawEvents();
         this.drawFootballScores();
-        if(players.filter(p => p.name === name).length == 0 && this.state.joining){
+        if(players.filter(p => p.name === name).length === 0 && this.state.joining){
             this.drawNotification();
         }
     }
@@ -188,7 +175,6 @@ class GameCanvas extends React.Component {
     drawNotification(){
         var yPosition = 100;
         var fontSize = 30/this.state.scale;
-        var yOffset = (this.ctx.canvas.height / 4);
         this.ctx.save()
         this.ctx.fillStyle = 'black';
         this.ctx.font = "bold " + fontSize+"px " + FONT;
@@ -247,7 +233,7 @@ class GameCanvas extends React.Component {
     }
 
     drawFootballScores() {
-        if(this.state.gameMode.title == "Football" && this.state.footballScores){
+        if(this.state.gameMode.title === "Football" && this.state.footballScores){
             this.ctx.font = "bold " + (20/this.state.scale)+"px " + FONT;
             this.ctx.save()
             var text = [];
@@ -278,7 +264,7 @@ class GameCanvas extends React.Component {
         if(!useExistingFillStyle){
             this.ctx.fillStyle = colour || "#1a1001";
         }
-        if(level.type == "goal"){
+        if(level.type === "goal"){
             this.ctx.fillStyle = level.colour;
             this.ctx.globalAlpha = 0.5;
         }
@@ -286,17 +272,18 @@ class GameCanvas extends React.Component {
         Utils.roundRect(this.ctx, level.x - this.state.camera.x, level.y - this.state.camera.y, level.width, level.height, useExistingFillStyle ? 0 : PLATFORMRADIUS, true, false);
         this.ctx.fill();
 
-        if(!colour && level.type != "goal" && !useExistingFillStyle){
+        if(!colour && level.type !== "goal" && !useExistingFillStyle){
             this.ctx.beginPath();
             this.ctx.fillStyle = colour || "green";
-            Utils.roundRect(this.ctx, level.x - 5 - this.state.camera.x, level.y - this.state.camera.y, level.width + 10, 20, 10, true, false);
+            Utils.roundRect(this.ctx, level.x - 5 - this.state.camera.x, level.y - this.state.camera.y, level.width + 10, 30, 8, true, false);
             this.ctx.fill();
 
-            var pat = this. ctx.createPattern(GRASS, "repeat-x");
-            this.ctx.translate(level.x - this.state.camera.x - 5, level.y - this.state.camera.y - 22);
+            var pat = this.ctx.createPattern(GRASS, "repeat-x");
+            this.ctx.translate(level.x - this.state.camera.x - 5, level.y - this.state.camera.y - 20);
             this.ctx.rect(0, 0, level.width + 10, 31);
             this.ctx.fillStyle = pat;
-            this.ctx.scale(0.7, 0.7);
+            var scalingFactor = this.ctx.canvas.width / 1080
+            this.ctx.scale(0.8 / scalingFactor, 0.8 / scalingFactor);
             this.ctx.fill();
         }
         this.ctx.restore();
@@ -443,7 +430,7 @@ class GameCanvas extends React.Component {
         }
         else {
             var players = this.state.players;
-            if(!(player.name in this.state.players) || player.health === 100){
+            if(!(player.name in this.state.players) || player.health === 100 || !players[player.name].damage){
                 players[player.name] = {damage: [{x: 0, y: 0},{x: width, y: 0},{x: width, y: -height}, {x: 0, y: -height}], image: players[player.name]?.image};
                 this.setState({players});
             }
@@ -465,7 +452,7 @@ class GameCanvas extends React.Component {
                 players[player.name].image = playerImage
                 this.setState({players});
             }
-            if(this.state.players[player.name]?.image && this.state.players[player.name]?.image.height != 0){
+            if(this.state.players[player.name]?.image && this.state.players[player.name]?.image.height !== 0){
                 this.ctx.drawImage(this.state.players[player.name].image, playerX - this.state.camera.x, playerY - height - this.state.camera.y, width, height);
             }
         }
@@ -647,7 +634,7 @@ class GameCanvas extends React.Component {
                 return;
             }
             var text = [];
-            if(d.type == "death"){
+            if(d.type === "death"){
                 if(!d.killer){
                     text.push({text: d.method, fillStyle: d.colour || "red"});
                 }
@@ -657,18 +644,16 @@ class GameCanvas extends React.Component {
                     text.push({text: d.killer.name, fillStyle: d.killer.colour});
                 }
             }
-            if(d.type == "halo"){
-                var text = [];
+            if(d.type === "halo"){
                 text.push({text: d.from.name, fillStyle: d.from.colour});
                 text.push({text: " took the halo from " , fillStyle: "yellow"});
                 text.push({text: d.to.name, fillStyle: d.to.colour});
             }
-            if(d.type == "box"){
-                var text = [];
+            if(d.type === "box"){
                 text.push({text: " collected a box", fillStyle: "yellow"});
                 text.push({text: d.player.name, fillStyle: d.player.colour});
             }
-            if(d.type == "goal"){
+            if(d.type === "goal"){
                 text.push({text: d.colour + " team conceded a goal.", fillStyle: d.colour});
             }
             Utils.fillMixedText(this.ctx, text, (this.ctx.canvas.width / 2 - 15) / this.state.scale, (this.ctx.canvas.height / 2 - 60 - 20 * (1+i)) / this.state.scale);
@@ -710,9 +695,9 @@ class GameCanvas extends React.Component {
         scores.forEach((s, i) => {
             this.ctx.fillStyle = s.colour;
             var aliveText = (!s.alive ? "[DEAD] " : "");
-            var lastWinnerText = (lastWinner?.name == s.name ? " [WINNER]" : "");
-            var livesText = (this.state.gameMode.title == "Free for All" || this.state.gameMode.title == "Collect the Boxes") ? " (" + s.lives + ")" : "";
-            var scoreText =
+            var lastWinnerText = (lastWinner?.name === s.name ? " [WINNER]" : "");
+            var livesText = (this.state.gameMode.title === "Free for All" || this.state.gameMode.title === "Collect the Boxes") ? " (" + s.lives + ")" : "";
+
             this.ctx.fillText(
                 aliveText + s.name + ": " + s.score + livesText + lastWinnerText,
                 (-this.ctx.canvas.width / 2 + 10) / this.state.scale,
@@ -723,26 +708,25 @@ class GameCanvas extends React.Component {
     }
 
     drawPlayerLegs(player, breathingOffset){
-        var xOffset = 25;
         var yOffset = -30;
+        var frame = 0.02 * Utils.millis() % 8;
         if(player.xVelocity !== 0){
-            var frame = 0.02 * Utils.millis() % 8;
             if(Math.abs(player.xVelocity) > 10){
                 frame = (frame * 2) % 8;
             }
             frame = Math.floor(frame);
             var direction = Math.sign(player.xVelocity);
-            var img = direction > 0 ? RunningBackward[frame] : RunningForward[frame];
-            this.ctx.drawImage(img, player.x - this.state.camera.x, player.y + yOffset - 3 - this.state.camera.y, 50, 33);
+            var runningImg = direction > 0 ? RunningBackward[frame] : RunningForward[frame];
+            this.ctx.drawImage(runningImg, player.x - this.state.camera.x, player.y + yOffset - 3 - this.state.camera.y, 50, 33);
         }
         else {
-            var frame = 0.005 * Utils.millis() % 3;
+            frame = 0.005 * Utils.millis() % 3;
             if(Math.abs(player.health) < 30){
                 frame = (frame * 2) % 3;
             }
             frame = Math.floor(frame);
-            var img = Standing[frame];
-            this.ctx.drawImage(img, player.x - this.state.camera.x, player.y + yOffset + breathingOffset - 3 - this.state.camera.y, 50, 33 - breathingOffset);
+            var standingImg = Standing[frame];
+            this.ctx.drawImage(standingImg, player.x - this.state.camera.x, player.y + yOffset + breathingOffset - 3 - this.state.camera.y, 50, 33 - breathingOffset);
         }
     }
 
@@ -801,7 +785,7 @@ class GameCanvas extends React.Component {
         var time = (Utils.millis() - boost.timestamp) / WHOOSHANIMATIONLENGTH;
         var transparency = 0.7 * (1 - Math.pow(time,4));
         this.ctx.globalAlpha = transparency;
-        var whooshAnimation = boost.direction == 'right' ? WhooshRight : boost.direction == 'left' ? WhooshLeft : WhooshDown;
+        var whooshAnimation = boost.direction === 'right' ? WhooshRight : boost.direction === 'left' ? WhooshLeft : WhooshDown;
         var image = whooshAnimation[Math.min(Math.floor(time * whooshAnimation.length), whooshAnimation.length - 1)];
         var imageWidth = 302;
         var imageHeight = 100;
@@ -831,10 +815,25 @@ class GameCanvas extends React.Component {
                 yOffset = - imageWidth - 25;
                 imageWidth = [imageHeight, imageHeight = imageWidth][0];
                 break;
+            default:
+                this.ctx.restore();
+                return;
         }
 
         this.ctx.drawImage(image, player.x + xOffset - this.state.camera.x, player.y - player.height + yOffset - this.state.camera.y, 
             imageWidth, imageHeight);
+
+        this.ctx.restore();
+    }
+
+    drawLanding(landing){
+        this.ctx.save();
+        var time = (Utils.millis() - landing.timestamp) / ANIMATIONLENGTH;
+        var image = Landing[Math.min(Math.floor(time * Landing.length), Landing.length - 1)];
+        if(landing.hitType === 'floor' && landing.speed > 10){
+            this.ctx.drawImage(image, landing.location.x - 90 + landing.size.width / 2 - this.state.camera.x, landing.location.y - 74 - this.state.camera.y, 
+                194, 82);
+        }
 
         this.ctx.restore();
     }
@@ -850,7 +849,7 @@ class GameCanvas extends React.Component {
         var currentPlayerHeight = player.ducked ? this.state.playerSize / 5 : this.state.playerSize;
         var currentPlayerWidth = player.ducked ? this.state.playerSize * 1.5 : this.state.playerSize;
         var xOffset = player.ducked ? - 0.25 * this.state.playerSize : 0;
-        var breathingOffset = (player.xVelocity ==- 0 && player.yVelocity === 0) ? 3 * Math.sin((0.01 * Utils.millis())) : 0;
+        var breathingOffset = (player.xVelocity === 0 && player.yVelocity === 0) ? 3 * Math.sin((0.01 * Utils.millis())) : 0;
         var yOffset = player.ducked ? 0 : -30 + breathingOffset;
 
         if(player.orb){
@@ -871,7 +870,7 @@ class GameCanvas extends React.Component {
             this.ctx.globalAlpha = 1;
             return;
         }
-        if(!player.ducked && player.boostCooldown != 0){
+        if(!player.ducked && player.boostCooldown !== 0){
             this.drawPlayerStamina(player, currentPlayerWidth, currentPlayerHeight, xOffset, yOffset, name);
         }
         this.ctx.globalAlpha = 1;
@@ -922,7 +921,7 @@ class GameCanvas extends React.Component {
     }
 
     drawPlayerScore(player){
-        if(this.state.gameMode.title == "Collect the Boxes"){
+        if(this.state.gameMode.title === "Collect the Boxes"){
             this.ctx.save()
             this.ctx.fillStyle = 'black';
             this.ctx.font = "bold " + (20/this.state.scale)+"px " + FONT;
@@ -937,7 +936,6 @@ class GameCanvas extends React.Component {
     }
 
     drawGameMode(lastWinner){
-        var yOffset = 0;
         var titleFontSize = 30/this.state.scale;
         var subtitleFontSize = 20/this.state.scale;
         var centerTitle = this.state.countdown;
@@ -948,8 +946,7 @@ class GameCanvas extends React.Component {
         if(centerTitle){
             titleFontSize = 60/this.state.scale;
             subtitleFontSize = 40/this.state.scale;
-            yOffset = (this.ctx.canvas.height / 4);
-            var subtitleDiff = 60;
+            subtitleDiff = 60;
         }
         this.ctx.save()
         this.ctx.fillStyle = 'black';
@@ -985,27 +982,38 @@ class GameCanvas extends React.Component {
         events.push(event);
         this.setState({events});
 
-        if(event.type == "goal"){
+        if(event.type === "goal"){
             this.setState({footballScores: event.scores});
         }
 
-        if(event.type == "collision"){
-            var collisions = this.state.collisions;
-            collisions.push(event);
-            this.setState({collisions: collisions});
+        var animations = this.state.animations;
+        switch(event.type){
+            case("collision"):
+                event.animationLength = ANIMATIONLENGTH;
+                event.drawAnimation = this.drawCollision;
+                animations.push(event);
+                break;
+            case("death"):
+                if(event.causeOfDeath === "water"){
+                    event.animationLength = SPLASHANIMATIONLENGTH;
+                    event.drawAnimation = this.drawDeath;
+                    animations.push(event);
+                }
+                break;
+            case("boost"):
+                event.animationLength = WHOOSHANIMATIONLENGTH;
+                event.drawAnimation = this.drawBoost;
+                animations.push(event);
+                break;
+            case("hit"):
+                event.animationLength = ANIMATIONLENGTH;
+                event.drawAnimation = this.drawLanding;
+                animations.push(event);
+                break;
+            default:
+                break;
         }
-
-        if(event.type == "death" && event.causeOfDeath == "water"){
-            var deaths = this.state.deaths;
-            deaths.push(event);
-            this.setState({deaths: deaths});
-        }
-
-        if(event.type == "boost"){
-            var boosts = this.state.boosts;
-            boosts.push(event);
-            this.setState({boosts: boosts});
-        }
+        this.setState({animations});
     }
 
     changeAvatar(avatar){

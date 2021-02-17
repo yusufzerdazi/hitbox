@@ -1,5 +1,6 @@
 .footerImage {
     height: 40px;
+    padding-right: 15px;
 }
 
 .footerImage:hover{

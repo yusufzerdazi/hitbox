@@ -163,7 +163,7 @@ class Options extends React.Component {
     }).then(response => {
       this.props.updateName(name);
     }).catch((error) => {
-      if(error.error == "NameNotAvailable"){
+      if(error.error === "NameNotAvailable"){
         this.setState({updatedUsername: null, usernameError: "The name '" + this.state.updatedUsername + "' is already in use."});
       } else {
         if(!this.props.user?.name){
@@ -178,7 +178,7 @@ class Options extends React.Component {
   }
 
   openModal(modal){
-    this.setState(prevState => ({  openModal: prevState.openModal != modal ? modal : null }));
+    this.setState(prevState => ({  openModal: prevState.openModal !== modal ? modal : null }));
   }
 
   toggleState(field){
@@ -221,6 +221,10 @@ class Options extends React.Component {
     });
   }
 
+  createPrivateRoom(){
+    window.open(`https://hitbox.online?room=${Utils.uuidv4()}`);
+  }
+
   render() {
     return (
       <>
@@ -228,7 +232,7 @@ class Options extends React.Component {
       <div className={styles.footerContainer}>
         <div className={styles.profile}>
           <div className={styles.profileImageContainer} style={{float: "left"}}>
-            <img className={styles.profileImage} src={this.props.user.image} />
+            <img alt="Avatar" className={styles.profileImage} src={this.props.user.image} />
           </div>
           <div style={{float: "left"}} className={styles.profileName}>
             {this.props.user?.name}
@@ -257,11 +261,12 @@ class Options extends React.Component {
             <Collapsible easing="ease-in-out" open={this.state.uploadingAvatar} >
               <Avatars playerId={this.props.user.id} onChange={this.onAvatarChange}></Avatars>
             </Collapsible>
-            <div className={styles.option} onClick={() => this.props.camera(this.props.cameraType == FOLLOWING ? DRAG : FOLLOWING)}>Camera mode: {this.props.cameraType}</div>
+            <div className={styles.option} onClick={() => this.props.camera(this.props.cameraType === FOLLOWING ? DRAG : FOLLOWING)}>Camera mode: {this.props.cameraType}</div>
             <div className={styles.option} onClick={() => this.openModal("leaderboard")}>Leaderboard</div>
             <div className={styles.option} onClick={() => this.openModal("controls")}>Controls</div>
-            {this.props.user?.name == "yusuf" ? <div className={styles.option} onClick={() => this.props.addAI()}>Add AI</div> : <></>}
-            {this.props.user?.name == "yusuf" ? <div className={styles.option} onClick={() => this.props.removeAI()}>Remove AI</div> : <></>}
+            <div className={styles.option} onClick={this.createPrivateRoom}>Create private room</div>
+            {this.props.user?.name === "yusuf" ? <div className={styles.option} onClick={() => this.props.addAI()}>Add AI</div> : <></>}
+            {this.props.user?.name === "yusuf" ? <div className={styles.option} onClick={() => this.props.removeAI()}>Remove AI</div> : <></>}
           </div>
         </Collapsible>
       </div> : 
@@ -279,10 +284,10 @@ class Options extends React.Component {
           </div>
         </Collapsible>
       </div> } 
-        <Modal show={this.state.openModal == 'leaderboard'}>
+        <Modal show={this.state.openModal === 'leaderboard'}>
           <Leaderboard click={() => this.openModal("leaderboard")} />
         </Modal>
-        <Modal show={this.state.openModal == 'controls'}>
+        <Modal show={this.state.openModal === 'controls'}>
           <Instructions click={() => this.openModal("controls")} />
         </Modal>
       </>

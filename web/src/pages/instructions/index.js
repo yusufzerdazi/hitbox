@@ -1,8 +1,6 @@
 
 import React from 'react';
 import styles from './styles.module.css';
-import info from '../../assets/images/info.svg'
-import controls from '../../assets/images/controls.svg'
 
 class Instructions extends React.Component {
   render() {

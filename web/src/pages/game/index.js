@@ -3,11 +3,9 @@ import React from 'react';
 import Gamepad from 'react-gamepad';
 import { connect } from "react-redux";
 import { store } from '../../redux/store';
-import { isMobile } from "react-device-detect";
 
 import GameCanvas from '../../components/gameCanvas';
 import GameService from '../../services/game.service';
-import styles from './styles.module.css';
 import { USERNAME_UPDATED } from '../../constants/actionTypes';
 
 const mapStateToProps = state => {
@@ -52,7 +50,7 @@ class Game extends React.Component {
 
     getUsername() {
         var state = store.getState();
-        if(state.logIn?.user?.name && state.logIn.user.name != this.state.name){
+        if(state.logIn?.user?.name && state.logIn.user.name !== this.state.name){
             this.gameService.changeName(state.logIn.user.name);
             this.setState({name: state.logIn.user.name});
         }
@@ -65,7 +63,7 @@ class Game extends React.Component {
                 this.setState({playing: true, name: state.logIn.user.name});
             });
         }
-        if(state.logIn?.user?.image && state.logIn?.user?.image != this.avatar){
+        if(state.logIn?.user?.image && state.logIn?.user?.image !== this.avatar){
             this.setState({avatar: state.logIn?.user?.image});
             this.gameService.changeAvatar(state.logIn?.user?.image, state.logIn?.user?.name);
         }
@@ -73,11 +71,11 @@ class Game extends React.Component {
             this.gameService.quit();
             this.setState({playing: false});
         }
-        if(this.state.ai != undefined && state.options.ai > this.state.ai){
+        if(this.state.ai !== undefined && state.options.ai > this.state.ai){
             this.gameService.addAi();
             this.setState({ai: state.options.ai});
         }
-        if(this.state.ai != undefined && state.options.ai < this.state.ai){
+        if(this.state.ai !== undefined && state.options.ai < this.state.ai){
             this.gameService.removeAi();
             this.setState({ai: state.options.ai});
         }
@@ -137,14 +135,6 @@ class Game extends React.Component {
 
     jump(enabled){
         this.gameService.jump(enabled);
-    }
-
-    boostRight(enabled){
-        this.gameService.boostRight(enabled);
-    }
-
-    boostLeft(enabled){
-        this.gameService.boostLeft(enabled);
     }
 
     boostRight(enabled){
