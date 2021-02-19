@@ -118,6 +118,10 @@ class GameCanvas extends React.Component {
     }
 
     draw(players, level, name, lastWinner) {
+        if(this.state.isDrawing){
+            return;
+        }
+        this.setState({isDrawing: true});
         if(this.props.cameraType === FOLLOWING){
             var you = players.filter(p => p.name === name && !p.orb && p.alive);
             if(you.length === 0 && this.state.gameMode.title === "Death Wall"){
@@ -166,6 +170,9 @@ class GameCanvas extends React.Component {
         if(players.filter(p => p.name === name).length === 0 && this.state.joining){
             this.drawNotification();
         }
+        setTimeout(() => {
+            this.setState({isDrawing: false});
+        }, 1);
     }
 
     newGame(players){
