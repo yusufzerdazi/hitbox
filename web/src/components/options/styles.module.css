@@ -32,6 +32,10 @@
 
 .profileName {
     margin: 5px;
+    width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     color: white;
     height: 32px;
     padding: 8px 0px 0px;

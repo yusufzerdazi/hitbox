@@ -48,16 +48,18 @@ class Scores extends React.Component {
         <div className={styles.scoresTitle} onClick={() => this.toggleState("optionsOpen")}>
           View Scores
         </div>
-        <Collapsible easing="ease-in-out" open={this.state.optionsOpen} >
-          {this.props.players ? <DataTable
-            theme="dark"
-            noHeader={true}
-            noTableHead={true}
-            columns={columns}
-            dense={true}
-            data={this.props.players.filter(p => !p.orb)}
-          /> : null}
-        </Collapsible>
+        <div className={styles.scoresTable}>
+          <Collapsible easing="ease-in-out" open={this.state.optionsOpen} >
+            {this.props.players ? <DataTable
+              theme="dark"
+              noHeader={true}
+              noTableHead={true}
+              columns={columns}
+              dense={true}
+              data={this.props.players.filter(p => !p.orb)}
+            /> : null}
+          </Collapsible>
+        </div>
       </div>
     );
   }

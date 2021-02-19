@@ -183,6 +183,8 @@ class Options extends React.Component {
 
   toggleState(field){
     var newState = {};
+    newState['uploadingAvatar'] = false;
+    newState['updatingUsername'] = false;
     newState[field] = !this.state[field];
     this.setState(newState);
   }

@@ -1,7 +1,7 @@
 .avatarContainer {
     margin: auto;
-    max-width: 350px;
-    max-height: 350px;
+    max-width: 453px;
+    max-height: calc(100vh - 360px);
     overflow-y: scroll;
 }
 

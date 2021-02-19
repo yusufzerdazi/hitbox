@@ -21,3 +21,8 @@
 .scoresTitle:hover {
     opacity: 0.7;
 }
+
+.scoresTable {
+    max-height: calc(100vh - 135px);
+    overflow-y: scroll;
+}
