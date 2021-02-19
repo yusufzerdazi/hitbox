@@ -233,16 +233,16 @@ class Options extends React.Component {
       { this.props.user?.loggedIn ?
       <div className={styles.footerContainer}>
         <div className={styles.profile}>
-          <div className={styles.profileImageContainer} style={{float: "left"}}>
+          <div className={styles.profileImageContainer}>
             <img alt="Avatar" className={styles.profileImage} src={this.props.user.image} />
           </div>
-          <div style={{float: "left"}} className={styles.profileName}>
+          <div className={styles.profileName}>
             {this.props.user?.name}
           </div>
-          <div style={{float: "left"}} className={styles.score}>Rank: {this.state?.score || "?"}</div>
-          <div style={{float: "left"}} className={styles.options}  onClick={() => this.toggleState("optionsOpen")}>Options {this.state.optionsOpen ? ' ᐃ' : ' ᐁ'}</div>
-          {this.props.isPlaying ? <div style={{float: "left"}} className={styles.options + " " + styles.quitOption} onClick={() => this.props.playing(false)}>Quit</div> : <></>}
-          {!this.props.isPlaying ? <div style={{float: "left"}} className={styles.options + " " + styles.playOption} onClick={() => this.props.playing(true)}>Join</div> : <></>}
+          {this.props.isPlaying ? <div  className={styles.options + " " + styles.quitOption} onClick={() => this.props.playing(false)}>Quit</div> : <></>}
+          {!this.props.isPlaying ? <div className={styles.options + " " + styles.playOption} onClick={() => this.props.playing(true)}>Join</div> : <></>}
+          <div className={styles.options}  onClick={() => this.toggleState("optionsOpen")}>Options {this.state.optionsOpen ? ' ᐃ' : ' ᐁ'}</div>
+          <div className={styles.score}>Rank: {this.state?.score || "?"}</div>
         </div>
         <Collapsible easing="ease-in-out" open={this.state.optionsOpen} >
           <div className={styles.optionsDetails}>
