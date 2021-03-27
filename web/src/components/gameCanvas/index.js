@@ -284,14 +284,6 @@ class GameCanvas extends React.Component {
             this.ctx.fillStyle = colour || "green";
             Utils.roundRect(this.ctx, level.x - 5 - this.state.camera.x, level.y - this.state.camera.y, level.width + 10, 30, 8, true, false);
             this.ctx.fill();
-
-            var pat = this.ctx.createPattern(GRASS, "repeat-x");
-            this.ctx.translate(level.x - this.state.camera.x - 5, level.y - this.state.camera.y - 20);
-            this.ctx.rect(0, 0, level.width + 10, 31);
-            this.ctx.fillStyle = pat;
-            var scalingFactor = this.ctx.canvas.width / 1080
-            this.ctx.scale(0.8 / scalingFactor, 0.8 / scalingFactor);
-            this.ctx.fill();
         }
         this.ctx.restore();
     }
