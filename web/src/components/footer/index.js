@@ -1,7 +1,7 @@
 
 import React from 'react';
 import yz from '../../assets/images/yz.svg';
-import cashapp from '../../assets/images/cashapp.svg';
+import beer from '../../assets/images/beer.png';
 import styles from './styles.module.css';
 import Tooltip from 'react-bootstrap/Tooltip'
 import OverlayTrigger from 'react-bootstrap/OverlayTrigger';
@@ -15,9 +15,9 @@ class Footer extends React.Component {
             <img alt="Yusuf Zerdazi" className={styles.footerImage} src={yz}></img>
           </OverlayTrigger>
         </a>
-        <a href="https://cash.app/£yusufzerdazi">
-          <OverlayTrigger placement="top" overlay={<Tooltip id={`donate`}>Donate</Tooltip> }>
-            <img alt="Donate" className={styles.footerImage} src={cashapp}></img>
+        <a href="https://buymeacoffee.com/yusufzerdazi">
+          <OverlayTrigger placement="top" overlay={<Tooltip id={`donate`}>Buy me a beer</Tooltip> }>
+            <img alt="Donate" className={styles.footerImage} src={beer}></img>
           </OverlayTrigger>
         </a>
       </div>
