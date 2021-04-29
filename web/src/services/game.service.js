@@ -15,6 +15,7 @@ import box from '../assets/sounds/box.mp3';
 import football from '../assets/sounds/football.mp3';
 import bigFootball from '../assets/sounds/football2.mp3';
 import splash from '../assets/sounds/splash.mp3';
+import BISON from 'bisonjs';
 
 import Utils from '../utils';
 
@@ -135,7 +136,8 @@ class GameService {
             this.level = level;
         })
 
-        this.socket.on('allPlayers', state => {
+        this.socket.on('allPlayers', stateCompressed => {
+            var state = BISON.decode(stateCompressed);
             if(this.mounted){
                 this.updateRunning(state.running);
                 this.canvasRef.current.draw(state.players, this.level, this.name, this.lastWinner);
