@@ -691,27 +691,27 @@ class Game {
 
     mapSocketToPlayer(socket){
         return {
-            name: socket.player.name,
+            n: socket.player.name,
             x: socket.player.x,
             y: socket.player.y,
-            xVelocity: socket.player.xVelocity,
-            yVelocity: socket.player.yVelocity,
+            xv: socket.player.xVelocity,
+            yv: socket.player.yVelocity,
             it: socket.player.it,
-            lives: socket.player.lives,
-            health: socket.player.health,
-            boostCooldown: socket.player.boostCooldown,
-            alive: socket.player.alive,
-            ducked: socket.player.ducked,
-            invincibility: socket.player.invincibility,
-            colour: socket.player.colour,
-            score: socket.player.score,
-            orb: socket.player.orb,
+            l: socket.player.lives,
+            h: socket.player.health,
+            b: socket.player.boostCooldown,
+            a: socket.player.alive,
+            d: socket.player.ducked,
+            i: socket.player.invincibility,
+            c: socket.player.colour,
+            s: socket.player.score,
+            o: socket.player.orb,
             id: socket.player.id,
-            type: socket.player.type,
-            team: socket.player.team,
-            angle: socket.player.angle,
-            width: socket.player.width,
-            height: socket.player.height
+            t: socket.player.type,
+            tm: socket.player.team,
+            an: socket.player.angle,
+            w: socket.player.width,
+            ht: socket.player.height
         }
     }
     
@@ -749,7 +749,7 @@ class Game {
             }, 0);
             this.emitToAllClients("allPlayers", BISON.encode({
                 running: runningPlayers,
-                players: this.clients.map(socket => socket.player)
+                players: this.clients.map(socket => this.mapSocketToPlayer(socket))
             }));
             this.ticks++;
         }, 1000 / 60);

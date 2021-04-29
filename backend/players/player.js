@@ -24,6 +24,9 @@ class Player {
         this.boostCooldown = 20;
         this.score = 0;
         this.rank = rank;
+        this.orb = null;
+        this.type = null
+        this.angle = null;
 
         this.width = Constants.PLAYERWIDTH;
         this.height = Constants.PLAYERHEIGHT;
