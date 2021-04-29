@@ -131,6 +131,32 @@ class GameService {
         return this;
     }
 
+    uncompressPlayer(player){
+        return {
+            name: player.n,
+            x: player.x,
+            y: player.y,
+            xVelocity:player.xv,
+            yVelocity:player.yv,
+            it:player.it,
+            lives: player.l,
+            health: player.h,
+            boostCooldown: player.b,
+            alive: player.a,
+            ducked: player.d,
+            invincibility: player.i,
+            colour: player.c,
+            score: player.s,
+            orb: player.o || null,
+            id:player.id,
+            type: player.t,
+            team:player.tm,
+            angle: player.an,
+            width: player.w,
+            height: player.ht
+        }
+    }
+
     addListeners(){
         this.socket.on('level', level => {
             this.level = level;
@@ -138,9 +164,11 @@ class GameService {
 
         this.socket.on('allPlayers', stateCompressed => {
             var state = BISON.decode(stateCompressed);
+            var uncompressedPlayers = state.players.map(p => this.uncompressPlayer(p));
+            
             if(this.mounted){
                 this.updateRunning(state.running);
-                this.canvasRef.current.draw(state.players, this.level, this.name, this.lastWinner);
+                this.canvasRef.current.draw(uncompressedPlayers, this.level, this.name, this.lastWinner);
             }
         });
 
