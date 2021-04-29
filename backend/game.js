@@ -14,6 +14,7 @@ var Football = require('./game/football');
 var Square = require('./square');
 var Constants = require('./constants');
 var Utils = require('./utils');
+var BISON = require('bisonjs');
 
 var GameModes = {
     generic: [CollectTheBoxes, DeathWall, BattleRoyale, Tag, BattleRoyale, BattleRoyale, Football],
@@ -746,10 +747,10 @@ class Game {
             var runningPlayers = this.movingPlayers().reduce((acc, cur) => {
                 return acc + (cur.player.type != "ball" && cur.player.onSurface.includes(true) && cur.player.xVelocity != 0)
             }, 0);
-            this.emitToAllClients("allPlayers", {
+            this.emitToAllClients("allPlayers", BISON.encode({
                 running: runningPlayers,
-                players: this.clients.map(socket => this.mapSocketToPlayer(socket))
-            });
+                players: this.clients.map(socket => socket.player)
+            }));
             this.ticks++;
         }, 1000 / 60);
     }
