@@ -162,8 +162,7 @@ class GameService {
             this.level = level;
         })
 
-        this.socket.on('allPlayers', compressedState => {
-            var state = BISON.decode(compressedState);
+        this.socket.on('allPlayers', state => {
             var uncompressedPlayers = state[1].map(p => this.uncompressPlayer(p));
             
             if(this.mounted){
