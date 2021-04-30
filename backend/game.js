@@ -207,7 +207,7 @@ class Game {
     emitToAllClients(event, eventData, context = this){
         var clients = context.humanPlayers().concat(context.spectators).filter(c => !c.player || !c.player.ai);
         clients.forEach(client => {
-            client.emit(event, eventData);
+            client.volatile.emit(event, eventData);
         });
     }
 
