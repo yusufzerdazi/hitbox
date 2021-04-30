@@ -133,27 +133,27 @@ class GameService {
 
     uncompressPlayer(player){
         return {
-            name: player.n,
-            x: player.x,
-            y: player.y,
-            xVelocity:player.xv,
-            yVelocity:player.yv,
-            it:player.it,
-            lives: player.l,
-            health: player.h,
-            boostCooldown: player.b,
-            alive: player.a,
-            ducked: player.d,
-            invincibility: player.i,
-            colour: player.c,
-            score: player.s,
-            orb: player.o || null,
-            id:player.id,
-            type: player.t,
-            team:player.tm,
-            angle: player.an,
-            width: player.w,
-            height: player.ht
+            name: player[0],
+            x: player[1],
+            y: player[2],
+            xVelocity:player[3],
+            yVelocity:player[4],
+            it:player[5],
+            lives: player[6],
+            health: player[7],
+            boostCooldown: player[8],
+            alive: player[9],
+            ducked: player[10],
+            invincibility: player[11],
+            colour: player[12],
+            score: player[13],
+            orb: player[14],
+            id:player[15],
+            type: player[16],
+            team:player[17],
+            angle: player[18],
+            width: player[19],
+            height: player[20]
         }
     }
 
@@ -162,13 +162,14 @@ class GameService {
             this.level = level;
         })
 
-        this.socket.on('allPlayers', stateCompressed => {
-            var state = BISON.decode(stateCompressed);
-            var uncompressedPlayers = state.players.map(p => this.uncompressPlayer(p));
+        this.socket.on('allPlayers', compressedState => {
+            var state = BISON.decode(compressedState);
+            var uncompressedPlayers = state[1].map(p => this.uncompressPlayer(p));
             
             if(this.mounted){
-                this.updateRunning(state.running);
+                this.updateRunning(state[0]);
                 this.canvasRef.current.draw(uncompressedPlayers, this.level, this.name, this.lastWinner);
+                this.canvasRef.current.updateGameModeDetails(state[2]);
             }
         });
 
@@ -231,19 +232,13 @@ class GameService {
 
         this.socket.on('starting', (timer) => {
             if (this.mounted){
-                this.canvasRef.current.countdown(timer ? timer : "");
+                this.canvasRef.current.setCountdown(timer ? timer : "");
             }
         })
 
         this.socket.on('gameMode', (gameMode) => {
             if(this.mounted){
-                this.canvasRef.current.gameMode(gameMode);
-            }
-        });
-
-        this.socket.on('deathWall', (deathWall) => {
-            if(this.mounted){
-                this.canvasRef.current.updateDeathWall(deathWall);
+                this.canvasRef.current.setGameMode(gameMode);
             }
         });
         
@@ -314,7 +309,8 @@ class GameService {
 
         this.socket.on('newGame', (players) => {
             if(this.mounted){
-                this.canvasRef.current.newGame(players);
+                var uncompressedPlayers = players.map(p => this.uncompressPlayer(p));
+                this.canvasRef.current.newGame(uncompressedPlayers);
             }
         });
 
