@@ -147,8 +147,8 @@ class GameCanvas extends React.Component {
         players.filter(p => p.type !== "ball").forEach(player => this.drawPlayer(player, name));
         players.filter(p => p.type === "ball").forEach(player => this.drawBall(player));
         players.filter(p => p.name === name).forEach(player => {
-            this.drawPlayerStats(player);
             this.drawPlayerScore(player);
+            this.drawPlayerStats(player);
         });
 
         this.animations = this.animations.filter(c => Utils.millis() - c.animationLength < c.timestamp);
@@ -217,13 +217,14 @@ class GameCanvas extends React.Component {
         if(this.gameModeDetails.maxDistance){
             this.ctx.save()
             this.ctx.fillStyle = 'black';
+            this.ctx.globalCompositeOperation = "difference";
             this.ctx.font = "bold " + (20/this.scale)+"px " + FONT;
             this.ctx.shadowColor = "white";
             this.ctx.shadowOffsetX = 1;
             this.ctx.shadowOffsetY = 1;
             this.ctx.shadowBlur = 1;
-            this.ctx.textAlign = "center";
-            this.ctx.fillText(Math.round(this.gameModeDetails.maxDistance / 50) + "m  (Max: " + Math.round(this.gameModeDetails.levelMaxDistance / 50) + "m)", 0, -(this.ctx.canvas.height / 2 - 100) / this.scale);
+            this.ctx.textAlign = "left";
+            this.ctx.fillText(Math.round(this.gameModeDetails.maxDistance / 50) + "m  (Max: " + Math.round(this.gameModeDetails.levelMaxDistance / 50) + "m)", -(this.ctx.canvas.width / 2 - 10) / this.scale, -(this.ctx.canvas.height / 2 - 80) / this.scale);
             this.ctx.restore()
         }
     }
@@ -232,11 +233,12 @@ class GameCanvas extends React.Component {
         if(this.gameMode.title === "Football" && this.gameModeDetails){
             this.ctx.font = "bold " + (20/this.scale)+"px " + FONT;
             this.ctx.save()
+            this.ctx.textAlign = "left";
             var text = [];
             text.push({text: this.gameModeDetails.team1, fillStyle: "red"});
             text.push({text: "-", fillStyle: "black"});
             text.push({text: this.gameModeDetails.team2, fillStyle: "slateblue"});
-            Utils.fillMixedText(this.ctx, text, 0, - (this.ctx.canvas.height / 2 - 100) / this.scale);
+            Utils.fillMixedText(this.ctx, text, - (this.ctx.canvas.width - 68) / (2 * this.scale), - (this.ctx.canvas.height / 2 - 80) / this.scale);
             this.ctx.restore()
         }
     }
@@ -256,7 +258,7 @@ class GameCanvas extends React.Component {
         }
         if(level.type === "goal"){
             this.ctx.fillStyle = level.colour;
-            this.ctx.globalAlpha = 0.5;
+            this.ctx.globalAlpha = 0.3;
         }
         this.ctx.beginPath();
         Utils.roundRect(this.ctx, level.x - this.camera.x, level.y - this.camera.y, level.width, level.height, useExistingFillStyle ? 0 : PLATFORMRADIUS, true, false);
@@ -425,7 +427,7 @@ class GameCanvas extends React.Component {
                 this.ctx.globalAlpha = 0.5;
             }
             
-            if(!this.players[player.name].image && !player.id){
+            if(!this.players[player.name].image && !player.id && player.type != "flag"){
                 const playerImage = new Image();
                 playerImage.src = "https://hitbox.blob.core.windows.net/options/" + Math.floor(Math.random() * 40 + 1) + ".svg";
                 this.players[player.name].image = playerImage
@@ -707,6 +709,13 @@ class GameCanvas extends React.Component {
         }
     }
 
+    drawFlag(player){
+        this.ctx.beginPath();
+        this.ctx.fillStyle = player.colour;
+        this.drawRectangle(player.x, player.y - player.height, 5, player.height);
+        this.ctx.fill();
+    }
+
     drawPlayerIsIt(player, width, height, xOffset, yOffset){
         var haloWidth = 15;
         this.ctx.save();
@@ -826,7 +835,7 @@ class GameCanvas extends React.Component {
         var currentPlayerHeight = player.ducked ? this.playerSize / 5 : this.playerSize;
         var currentPlayerWidth = player.ducked ? this.playerSize * 1.5 : this.playerSize;
         var xOffset = player.ducked ? - 0.25 * this.playerSize : 0;
-        var breathingOffset = (player.xVelocity === 0 && player.yVelocity === 0) ? 3 * Math.sin((0.01 * Utils.millis())) : 0;
+        var breathingOffset = (player.xVelocity === 0 && player.yVelocity === 0) && player.type !== "flag" ? 3 * Math.sin((0.01 * Utils.millis())) : 0;
         var yOffset = player.ducked ? 0 : -30 + breathingOffset;
 
         if(player.orb){
@@ -835,8 +844,11 @@ class GameCanvas extends React.Component {
         if(player.it){
             this.drawPlayerIsIt(player, currentPlayerWidth, currentPlayerHeight, xOffset, yOffset);
         }
-        if(!player.ducked && player.alive && !player.orb){
+        if(!player.ducked && player.alive && !player.orb && player.type !== "flag"){
             this.drawPlayerLegs(player, breathingOffset);
+        }
+        if(player.type == "flag"){
+            this.drawFlag(player);
         }
         this.drawPlayerCube(player, currentPlayerWidth, currentPlayerHeight, xOffset, yOffset);
         this.drawPlayerName(player, currentPlayerHeight, xOffset, yOffset);
@@ -865,12 +877,9 @@ class GameCanvas extends React.Component {
 
     drawStartingTimer() {
         this.ctx.save()
-        this.ctx.fillStyle = 'black';
+        this.ctx.globalCompositeOperation = "difference";
+        this.ctx.fillStyle = 'white';
         this.ctx.font = "bold " + (50/this.scale)+"px " + FONT;
-        this.ctx.shadowColor = "white";
-        this.ctx.shadowOffsetX = 1;
-        this.ctx.shadowOffsetY = 1;
-        this.ctx.shadowBlur = 1;
         this.ctx.textAlign = "center";
         var timerText = Math.round(this.countdown / 20);
         if (timerText === 0 && this.countdown) {
@@ -885,14 +894,11 @@ class GameCanvas extends React.Component {
     drawGameCountdown(){
         if(this.gameCountdown){
             this.ctx.save()
-            this.ctx.fillStyle = 'black';
+            this.ctx.globalCompositeOperation = "difference";
+            this.ctx.fillStyle = 'white';
             this.ctx.font = "bold " + (20/this.scale)+"px " + FONT;
-            this.ctx.shadowColor = "white";
-            this.ctx.shadowOffsetX = 1;
-            this.ctx.shadowOffsetY = 1;
-            this.ctx.shadowBlur = 1;
-            this.ctx.textAlign = "center";
-            this.ctx.fillText((this.gameCountdown / 60).toFixed(2), 0, -(this.ctx.canvas.height / 2 - 100) / this.scale);
+            this.ctx.textAlign = "left";
+            this.ctx.fillText((this.gameCountdown / 60).toFixed(2), -(this.ctx.canvas.width / 2 - 10) / this.scale, -(this.ctx.canvas.height / 2 - 80) / this.scale);
             this.ctx.restore()
         }
     }
@@ -900,49 +906,46 @@ class GameCanvas extends React.Component {
     drawPlayerScore(player){
         if(this.gameMode.title === "Collect the Boxes"){
             this.ctx.save()
-            this.ctx.fillStyle = 'black';
+            this.ctx.globalCompositeOperation = "difference";
+            this.ctx.fillStyle = 'white';
             this.ctx.font = "bold " + (20/this.scale)+"px " + FONT;
-            this.ctx.shadowColor = "white";
-            this.ctx.shadowOffsetX = 1;
-            this.ctx.shadowOffsetY = 1;
-            this.ctx.shadowBlur = 1;
             this.ctx.textAlign = "center";
-            this.ctx.fillText(player.lives, 0, -(this.ctx.canvas.height / 2 - 100) / this.scale);
+            this.ctx.fillText(player.lives, -(this.ctx.canvas.width / 2 - 16) / this.scale, -(this.ctx.canvas.height / 2 - 80) / this.scale);
             this.ctx.restore()
         }
     }
 
     drawGameMode(lastWinner){
-        var titleFontSize = 30/this.scale;
+        var titleFontSize = 25/this.scale;
         var subtitleFontSize = 20/this.scale;
         var centerTitle = this.countdown;
         var showWinner = this.countdown > 60;
         
-        var yPosition = centerTitle ? - 100 : -(this.ctx.canvas.height / 2 - 40)
-        var subtitleDiff = 30;
+        var yPosition = centerTitle ? - 100 : -(this.ctx.canvas.height / 2 - 30);
+        var xPosition = centerTitle ? 0 : -(this.ctx.canvas.width - 20) / (2 * this.scale);
+        var subtitleDiff = centerTitle ? 30 : 25;
+        this.ctx.save();
+        this.ctx.globalCompositeOperation = "difference";
         if(centerTitle){
             titleFontSize = 60/this.scale;
             subtitleFontSize = 40/this.scale;
             subtitleDiff = 60;
+            this.ctx.textAlign = "center";
+        } else {
+            this.ctx.textAlign = "left";
         }
-        this.ctx.save()
-        this.ctx.fillStyle = 'black';
+        this.ctx.fillStyle = 'white';
         this.ctx.font = "bold " + titleFontSize+"px " + FONT;
-        this.ctx.shadowColor = "white";
-        this.ctx.shadowOffsetX = 1;
-        this.ctx.shadowOffsetY = 1;
-        this.ctx.shadowBlur = 1;
-        this.ctx.textAlign = "center";
         
         if(centerTitle && showWinner && lastWinner){
             this.ctx.fillText(lastWinner.name + " won!" || "", 0, (yPosition + subtitleDiff) / this.scale);
         } else {
-            this.ctx.fillText(this.gameMode.title || "", 0, (yPosition) / this.scale);
+            this.ctx.fillText(this.gameMode.title || "", xPosition, (yPosition) / this.scale);
             this.ctx.font = "bold " + subtitleFontSize+"px " + FONT;
-            this.ctx.fillText(this.gameMode.subtitle || "", 0, (yPosition + subtitleDiff) / this.scale);
+            this.ctx.fillText(this.gameMode.subtitle || "", xPosition, (yPosition + subtitleDiff) / this.scale);
         }
         
-        this.ctx.restore()
+        this.ctx.restore();
     }
 
     setCountdown(timer) {

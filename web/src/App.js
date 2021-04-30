@@ -29,9 +29,11 @@ class App extends React.Component {
               <Instructions />
             </Route>
           </Switch>
-          <Options/>
+          <div className="options">
+            <Scores/>
+            <Options/>
+          </div>
           <Footer/>
-          <Scores/>
         </Router>
       </Provider>
     );

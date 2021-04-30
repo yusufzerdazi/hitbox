@@ -1,10 +1,9 @@
 .scoresContainer {
-    position: absolute;
-    top: 0;
-    left: 0;
+    vertical-align: top;
+    display: inline-block;
     background-color: black;
     opacity: 0.7;
-    margin: 15px;
+    margin: 15px 0px 15px 15px;
     text-align: center a;
     color: white;
     height: 50px;

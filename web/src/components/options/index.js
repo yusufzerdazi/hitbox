@@ -13,6 +13,7 @@ import axios from 'axios';
 import { LOG_IN, CAMERA, USERNAME_UPDATED, IMAGE_UPDATED, PLAYING, ADDAI, REMOVEAI } from '../../constants/actionTypes';
 import { FOLLOWING, DRAG } from '../../constants/cameraTypes';
 import Avatars from '../avatars';
+import Scores from '../scores';
 
 const mapStateToProps = state => {
     return {

@@ -44,6 +44,8 @@ class Scores extends React.Component {
 
   render() {
     return (
+      <>
+      { this.props.players ?
       <div className={styles.scoresContainer}>
         <div className={styles.scoresTitle} onClick={() => this.toggleState("optionsOpen")}>
           View Scores
@@ -56,11 +58,12 @@ class Scores extends React.Component {
               noTableHead={true}
               columns={columns}
               dense={true}
-              data={this.props.players.filter(p => !p.orb)}
+              data={this.props.players.filter(p => !p.orb && p.type !== "flag")}
             /> : null}
           </Collapsible>
         </div>
-      </div>
+      </div> : <></> }
+      </>
     );
   }
 }
