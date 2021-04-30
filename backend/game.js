@@ -11,13 +11,14 @@ var FreeForAll = require('./game/freeForAll');
 var DeathWall = require('./game/deathWall');
 var CollectTheBoxes = require('./game/collectTheBoxes');
 var Football = require('./game/football');
+var CaptureTheFlag = require('./game/captureTheFlag');
 var Square = require('./square');
 var Constants = require('./constants');
 var Utils = require('./utils');
 var BISON = require('bisonjs');
 
 var GameModes = {
-    generic: [CollectTheBoxes, DeathWall, BattleRoyale, Tag, BattleRoyale, BattleRoyale, Football],
+    generic: [CollectTheBoxes, DeathWall, BattleRoyale, Tag, BattleRoyale, BattleRoyale, Football, CaptureTheFlag],
     football: [Football]
 };
 
@@ -30,7 +31,6 @@ class Game {
     constructor(room){
         this.room = room;
         this.clients = [];
-        this.newClients = [];
         this.spectators = [];
         this.state = state.STARTING;
         this.aiEnabled = true;
@@ -40,12 +40,13 @@ class Game {
         
         this.gameMode = new GameModes[GameModes[this.room] ? this.room : "generic"][Math.floor(Math.random() * GameModes[GameModes[this.room] ? this.room : "generic"].length)](this.clients, this.ticks, (v1, v2) =>this.emitToAllClients(v1,v2,this));
 
-        this.players = () => { return this.clients.filter(c => !c.player.orb && c.player.type != "ball") }
+        this.players = () => { return this.clients.filter(c => !c.player.orb && !["ball","flag"].includes(c.player.type)) }
         this.humanPlayers = () => { return this.clients.filter(c => c.player && !c.player.ai) }
-        this.aiPlayers = () => { return this.clients.filter(c => c.player.ai && !c.player.orb && c.player.type != "ball") }
+        this.aiPlayers = () => { return this.clients.filter(c => c.player.ai && !c.player.orb && !["ball","flag"].includes(c.player.type)) }
         this.livingPlayers = () => { return this.clients.filter(c => c.player.alive); }
-        this.movingPlayers = () => { return this.livingPlayers().filter(c => !c.player.ducked); }
-        this.vulnerablePlayers = () => { return this.livingPlayers().filter(c => c.player.invincibility == 0); }
+        this.movingPlayers = () => { return this.livingPlayers().filter(c => !c.player.ducked && !c.player.attachedToPlayer); }
+        this.attachedPlayers = () => { return this.livingPlayers().filter(c => c.player.attachedToPlayer); }
+        this.vulnerablePlayers = () => { return this.livingPlayers().filter(c => c.player.invincibility == 0 && !c.player.attachedToPlayer); }
         this.invulnerablePlayers = () => { return this.livingPlayers().filter(c => c.player.invincibility > 0); }
     }
 
@@ -92,12 +93,6 @@ class Game {
         } else if(this.humanPlayers().length > 1 && this.aiPlayers().length > 0){
             this.removeAiPlayer();
         }
-    }
-
-    spawnNewClients(){
-        var newClients = this.newClients;
-        this.clients = this.clients.concat(newClients);
-        this.newClients = [];
     }
 
     removeClientListeners(client){
@@ -210,7 +205,7 @@ class Game {
     }
 
     emitToAllClients(event, eventData, context = this){
-        var clients = context.humanPlayers().concat(context.spectators).concat(context.newClients).filter(c => !c.player || !c.player.ai);
+        var clients = context.humanPlayers().concat(context.spectators).filter(c => !c.player || !c.player.ai);
         clients.forEach(client => {
             client.emit(event, eventData);
         });
@@ -309,6 +304,18 @@ class Game {
     }
     
     calculateMovement() {
+        this.movingPlayers().forEach(client => client.player.attachedPlayers = 0);
+        this.attachedPlayers().forEach(client => {
+            var attachedPlayer = this.movingPlayers().filter(p => p.player.name == client.player.attachedToPlayer)[0];
+            if(!attachedPlayer) {
+                client.player.attachedToPlayer = null;
+                return;
+            }
+            attachedPlayer.player.attachedPlayers = (attachedPlayer.player.attachedPlayers | 0) + 1
+            client.player.x = attachedPlayer.player.x;
+            client.player.y = attachedPlayer.player.y - 100 * attachedPlayer.player.attachedPlayers;
+        });
+
         this.movingPlayers().forEach(client => {
             var previouslyOnSurface = client.player.onSurface.includes(true);
             var currentSpeed = client.player.speed();
@@ -407,7 +414,7 @@ class Game {
     getCollisionType(collision){
         var collisionType = "player";
         collision.forEach(client => {
-            if(client.player.orb || client.player.it){
+            if(client.player.orb || client.player.it || client.player.type == "flag"){
                 collisionType = "box";
             }
             if(client.player.type == "ball"){
@@ -452,7 +459,7 @@ class Game {
                     var speedDifference = Math.abs(clientSpeed - otherClientSpeed);
                     
                     if(clientSpeed < otherClientSpeed){
-                        if(this.gameMode.damageEnabled && client.player.type != "ball" && otherClient.player.type != "ball") {
+                        if(this.gameMode.damageEnabled && !["ball","flag"].includes(client.player.type) && !["ball","flag"].includes(otherClient.player.type)) {
                             client.player.health = Math.max(client.player.health - (this.gameMode.playerDamage ? this.gameMode.playerDamage : otherClientSpeed), 0);
                         }
                         if(client.player.health == 0){
@@ -613,35 +620,13 @@ class Game {
     
     reset() {
         var positions = [];
-        this.gameMode = new GameModes[this.room ? this.room : "generic"][Math.floor(Math.random() * GameModes[this.room ? this.room : "generic"].length)](this.clients, this.ticks, (v1, v2) =>this.emitToAllClients(v1,v2,this));
-        this.spawnNewClients();
-        var aiPlayers = this.aiPlayers().filter(c => !c.player.orb);
-        if(this.gameMode.title == "Death Wall"){
-            for(var i = 0; i<aiPlayers.length; i++){
-                var score = aiPlayers[i].player.score;
-                aiPlayers[i].player = new RunningAi(aiPlayers[i].player.colour, aiPlayers[i].player.name)
-                aiPlayers[i].player.score = score;
-            }
-        } else {
-            this.emitToAllClients("deathWall", {
-                deathWallX: null,
-                maxDistance: null
-            });
-            for(var i = 0; i<aiPlayers.length; i++){
-                var score = aiPlayers[i].player.score;
-                if(Math.random() > 0.5){
-                    aiPlayers[i].player = new SimpleAi(aiPlayers[i].player.colour, aiPlayers[i].player.name)
-                } else {
-                    aiPlayers[i].player = new CleverAi(aiPlayers[i].player.colour, aiPlayers[i].player.name)
-                }
-                aiPlayers[i].player.score = score;
-            }
-        }
+        var aiPlayers = this.aiPlayers();
         this.clients = this.humanPlayers().concat(aiPlayers);
-        this.clients = this.gameMode.orb ? this.clients.concat(this.gameMode.orb) : this.clients;
-        this.gameMode.updateClients(this.clients);
-
+        this.gameMode = new GameModes[this.room ? this.room : "generic"][Math.floor(Math.random() * GameModes[this.room ? this.room : "generic"].length)](this.clients, this.ticks, (v1, v2) =>this.emitToAllClients(v1,v2,this));
         this.clients.forEach((client, i)=> {
+            if(client.player.type == "flag"){
+                return;
+            }
             client.player.respawn(this.clients, this.gameMode.level);
             positions.push({x: client.player.x, y: client.player.y});
         });
@@ -740,7 +725,7 @@ class Game {
             var runningPlayers = this.movingPlayers().reduce((acc, cur) => {
                 return acc + (cur.player.type != "ball" && cur.player.onSurface.includes(true) && cur.player.xVelocity != 0)
             }, 0);
-            this.emitToAllClients("allPlayers", BISON.encode([
+            this.emitToAllClients("allPlayers", [
                 runningPlayers,
                 this.clients.map(socket => this.mapSocketToPlayer(socket)),
                 this.gameMode.title == "Death Wall" ? {
@@ -750,7 +735,7 @@ class Game {
                 } : this.gameMode.title == "Football" ? 
                 this.gameMode.scores : 
                 {}
-            ]));
+            ]);
             this.ticks++;
         }, 1000 / 60);
     }

@@ -3,6 +3,7 @@ var Levels = require('../levels');
 var Constants = require('../constants');
 var Square = require('../square');
 var Utils = require('../utils');
+var RunningAi = require('../players/runningAi');
 
 class DeathWall extends GameMode {
     constructor(clients, ticks, emitToAllClients){
@@ -17,6 +18,15 @@ class DeathWall extends GameMode {
         this.deathWallSpeed = 10;
         this.level.maxDistance = this.level.maxDistance || 0;
         this.winner = null;
+    }
+
+    replacePlayers() {
+        var aiPlayers = this.clients.filter(c => c.player.ai && !c.player.orb && !["ball","flag"].includes(c.player.type));
+        for(var i = 0; i<aiPlayers.length; i++){
+            var score = aiPlayers[i].player.score;
+            aiPlayers[i].player = new RunningAi(aiPlayers[i].player.colour, aiPlayers[i].player.name)
+            aiPlayers[i].player.score = score;
+        }
     }
 
     endCondition(ticks){

@@ -22,5 +22,5 @@ module.exports = Object.freeze({
     DEATHMETHODS: [" murdered ", " boxed ", " destroyed ", " hit ", " killed "],
     SUICIDEMETHODS: [" drowned", " killed themself", " died"],
     TEAM1: "red",
-    TEAM2: "slateblue"
+    TEAM2: "blue"
 });
