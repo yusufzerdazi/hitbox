@@ -161,7 +161,9 @@ class GameCanvas extends React.Component {
         if(players.filter(p => p.name === name).length === 0 && this.joining){
             this.drawNotification();
         }
-        this.drawing = false;
+        setTimeout(() => {
+            this.drawing = false;
+        }, 1);
     }
 
     newGame(players){
