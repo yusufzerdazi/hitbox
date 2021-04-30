@@ -6,17 +6,19 @@ var Constants = require('../constants');
 class CaptureTheFlag extends GameMode {
     constructor(clients, ticks, emitToAllClients){
         super(clients, true, emitToAllClients);
-        var possibleLevels = [Levels.LongIsland];
+        var possibleLevels = [Levels.LongIsland, Levels.Mountain];
         this.level = possibleLevels[Math.floor(possibleLevels.length * Math.random())];
+        var team1Goal = this.level.platforms.filter(l => l.colour == Constants.TEAM1)[0];
+        var team2Goal = this.level.platforms.filter(l => l.colour == Constants.TEAM2)[0];
         
         this.finished = false;
         this.title = "Capture The Flag";
         this.subtitle = "Steal the other team's flag";
-        
-        this.blueFlag = new Flag(Constants.TEAM1, -2750, Constants.HEIGHT / 2);
-        this.redFlag = new Flag(Constants.TEAM2, 3250 + Constants.WIDTH / 2 - Constants.PLAYERWIDTH, Constants.HEIGHT / 2);
-        this.clients.push({player: this.blueFlag});
-        this.clients.push({player: this.redFlag});
+        console.log(team1Goal);
+        this.team1Flag = new Flag(Constants.TEAM1, team1Goal.x + team1Goal.width / 2 - Constants.PLAYERWIDTH / 2, Constants.HEIGHT / 2);
+        this.team2Flag = new Flag(Constants.TEAM2, team2Goal.x + team2Goal.width / 2 - Constants.PLAYERWIDTH / 2, Constants.HEIGHT / 2);
+        this.clients.push({player: this.team1Flag});
+        this.clients.push({player: this.team2Flag});
 
         this.allocateTeams();
     }
@@ -66,7 +68,7 @@ class CaptureTheFlag extends GameMode {
             if(!this.finished){
                 client.player.respawn(this.clients, this.level);
             }
-        }, 1000);
+        }, client.player.type == "flag" ? 0 : 1000);
     }
 
     onTick(){

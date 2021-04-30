@@ -56,6 +56,15 @@ module.exports = {
     LongIsland: new Level([
         new Square(-3000, - Constants.HEIGHT, 500, 2 * Constants.HEIGHT, "goal", Constants.TEAM1),
         new Square(Constants.WIDTH + 2500, - Constants.HEIGHT, 500, 2 * Constants.HEIGHT, "goal", Constants.TEAM2),
-        new Square(-3000, Constants.HEIGHT / 2, Constants.WIDTH + 6000, Constants.HEIGHT / 2)
-    ], new Square(-3000, -3 * Constants.HEIGHT / 2, Constants.WIDTH + 6000, 2 * Constants.HEIGHT), 0.5, null),
+        new Square(-3000, Constants.HEIGHT / 2, Constants.WIDTH + 6000, Constants.HEIGHT / 2), 
+    ], new Square(-2500, -3 * Constants.HEIGHT / 2, Constants.WIDTH + 5000, 2 * Constants.HEIGHT), 0.5, null),
+    Mountain: new Level([
+        new Square(-4000, - Constants.HEIGHT, 500, 2 * Constants.HEIGHT, "goal", Constants.TEAM1),
+        new Square(Constants.WIDTH + 3500, - Constants.HEIGHT, 500, 2 * Constants.HEIGHT, "goal", Constants.TEAM2),
+        new Square(-4000, Constants.HEIGHT / 2, Constants.WIDTH + 8000, Constants.HEIGHT / 2), 
+        new Square(-3000, - Constants.HEIGHT / 2, Constants.WIDTH + 6000, 3 * Constants.HEIGHT / 2), 
+        new Square(-2000, - 3 * Constants.HEIGHT / 2, Constants.WIDTH + 4000, 2 * Constants.HEIGHT), 
+        new Square(-1000, - 5 * Constants.HEIGHT / 2, Constants.WIDTH + 2000, 2 * Constants.HEIGHT), 
+        new Square(0, - 7 * Constants.HEIGHT / 2, Constants.WIDTH, 2 * Constants.HEIGHT), 
+    ], new Square(-3500, -7 * Constants.HEIGHT / 2, Constants.WIDTH + 7000, 4 * Constants.HEIGHT), 0.5, null)
 }

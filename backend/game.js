@@ -18,7 +18,7 @@ var Utils = require('./utils');
 var BISON = require('bisonjs');
 
 var GameModes = {
-    generic: [CollectTheBoxes, DeathWall, BattleRoyale, Tag, BattleRoyale, BattleRoyale, Football, CaptureTheFlag],
+    generic: [CaptureTheFlag, CollectTheBoxes, DeathWall, BattleRoyale, Tag, BattleRoyale, BattleRoyale, Football],
     football: [Football]
 };
 
@@ -291,7 +291,8 @@ class Game {
                 }
                 client.player.xVelocity = newMagnitude * velSign;
             }
-            if((client.player.health != 0) && (client.player.y != Constants.PLATFORMHEIGHT || client.player.x + Constants.PLAYERHEIGHT < 100 || client.player.x > 860 || client.player.yVelocity < 0)) {
+            if((client.player.health != 0) && (client.player.y != Constants.PLATFORMHEIGHT || client.player.x + Constants.PLAYERHEIGHT < 100 || client.player.x > 860 || client.player.yVelocity < 0)
+                && !client.player.attachedToPlayer) {
                 client.player.yVelocity += Constants.VERTICALACCELERATION * this.gameMode.level.gravity;
             } else {
                 client.player.yVelocity = 0;
@@ -309,6 +310,7 @@ class Game {
             var attachedPlayer = this.movingPlayers().filter(p => p.player.name == client.player.attachedToPlayer)[0];
             if(!attachedPlayer) {
                 client.player.attachedToPlayer = null;
+                client.player.invincibility = 1000;
                 return;
             }
             attachedPlayer.player.attachedPlayers = (attachedPlayer.player.attachedPlayers | 0) + 1
