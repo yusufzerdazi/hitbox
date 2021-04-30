@@ -5,8 +5,7 @@ var io = require('socket.io')(http, {
         origin: "https://hitbox.online",
         methods: ["GET", "POST"]
     },
-    cookie: false,
-    perMessageDeflate: true
+    cookie: false
 });
 
 var Game = require('./game');
