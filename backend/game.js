@@ -690,29 +690,29 @@ class Game {
     }
 
     mapSocketToPlayer(socket){
-        return {
-            n: socket.player.name,
-            x: socket.player.x,
-            y: socket.player.y,
-            xv: socket.player.xVelocity,
-            yv: socket.player.yVelocity,
-            it: socket.player.it,
-            l: socket.player.lives,
-            h: socket.player.health,
-            b: socket.player.boostCooldown,
-            a: socket.player.alive,
-            d: socket.player.ducked,
-            i: socket.player.invincibility,
-            c: socket.player.colour,
-            s: socket.player.score,
-            o: socket.player.orb,
-            id: socket.player.id,
-            t: socket.player.type,
-            tm: socket.player.team,
-            an: socket.player.angle,
-            w: socket.player.width,
-            ht: socket.player.height
-        }
+        return [
+            socket.player.name,
+            parseInt(socket.player.x),
+            parseInt(socket.player.y),
+            parseInt(socket.player.xVelocity),
+            parseInt(socket.player.yVelocity),
+            socket.player.it,
+            socket.player.lives,
+            parseInt(socket.player.health),
+            parseInt(socket.player.boostCooldown),
+            socket.player.alive,
+            socket.player.ducked,
+            parseInt(socket.player.invincibility),
+            socket.player.colour,
+            socket.player.score,
+            socket.player.orb,
+            socket.player.id,
+            socket.player.type,
+            socket.player.team,
+            socket.player.angle,
+            socket.player.width,
+            socket.player.height
+        ]
     }
     
     gameLoop() {
@@ -734,23 +734,23 @@ class Game {
             if(redrawLevel){
                 this.emitToAllClients("level", this.gameMode.level.platforms);
             }
-            if(this.gameMode.title == "Death Wall"){
-                this.emitToAllClients("deathWall", {
-                    deathWallX: this.gameMode.deathWallX,
-                    levelMaxDistance: this.gameMode.level.maxDistance,
-                    maxDistance: this.gameMode.maxDistance
-                });
-            }
             if(this.gameMode.title == "Tag"){
                 this.emitToAllClients("gameCountdown", (this.gameMode.startingTicks + this.gameMode.gameLength) - this.ticks);
             }
             var runningPlayers = this.movingPlayers().reduce((acc, cur) => {
                 return acc + (cur.player.type != "ball" && cur.player.onSurface.includes(true) && cur.player.xVelocity != 0)
             }, 0);
-            this.emitToAllClients("allPlayers", BISON.encode({
-                running: runningPlayers,
-                players: this.clients.map(socket => this.mapSocketToPlayer(socket))
-            }));
+            this.emitToAllClients("allPlayers", BISON.encode([
+                runningPlayers,
+                this.clients.map(socket => this.mapSocketToPlayer(socket)),
+                this.gameMode.title == "Death Wall" ? {
+                    deathWallX: this.gameMode.deathWallX,
+                    levelMaxDistance: this.gameMode.level.maxDistance,
+                    maxDistance: this.gameMode.maxDistance
+                } : this.gameMode.title == "Football" ? 
+                this.gameMode.scores : 
+                {}
+            ]));
             this.ticks++;
         }, 1000 / 60);
     }

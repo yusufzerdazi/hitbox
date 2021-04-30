@@ -11,7 +11,7 @@ class Tag extends GameMode {
             possibleLevels.push(Levels.Basic);
         }
         this.level = possibleLevels[Math.floor(possibleLevels.length * Math.random())];
-        this.gameLength = 1000;
+        this.gameLength = 600;
         this.startingTicks = startingTicks;
         this.title = "Tag";
         this.subtitle = "Keep the halo!";

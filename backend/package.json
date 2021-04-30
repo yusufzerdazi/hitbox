@@ -10,7 +10,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@tensorflow/tfjs": "^2.0.1",
     "bisonjs": "^2.0.2",
     "elo-rating": "^1.0.1",
     "express": "^4.17.1",

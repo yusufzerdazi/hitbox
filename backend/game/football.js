@@ -80,8 +80,7 @@ class Football extends GameMode {
                         this.scores[scorerColour] += 1;
                         this.emitToAllClients("event", {
                             type: "goal",
-                            colour: goal.colour,
-                            scores: this.scores
+                            colour: goal.colour
                         });
                         client.player.respawn(this.clients, this.level);
                    }
