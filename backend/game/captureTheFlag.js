@@ -14,7 +14,6 @@ class CaptureTheFlag extends GameMode {
         this.finished = false;
         this.title = "Capture The Flag";
         this.subtitle = "Steal the other team's flag";
-        console.log(team1Goal);
         this.team1Flag = new Flag(Constants.TEAM1, team1Goal.x + team1Goal.width / 2 - Constants.PLAYERWIDTH / 2, Constants.HEIGHT / 2);
         this.team2Flag = new Flag(Constants.TEAM2, team2Goal.x + team2Goal.width / 2 - Constants.PLAYERWIDTH / 2, Constants.HEIGHT / 2);
         this.clients.push({player: this.team1Flag});
@@ -55,7 +54,11 @@ class CaptureTheFlag extends GameMode {
         var flag = client1.player.type == "flag" ? client1 : client2.player.type == "flag" ? client2 : null;
         var player = !client1.player.type ? client1 : !client2.player.type ? client2 : null;
         if(flag && player){
-            flag.player.attachedToPlayer = player.player.name;
+            if(flag.player.colour != player.player.team){
+                flag.player.attachedToPlayer = player.player.name;
+            } else {
+                flag.player.respawn();
+            }
         }
     }
 
