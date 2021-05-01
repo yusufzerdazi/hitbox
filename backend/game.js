@@ -207,7 +207,7 @@ class Game {
     emitToAllClients(event, eventData, context = this){
         var clients = context.humanPlayers().concat(context.spectators).filter(c => !c.player || !c.player.ai);
         clients.forEach(client => {
-            client.volatile.emit(event, eventData);
+            client.emit(event, eventData);
         });
     }
 
@@ -724,6 +724,10 @@ class Game {
             if(this.gameMode.title == "Tag"){
                 this.emitToAllClients("gameCountdown", (this.gameMode.startingTicks + this.gameMode.gameLength) - this.ticks);
             }
+            this.ticks++;
+        }, 1000 / 60);
+
+        setInterval(() => {
             var runningPlayers = this.movingPlayers().reduce((acc, cur) => {
                 return acc + (cur.player.type != "ball" && cur.player.onSurface.includes(true) && cur.player.xVelocity != 0)
             }, 0);
@@ -738,7 +742,6 @@ class Game {
                 this.gameMode.scores : 
                 {}
             ]);
-            this.ticks++;
         }, 1000 / 60);
     }
 }
