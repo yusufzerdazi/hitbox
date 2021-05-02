@@ -1,6 +1,8 @@
+var { Server } = require('colyseus');
 var app = require('express')();
-var http = require('http').createServer(app);
-var io = require('socket.io')(http, {
+var server = require('http').createServer(app);
+
+var io = require('socket.io')(server, {
     cors: {
         origin: "https://hitbox.online",
         methods: ["GET", "POST"]
@@ -9,7 +11,9 @@ var io = require('socket.io')(http, {
     perMessageDeflate: true
 });
 
+const port = Number(process.env.PORT || 3001);
 var Game = require('./game');
+
 var games = {};
 
 io.on('connection', (socket) => {
@@ -41,6 +45,16 @@ io.on('connection', (socket) => {
     });
 });
 
-http.listen(process.env.PORT || 3001, () => {
+server.listen(process.env.PORT || 3001, () => {
     console.log('listening on *:3001');
 });
+
+
+// const gameServer = new Server({
+//     server,
+// });
+
+// gameServer.define('Game', Game);
+
+// gameServer.listen(port);
+// console.log(`Listening on ws://localhost:${ port }`)

@@ -11,6 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "bisonjs": "^2.0.2",
+    "colyseus": "^0.14.13",
     "elo-rating": "^1.0.1",
     "express": "^4.17.1",
     "simplex-noise": "^2.4.0",
