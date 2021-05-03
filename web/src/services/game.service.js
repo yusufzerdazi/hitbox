@@ -130,32 +130,6 @@ class GameService {
         return this;
     }
 
-    uncompressPlayer(player){
-        return {
-            name: player[0],
-            x: player[1],
-            y: player[2],
-            xVelocity:player[3],
-            yVelocity:player[4],
-            it:player[5],
-            lives: player[6],
-            health: player[7],
-            boostCooldown: player[8],
-            alive: player[9],
-            ducked: player[10],
-            invincibility: player[11],
-            colour: player[12],
-            score: player[13],
-            orb: player[14],
-            id:player[15],
-            type: player[16],
-            team:player[17],
-            angle: player[18],
-            width: player[19],
-            height: player[20]
-        }
-    }
-
     addListeners(){
         this.room.onMessage('collision', (collision) => {
             if (this.soundEnabled && this.mounted) {
@@ -293,8 +267,7 @@ class GameService {
 
         this.room.onMessage('newGame', (players) => {
             if(this.mounted){
-                var uncompressedPlayers = players.map(p => this.uncompressPlayer(p));
-                this.canvasRef.current.newGame(uncompressedPlayers);
+                this.canvasRef.current.newGame(players);
             }
         });
 
