@@ -15,7 +15,7 @@ import box from '../assets/sounds/box.mp3';
 import football from '../assets/sounds/football.mp3';
 import bigFootball from '../assets/sounds/football2.mp3';
 import splash from '../assets/sounds/splash.mp3';
-import BISON from 'bisonjs';
+import { Client } from "colyseus.js";
 
 import Utils from '../utils';
 
@@ -23,7 +23,7 @@ const OW = [ow1, ow2, ow4, ow5];
 
 class GameService {
     constructor(){
-        this.socket = io(process.env.REACT_APP_SERVER);
+        this.client = new Client(process.env.REACT_APP_SERVER);
         this.listener = new THREE.AudioListener();
         this.players = [];
         this.mounted = false;
@@ -32,7 +32,6 @@ class GameService {
         this.ePressed = false;
         this.aMillis = 0;
         this.eMillis = 0;
-        this.addListeners();
 
         this.wallSound = [new THREE.Audio(this.listener), new THREE.Audio(this.listener), new THREE.Audio(this.listener)];
         this.playerSound = [new THREE.Audio(this.listener), new THREE.Audio(this.listener), new THREE.Audio(this.listener)];
@@ -158,21 +157,7 @@ class GameService {
     }
 
     addListeners(){
-        this.socket.on('level', level => {
-            this.level = level;
-        })
-
-        this.socket.on('allPlayers', state => {
-            var uncompressedPlayers = state[1].map(p => this.uncompressPlayer(p));
-            
-            if(this.mounted){
-                this.updateRunning(state[0]);
-                this.canvasRef.current.draw(uncompressedPlayers, this.level, this.name, this.lastWinner);
-                this.canvasRef.current.updateGameModeDetails(state[2]);
-            }
-        });
-
-        this.socket.on('collision', (collision) => {
+        this.room.onMessage('collision', (collision) => {
             if (this.soundEnabled && this.mounted) {
                 var collisionEvent = {
                     ...collision,
@@ -201,7 +186,7 @@ class GameService {
             }
         });
 
-        this.socket.on('hitWall', (hit) => {
+        this.room.onMessage('hitWall', (hit) => {
             if (this.soundEnabled && this.mounted) {
                 this.playSound(this.wallSound);
                 var hitEvent = {
@@ -212,7 +197,7 @@ class GameService {
             }
         });
 
-        this.socket.on('boost', (boost) => {
+        this.room.onMessage('boost', (boost) => {
             var boostEvent = {
                 ...boost,
                 type: "boost"
@@ -223,44 +208,44 @@ class GameService {
             }
         });
 
-        this.socket.on('winner', (winner) => {
+        this.room.onMessage('winner', (winner) => {
             if (this.mounted){
                 this.lastWinner = winner;
             }
         });
 
-        this.socket.on('starting', (timer) => {
+        this.room.onMessage('starting', (timer) => {
             if (this.mounted){
                 this.canvasRef.current.setCountdown(timer ? timer : "");
             }
         })
 
-        this.socket.on('gameMode', (gameMode) => {
+        this.room.onMessage('gameMode', (gameMode) => {
             if(this.mounted){
                 this.canvasRef.current.setGameMode(gameMode);
             }
         });
         
-        this.socket.on('gameCountdown', (gameCountdown) => {
+        this.room.onMessage('gameCountdown', (gameCountdown) => {
             if(this.mounted){
                 this.canvasRef.current.updateGameCountdown(gameCountdown);
             }
         });
 
-        this.socket.on('scale', (scale) => {
+        this.room.onMessage('scale', (scale) => {
             if(this.mounted && scale){
                 this.canvasRef.current.setScale(scale);
             }
-        })
+        });
 
-        this.socket.on('win', () => {
+        this.room.onMessage('win', () => {
             if (this.mounted) window.PlayFabClientSDK.ExecuteCloudScript({
                 FunctionName: "playerWins",
                 GeneratePlayStreamEvent: true
             });
         });
 
-        this.socket.on('beaten', beaten => {
+        this.room.onMessage('beaten', beaten => {
             if (this.mounted) window.PlayFabClientSDK.ExecuteCloudScript({
                 FunctionName: "playerBeaten",
                 FunctionParameter: beaten,
@@ -268,28 +253,28 @@ class GameService {
             });
         });
 
-        this.socket.on('kill', () => {
+        this.room.onMessage('kill', () => {
             if (this.mounted) window.PlayFabClientSDK.ExecuteCloudScript({
                 FunctionName: "playerKills",
                 GeneratePlayStreamEvent: true
             });
         })
 
-        this.socket.on('death', () => {
+        this.room.onMessage('death', () => {
             if (this.mounted) window.PlayFabClientSDK.ExecuteCloudScript({
                 FunctionName: "playerDies",
                 GeneratePlayStreamEvent: true
             });
         })
 
-        this.socket.on('loss', () => {
+        this.room.onMessage('loss', () => {
             if (this.mounted) window.PlayFabClientSDK.ExecuteCloudScript({
                 FunctionName: "playerLoses",
                 GeneratePlayStreamEvent: true
             });
         });
 
-        this.socket.on('rank', (rank) => {
+        this.room.onMessage('rank', (rank) => {
             if (this.mounted) window.PlayFabClientSDK.ExecuteCloudScript({
                 FunctionName: "playerRankUpdated",
                 GeneratePlayStreamEvent: true,
@@ -297,7 +282,7 @@ class GameService {
             });
         });
 
-        this.socket.on('event', (event) => {
+        this.room.onMessage('event', (event) => {
             if(this.mounted){
                 this.canvasRef.current.event(event);
                 if(event.type === "death" && event.causeOfDeath === "water"){
@@ -306,14 +291,14 @@ class GameService {
             }
         });
 
-        this.socket.on('newGame', (players) => {
+        this.room.onMessage('newGame', (players) => {
             if(this.mounted){
                 var uncompressedPlayers = players.map(p => this.uncompressPlayer(p));
                 this.canvasRef.current.newGame(uncompressedPlayers);
             }
         });
 
-        this.socket.on('changeAvatar', (avatar) => {
+        this.room.onMessage('changeAvatar', (avatar) => {
             if(this.mounted){
                 this.canvasRef.current.changeAvatar(avatar);
             }
@@ -378,54 +363,57 @@ class GameService {
     }
 
     jump(enabled = true) {
-        this.socket.emit('space', enabled);
+        this.room.send('space', enabled);
     }
 
     boostRight(enabled = true) {
-        this.socket.emit('boostRight', enabled);
+        this.room.send('boostRight', enabled);
     }
 
     boostLeft(enabled = true) {
-        this.socket.emit('boostLeft', enabled);
+        this.room.send('boostLeft', enabled);
     }
 
     moveRight(enabled = true) {
-        this.socket.emit('right', enabled);
+        this.room.send('right', enabled);
     }
 
     moveLeft(enabled = true) {
-        this.socket.emit('left', enabled);
+        this.room.send('left', enabled);
     }
 
     crouch(enabled = true) {
-        this.socket.emit('down', enabled);
+        this.room.send('down', enabled);
     }
 
     addAi() {
-        this.socket.emit('addAi');
+        this.room.send('addAi');
     }
 
     removeAi() {
-        this.socket.emit('removeAi');
+        this.room.send('removeAi');
     }
 
     play(user, room, rank) {
-        this.bgMusic.play();
-        this.name = user.name;
-        this.socket.emit('play', { user: user, room: room, rank: rank });
+        this.room.send('play', { user: user, room: room, rank: rank })
     }
 
-    spectate(room){
-        this.socket.emit('spectate', room);
+    async spectate(room){
+        this.room = await this.client.joinOrCreate("Game");
+        this.addListeners();
+
+        this.room.onStateChange((newState) => {
+            this.canvasRef.current.draw(Array.from(newState.players.values()), newState.level, this.name, this.lastWinner);
+            this.updateRunning(newState.runningPlayers);
+        });
     }
 
     quit() {
-        
-        this.socket.emit('quit');
+        this.room.send('quit');
     }
 
     toggleAi() {
-        this.socket.emit('toggleAi');
+        this.room.send('toggleAi');
     }
     
     toggleSound() {
@@ -439,11 +427,11 @@ class GameService {
 
     changeName(name){
         this.name = name;
-        this.socket.emit("nameChange", name);
+        this.room.send("nameChange", name);
     }
 
     changeAvatar(url, name){
-        this.socket.emit("changeAvatar", {url:url, name:name});
+        this.room.send("changeAvatar", {url:url, name:name});
     }
 
     playerHit(){

@@ -61,7 +61,10 @@ class GameCanvas extends React.Component {
         this.players = {};
         this.events = [];
         this.animations = [];
-        this.gameModeDetails = {};
+        this.scores = {
+            team1: 0,
+            team2: 0
+        }
         this.gameMode = {title:null,subtitle:null};
     }
 
@@ -140,10 +143,12 @@ class GameCanvas extends React.Component {
             this.setScale(this.scale * this.zoomRate);
         }
         this.drawBackground();
-        level.forEach(l => this.drawLevelPlatform(l));
+        if(level.platforms){
+            level.platforms.forEach(l => this.drawLevelPlatform(l));
+        }
         this.drawWater();
 
-        this.drawDeathWall();
+        this.drawDeathWall(level);
         players.filter(p => p.type !== "ball").forEach(player => this.drawPlayer(player, name));
         players.filter(p => p.type === "ball").forEach(player => this.drawBall(player));
         players.filter(p => p.name === name).forEach(player => {
@@ -211,12 +216,12 @@ class GameCanvas extends React.Component {
         ], 0, 0, "#002138", false, true);
     }
 
-    drawDeathWall(){
-        if(this.gameModeDetails.deathWallX){
-            this.drawLevelPlatform({x: this.gameModeDetails.deathWallX, y:-(this.ctx.canvas.height / 2)/this.scale + this.camera.y,
-                width: -(((this.ctx.canvas.width) / 2)/this.scale) + this.camera.x - this.gameModeDetails.deathWallX, height: this.ctx.canvas.height / this.scale}, "#f0af00")
+    drawDeathWall(level){
+        if(level.deathWallX){
+            this.drawLevelPlatform({x: level.deathWallX, y:-(this.ctx.canvas.height / 2)/this.scale + this.camera.y,
+                width: -(((this.ctx.canvas.width) / 2)/this.scale) + this.camera.x - level.deathWallX, height: this.ctx.canvas.height / this.scale}, "#f0af00")
         }
-        if(this.gameModeDetails.maxDistance){
+        if(level.maxDistance){
             this.ctx.save()
             this.ctx.fillStyle = 'black';
             this.ctx.globalCompositeOperation = "difference";
@@ -226,27 +231,23 @@ class GameCanvas extends React.Component {
             this.ctx.shadowOffsetY = 1;
             this.ctx.shadowBlur = 1;
             this.ctx.textAlign = "left";
-            this.ctx.fillText(Math.round(this.gameModeDetails.maxDistance / 50) + "m  (Max: " + Math.round(this.gameModeDetails.levelMaxDistance / 50) + "m)", -(this.ctx.canvas.width / 2 - 10) / this.scale, -(this.ctx.canvas.height / 2 - 80) / this.scale);
+            this.ctx.fillText(Math.round(level.currentDistance / 50) + "m  (Max: " + Math.round(level.maxDistance / 50) + "m)", -(this.ctx.canvas.width / 2 - 10) / this.scale, -(this.ctx.canvas.height / 2 - 80) / this.scale);
             this.ctx.restore()
         }
     }
 
     drawFootballScores() {
-        if(this.gameMode.title === "Football" && this.gameModeDetails){
+        if(this.gameMode.title === "Football" && this.scores){
             this.ctx.font = "bold " + (20/this.scale)+"px " + FONT;
             this.ctx.save()
             this.ctx.textAlign = "left";
             var text = [];
-            text.push({text: this.gameModeDetails.team1, fillStyle: "red"});
+            text.push({text: this.scores.team1, fillStyle: "red"});
             text.push({text: "-", fillStyle: "black"});
-            text.push({text: this.gameModeDetails.team2, fillStyle: "slateblue"});
+            text.push({text: this.scores.team2, fillStyle: "slateblue"});
             Utils.fillMixedText(this.ctx, text, - (this.ctx.canvas.width - 68) / (2 * this.scale), - (this.ctx.canvas.height / 2 - 80) / this.scale);
             this.ctx.restore()
         }
-    }
-
-    updateGameModeDetails(gameModeDetails){
-        this.gameModeDetails = gameModeDetails;
     }
 
     updateGameCountdown(gameCountdown){
@@ -984,6 +985,9 @@ class GameCanvas extends React.Component {
                 event.animationLength = ANIMATIONLENGTH;
                 event.drawAnimation = this.drawLanding;
                 this.animations.push(event);
+                break;
+            case("goal"):
+                this.scores = event.scores;
                 break;
             default:
                 break;
