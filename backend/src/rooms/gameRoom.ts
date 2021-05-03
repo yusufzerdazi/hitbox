@@ -60,7 +60,7 @@ export class GameRoom extends Room<HitboxRoomState> {
         });
 
         this.onMessage('removeAi', () => {
-            
+            this.removeAiPlayer();
         });
 
         this.onMessage('quit', (client) => {

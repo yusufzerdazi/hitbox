@@ -26,7 +26,6 @@ class SimpleAi extends Player {
         this.duckThreshold = -0.5;
         this.poundThreshold = 0.9;
         this.ticksScaling = 0.01;
-        this.clientId = Utils.uuidv4();
     }
 
     move(players: Player[], serverTime: number){

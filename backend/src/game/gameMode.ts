@@ -53,6 +53,7 @@ class GameMode {
             new SimpleAi(Utils.randomColor(),Utils.generateName()) :
             new CleverAi(Utils.randomColor(), Utils.generateName())
         newAI.respawn(Array.from(this.roomRef.state.players.values()), this.roomRef.state.level, this.teamBased);
+        newAI.clientId = Utils.uuidv4();
         this.roomRef.state.players.set(newAI.clientId, newAI);
         this.onPlayerJoin();
     }
@@ -73,7 +74,7 @@ class GameMode {
     }
 
     onGameStart(){
-        
+        this.roomRef.broadcast('newGame', Array.from(this.roomRef.state.players.values()));
     }
 
     endCondition(): EndStatus {

@@ -30,7 +30,8 @@ class DeathWall extends GameMode {
     setModeSpecificPlayers() {
         this.roomRef.state.players.forEach((player, clientId) => {
             if(player.ai){
-                var newAI = new RunningAi(player.colour, player.name)
+                var newAI = new RunningAi(player.colour, player.name);
+                newAI.clientId = Utils.uuidv4();
                 newAI.score = player.score;
                 this.roomRef.state.players.set(clientId, newAI);
             }

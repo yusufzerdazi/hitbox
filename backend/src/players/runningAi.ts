@@ -12,7 +12,6 @@ class RunningAi extends Player {
         super(colour, name, x, y, true);
         this.abovePlatformThreshold = Math.random() * 2000;
         this.yVelocityThreshold = Math.random() * 20;
-        this.clientId = Utils.uuidv4();
     }
 
     move(players: Player[], ticks: number, level: Level){

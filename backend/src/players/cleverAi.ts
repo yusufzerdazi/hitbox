@@ -19,7 +19,6 @@ class CleverAi extends Player {
         this.duckingCooldown = 0;
         this.ticksScaling = 0.01;
         this.alwaysHigher = this.playerId % 2 == 0;
-        this.clientId = Utils.uuidv4();
     }
 
     duckBoostingPlayers(players: Player[]){

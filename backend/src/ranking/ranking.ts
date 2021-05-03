@@ -1,11 +1,11 @@
 import { Room } from 'colyseus';
-import { PlayFabClient } from 'playfab-sdk';
+import { PlayFabServer } from 'playfab-sdk';
 import { HitboxRoomState } from '../rooms/schema/HitboxRoomState';
 import EndStatus from './endStatus';
 var EloRating = require('elo-rating');
 
-PlayFabClient.settings.titleId = 'B15E8';
-PlayFabClient.settings.developerSecretKey = "***REMOVED***";
+PlayFabServer.settings.titleId = 'B15E8';
+PlayFabServer.settings.developerSecretKey = "***REMOVED***";
 
 class Ranking {
     calculateRank(endStatus: EndStatus, roomRef: Room<HitboxRoomState>) {
@@ -19,19 +19,45 @@ class Ranking {
     private calculateIndividualRank(endStatus: EndStatus, roomRef: Room<HitboxRoomState>){
         if(!this.anyAiPlayers(roomRef)){
             var eloRatingChanges: any = {};
+            PlayFabServer.UpdatePlayerStatistics({
+                Statistics: [
+                    {
+                        StatisticName: "wins",
+                        Value: 1
+                    }
+                ],
+                PlayFabId: endStatus.winner.id
+            }, () => {});
+            
             roomRef.state.players.forEach(p => {
                 if(p.clientId != endStatus.winner.clientId && !p.type){
                     var newElo = EloRating.calculate(endStatus.winner.rank || 1000, p.rank || 1000);
                     eloRatingChanges[endStatus.winner.clientId] = (eloRatingChanges[endStatus.winner.clientId] || 0) + (newElo.playerRating - (endStatus.winner.rank || 1000));
                     eloRatingChanges[p.clientId] = (newElo.opponentRating - p.rank || 1000);
-                    roomRef.clients.filter(c => c.id == p.clientId)[0].send("loss");
+                    PlayFabServer.UpdatePlayerStatistics({
+                        Statistics: [
+                            {
+                                StatisticName: "losses",
+                                Value: 1
+                            }
+                        ],
+                        PlayFabId: p.id
+                    }, () => {});
                 }
             })
 
             for(var key in eloRatingChanges){
                 var player = roomRef.state.players.get(key);
                 player.rank = (player.rank || 1000) + eloRatingChanges[key];
-                roomRef.clients.filter(c => c.id == player.clientId)[0].send("rank", player.rank);
+                PlayFabServer.UpdatePlayerStatistics({
+                    Statistics: [
+                        {
+                            StatisticName: "rank",
+                            Value: player.rank
+                        }
+                    ],
+                    PlayFabId: player.id
+                }, () => {});
             }
         }
         endStatus.winner.score += 1;
@@ -50,13 +76,35 @@ class Ranking {
             });
             endStatus.winners.forEach(w => {
                 w.rank = (w.rank || 1000) + eloRatingChanges[w.clientId] / endStatus.losers.length;
-                roomRef.clients.filter(c => c.id == w.clientId)[0].send("rank", w.rank);
-                roomRef.clients.filter(c => c.id == w.clientId)[0].send("win");
+                PlayFabServer.UpdatePlayerStatistics({
+                    Statistics: [
+                        {
+                            StatisticName: "rank",
+                            Value: w.rank
+                        },
+                        {
+                            StatisticName: "wins",
+                            Value: 1
+                        }
+                    ],
+                    PlayFabId: w.id
+                }, () => {});
             });
             endStatus.losers.forEach(l => {
                 l.rank = (l.rank || 1000) + eloRatingChanges[l.clientId] / endStatus.winners.length;
-                roomRef.clients.filter(c => c.id == l.clientId)[0].send("rank", l.rank);
-                roomRef.clients.filter(c => c.id == l.clientId)[0].send("loss");
+                PlayFabServer.UpdatePlayerStatistics({
+                    Statistics: [
+                        {
+                            StatisticName: "rank",
+                            Value: l.rank
+                        },
+                        {
+                            StatisticName: "losses",
+                            Value: 1
+                        }
+                    ],
+                    PlayFabId: l.id
+                }, () => {});
             });
         }
         endStatus.winners.forEach(w => {
