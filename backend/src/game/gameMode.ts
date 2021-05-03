@@ -17,7 +17,7 @@ const state = {
 class GameMode {
     damageEnabled: boolean;
     playerDamage: number;
-    possibleLevels: Level[];
+    possibleLevels: (() => Level)[];
     state: string;
     title: string;
     subtitle: string;
@@ -27,12 +27,13 @@ class GameMode {
     constructor(damageEnabled: boolean, roomRef: Room<HitboxRoomState>) {
         this.state = state.STARTING;
         this.damageEnabled = damageEnabled;
+        var keys = Object.keys(Levels);
         this.possibleLevels = [Levels.Space, Levels.Complex, Levels.Towers, Levels.Island, Levels.Maze];
         this.roomRef = roomRef;
     }
 
     getLevel(){
-        return this.possibleLevels[Math.floor(this.possibleLevels.length * Math.random())];
+        return this.possibleLevels[Math.floor(this.possibleLevels.length * Math.random())]();
     }
 
     setModeSpecificPlayers() {
