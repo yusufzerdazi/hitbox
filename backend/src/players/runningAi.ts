@@ -1,15 +1,22 @@
-var Player = require('./player');
-var Constants = require('../constants');
+import Player from './player';
+import Constants from '../constants';
+import Level from '../level';
+import Utils from '../utils';
 
 class RunningAi extends Player {
-    constructor(colour, name, x, y){
+    abovePlatformThreshold: number;
+    yVelocityThreshold: number;
+    justJumped: boolean;
+    
+    constructor(colour: string, name: string, x: number = null, y: number = null){
         super(colour, name, x, y, true);
         this.abovePlatformThreshold = Math.random() * 2000;
         this.yVelocityThreshold = Math.random() * 20;
+        this.clientId = Utils.uuidv4();
     }
 
-    move(players, ticks, level){
-        if(this.onSurface.includes(true)){
+    move(players: Player[], ticks: number, level: Level){
+        if(this.onSurface){
             this.justJumped = true;
             this.right = true;
 
@@ -41,4 +48,4 @@ class RunningAi extends Player {
     }
 }
 
-module.exports = RunningAi;
+export default RunningAi;

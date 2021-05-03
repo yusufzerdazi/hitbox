@@ -1,17 +1,15 @@
-var Player = require('./player');
-var Constants = require('../constants');
+import Player from './player';
+import Constants from '../constants';
 
 class Orb extends Player {
     constructor(){
         super("yellow", "", 0, 0, true);
         this.orb = true;
-
+        this.type = "orb";
         this.width = Constants.PLAYERWIDTH;
         this.height = Constants.PLAYERHEIGHT;
-    }
-
-    move(players, ticks){
+        this.clientId = "orb";
     }
 }
 
-module.exports = Orb;
+export default Orb;

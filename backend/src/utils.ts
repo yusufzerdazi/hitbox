@@ -1,16 +1,21 @@
-Object.defineProperty(String.prototype, 'hashCode', {
-    value: function() {
-      var hash = 0, i, chr;
-      for (i = 0; i < this.length; i++) {
-        chr   = this.charCodeAt(i);
-        hash  = ((hash << 5) - hash) + chr;
-        hash |= 0; // Convert to 32bit integer
-      }
-      return hash;
-    }
-});
-
 class Utils {
+    static getHashCode(text: string){
+        var hash = 0, i, chr;
+        for (i = 0; i < text.length; i++) {
+          chr   = text.charCodeAt(i);
+          hash  = ((hash << 5) - hash) + chr;
+          hash |= 0; // Convert to 32bit integer
+        }
+        return hash;
+    }
+
+    static uuidv4() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    }
+
     static randomColor(){
         // Threshold can be between 0 and 127: 
         //    the higher it is, the more colors are considered to be too grey-like.
@@ -29,7 +34,7 @@ class Utils {
             if (parts[1] >= parts[2] - threshold) parts[1] += exclude;
         }
         // Shuffle and format the color parts and return the resulting string
-        parts.sort( (a, b) => Math.random() < 0.5 );
+        parts.sort((a, b) => +(Math.random() < 0.5));
         return 'rgb(' + parts[0] + ', ' + parts[1] + ', ' + parts[2] + ')';
     }
 
@@ -39,12 +44,12 @@ class Utils {
             Math.floor(Math.random()*256),
             Math.floor(Math.random()*rangeSize),
             Math.floor(Math.random()*rangeSize) + 256-rangeSize 
-        ].sort( (a, b) => Math.random() < 0.5 );
+        ].sort((a, b) => + (Math.random() < 0.5));
 
         return 'rgb(' + parts[0] + ', ' + parts[1] + ', ' + parts[2] + ')';
     }
     
-    static getRandomInt(max) {
+    static getRandomInt(max: number) {
         return Math.floor(Math.random() * Math.floor(max));
     }
 
@@ -61,4 +66,4 @@ class Utils {
     }
 }
 
-module.exports = Utils;
+export default Utils;

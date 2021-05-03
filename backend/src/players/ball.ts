@@ -1,25 +1,28 @@
-var Player = require('./player');
-var Constants = require('../constants');
-const { PLAYERWIDTH, PLAYERHEIGHT, BALLWIDTH } = require('../constants');
+import Player from './player';
+import Constants from '../constants';
+import Level from '../level';
 
 class Ball extends Player {
-    constructor(x, y){
+    angularVelocity: number;
+
+    constructor(x: number, y: number){
         super("red", "", x, y, true);
         this.type = "ball";
         this.width = Constants.BALLWIDTH;
         this.height = Constants.BALLWIDTH;
         this.angularVelocity = 0;
         this.angle = 0;
+        this.clientId = "ball";
     }
 
-    isCollision(player) {
+    isCollision(player: Player) {
         var playerX = player.x + player.xVelocity;
         var playerY = player.y + player.yVelocity;
         var playerVertices = [
             {x: playerX, y: playerY}, 
-            {x: playerX + PLAYERWIDTH, y: playerY}, 
-            {x: playerX, y: playerY + PLAYERHEIGHT}, 
-            {x: playerX + PLAYERWIDTH, y: playerY + PLAYERHEIGHT}
+            {x: playerX + Constants.PLAYERWIDTH, y: playerY}, 
+            {x: playerX, y: playerY + Constants.PLAYERHEIGHT}, 
+            {x: playerX + Constants.PLAYERWIDTH, y: playerY + Constants.PLAYERHEIGHT}
         ];
 
         var ballX = this.x + this.xVelocity;
@@ -27,7 +30,7 @@ class Ball extends Player {
 
         var isCollision = false;
         playerVertices.forEach(v => {
-            if(v.x >= ballX && v.x <= ballX + BALLWIDTH && v.y >= ballY && v.y <= ballY + BALLWIDTH){
+            if(v.x >= ballX && v.x <= ballX + Constants.BALLWIDTH && v.y >= ballY && v.y <= ballY + Constants.BALLWIDTH){
                 isCollision = true;
             }
         });
@@ -37,14 +40,11 @@ class Ball extends Player {
         return isCollision;
     }
 
-    respawn(clients, level){
+    respawn(clients: Player[], level: Level){
         Player.prototype.respawn.call(this, clients, level);
         this.x = Constants.WIDTH / 2;
         this.angularVelocity = 0;
     }
-
-    move(players, ticks){
-    }
 }
 
-module.exports = Ball;
+export default Ball;

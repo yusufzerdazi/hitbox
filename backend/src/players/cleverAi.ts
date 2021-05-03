@@ -1,9 +1,17 @@
-var Player = require('./player');
-var Constants = require('../constants');
+import Player from './player';
+import Constants from '../constants';
+import Utils from '../utils';
 
 class CleverAi extends Player {
-    constructor(colour, name, x, y){
-        var playerId = name.hashCode();
+    playerId: any;
+    xBoostDistanceThreshold: number;
+    yBoostDistanceThreshold: number;
+    duckingCooldown: number;
+    ticksScaling: number;
+    alwaysHigher: boolean;
+
+    constructor(colour: string, name: string, x: number = null, y: number = null){
+        var playerId = Utils.getHashCode(name);
         super(colour, name, x, y, true);
         this.playerId = playerId;
         this.xBoostDistanceThreshold = 120;
@@ -11,9 +19,10 @@ class CleverAi extends Player {
         this.duckingCooldown = 0;
         this.ticksScaling = 0.01;
         this.alwaysHigher = this.playerId % 2 == 0;
+        this.clientId = Utils.uuidv4();
     }
 
-    duckBoostingPlayers(players){
+    duckBoostingPlayers(players: Player[]){
         players.forEach(p => {
             var playerMovingTowardsMe = this.x < p.x && p.xVelocity < 0 || this.x > p.x && p.xVelocity > 0;
             var playerFasterThanMe = Math.abs(p.xVelocity) > Math.abs(this.xVelocity);
@@ -31,7 +40,7 @@ class CleverAi extends Player {
         });
     }
 
-    jumpDuckingPlayers(players){
+    jumpDuckingPlayers(players: Player[]){
         players.forEach(p => {
             if(p.ducked && this.y == Constants.PLATFORMHEIGHT){
                 this.space = true;
@@ -39,7 +48,7 @@ class CleverAi extends Player {
         });
     }
 
-    poundPlayersBelow(players){
+    poundPlayersBelow(players: Player[]){
         players.forEach(p => {
             var playerBelowMe = this.y < p.y;
             var playerCloseToMe = Math.abs(p.x - this.x) < 100;
@@ -53,7 +62,7 @@ class CleverAi extends Player {
         });
     }
 
-    followFirstPlayer(players, ticks){
+    followFirstPlayer(players: Player[], ticks: number){
         var orb = players.filter(p => p.orb);
         var followablePlayers = orb.length > 0 ? orb : players;
         if(followablePlayers[0] && followablePlayers[0].x < this.x){
@@ -85,13 +94,13 @@ class CleverAi extends Player {
         }
     }
 
-    move(players, ticks){
+    move(players: Player[], ticks: number){
         this.duckBoostingPlayers(players);
         this.jumpDuckingPlayers(players);
         this.poundPlayersBelow(players);
-        this.followFirstPlayer(players, ticks);
+        this.followFirstPlayer(players, ticks * 60 / 1000);
         this.dontFallToDeath();
     }
 }
 
-module.exports = CleverAi;
+export default CleverAi;

@@ -1,8 +1,11 @@
-var Player = require('./player');
-var Constants = require('../constants');
+import Player from './player';
+import Constants from '../constants';
 
 class Flag extends Player {
-    constructor(colour, x, y){
+    initialX: number;
+    initialY: number;
+
+    constructor(colour: string, x: number, y: number){
         super(colour, "", x, y, true);
         this.initialX = x;
         this.initialY = y;
@@ -11,9 +14,7 @@ class Flag extends Player {
         this.it = false;
         this.width = Constants.PLAYERWIDTH;
         this.height = Constants.PLAYERHEIGHT;
-    }
-
-    move(players, ticks){
+        this.clientId = this.colour + " flag";
     }
 
     respawn(){
@@ -21,4 +22,4 @@ class Flag extends Player {
     }
 }
 
-module.exports = Flag;
+export default Flag;

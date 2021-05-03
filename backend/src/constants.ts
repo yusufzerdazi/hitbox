@@ -1,4 +1,4 @@
-module.exports = Object.freeze({
+export default Object.freeze({
     ACCELERATION: 2,
     BALLACCELERATION: 0.1,
     VERTICALACCELERATION: 0.4,

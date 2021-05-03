@@ -1,10 +1,21 @@
-var Player = require('./player');
-var SimplexNoise = require('simplex-noise');
+import Player from './player';
+import Utils from '../utils';
+import SimplexNoise from 'simplex-noise';
 
 const SIMPLEX = new SimplexNoise();
 
 class SimpleAi extends Player {
-    constructor(colour, name, x, y){
+    randomMovementThreshold: number;
+    doNothingThreshold: number;
+    boostThreshold: number;
+    randomBoostThreshold: number;
+    randomJumpThreshold: number;
+    jumpThreshold: number;
+    duckThreshold: number;
+    poundThreshold: number;
+    ticksScaling: number;
+
+    constructor(colour: string, name: string, x: number = null, y: number = null){
         super(colour, name, x, y, true);
         this.randomMovementThreshold = 0.5 + 0.5 * Math.random();//0.8;
         this.doNothingThreshold = 0 + 0.5 * Math.random(); //0.6;
@@ -15,10 +26,12 @@ class SimpleAi extends Player {
         this.duckThreshold = -0.5;
         this.poundThreshold = 0.9;
         this.ticksScaling = 0.01;
+        this.clientId = Utils.uuidv4();
     }
 
-    move(players, ticks){
-        var playerId = this.name.hashCode();
+    move(players: Player[], serverTime: number){
+        var ticks = serverTime * 60 / 1000;
+        var playerId = Utils.getHashCode(this.name);
         
         var playersOnLeft = 0;
         var playersOnRight = 0;
@@ -77,4 +90,4 @@ class SimpleAi extends Player {
     }
 }
 
-module.exports = SimpleAi;
+export default SimpleAi;

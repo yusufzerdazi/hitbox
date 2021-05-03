@@ -1,8 +1,52 @@
-var Constants = require('../constants');
-var Utils = require('../utils');
+import { Schema, type, MapSchema } from "@colyseus/schema";
+import Constants from '../constants';
+import Level from "../level";
+import Utils from '../utils';
 
-class Player {
-    constructor(colour, name, x, y, ai = false, id = null, rank = 1000){
+class Player extends Schema {
+    @type("string") colour: string;
+    @type("string") name: string;
+    @type("string") id: string;
+    @type("string") type: string;
+    @type("string") team: string;
+    @type("string") clientId: string;
+    @type("string") sessionId: string;
+    @type("string") attachedToPlayer: string;
+    @type("number") x: number;
+    @type("number") y: number;
+    @type("number") lives: number;
+    @type("number") xVelocity: number;
+    @type("number") yVelocity: number;
+    @type("number") newXVelocity: number;
+    @type("number") newYVelocity: number;
+    @type("number") angle: number;
+    @type("number") width: number;
+    @type("number") height: number;
+    @type("number") health: number;
+    @type("number") score: number;
+    @type("number") invincibility: number;
+    @type("number") boostCooldown: number;
+    @type("number") rank: number;
+    @type("number") angularVelocity: number;
+    @type("number") attachedPlayers: number;
+    @type("boolean") ai: boolean;
+    @type("boolean") ducked: boolean;
+    @type("boolean") down: boolean;
+    @type("boolean") left: boolean;
+    @type("boolean") right: boolean;
+    @type("boolean") space: boolean;
+    @type("boolean") boostLeft: boolean | number;
+    @type("boolean") boostRight: boolean | number;
+    @type("boolean") boostDown: boolean;
+    @type("boolean") clicked: boolean;
+    @type("boolean") onSurface: boolean;
+    @type("boolean") alive: boolean;
+    @type("boolean") orb: boolean;
+    @type("boolean") it: boolean;
+
+    constructor(colour: string, name: string, x: number, y: number, 
+            ai: boolean = false, id: string = null, rank: number = 1000){
+        super();
         this.colour = colour;
         this.name = name;
         this.id = id;
@@ -12,7 +56,7 @@ class Player {
         this.ducked = false;
         this.left = false;
         this.right = false;
-        this.onSurface = [];
+        this.onSurface = false;
         this.lives = 0;
 
         this.xVelocity = 0;
@@ -22,7 +66,6 @@ class Player {
         this.alive = true;
         this.invincibility = 0;
         this.boostCooldown = 20;
-        this.score = 0;
         this.rank = rank;
         this.orb = null;
         this.type = null
@@ -32,7 +75,7 @@ class Player {
         this.height = Constants.PLAYERHEIGHT;
     }
 
-    reset(x, y){
+    reset(x: number, y: number, keepTeam: boolean = false){
         this.x = x;
         this.y = y;
         this.xVelocity = 0;
@@ -44,13 +87,13 @@ class Player {
         this.alive = true;
         this.invincibility = 0;
         this.boostCooldown = 20;
-        this.onSurface = [];
+        this.onSurface = false;
         this.it = false;
         this.lives = 0;
-        this.team = null;
+        this.team = keepTeam ? this.team : null;
     }
 
-    respawn(clients, level){
+    respawn(players: Player[] = null, level: Level = null, keepTeam: boolean = false){
         var newPosition;
         var anyCollision = true
         var onLand = false;
@@ -62,9 +105,9 @@ class Player {
                 y: level.spawnArea.topY() + Constants.PLAYERHEIGHT + Utils.getRandomInt(level.spawnArea.height)
             };
 
-            for(var i = 0; i < clients.length; i++){
-                var xCollision = Math.abs((newPosition.x) - (clients[i].player.x)) <= Constants.PLAYERWIDTH + 20;
-                var yCollision = Math.abs((newPosition.y) - (clients[i].player.y)) <= Constants.PLAYERHEIGHT + 20;
+            for(var i = 0; i < players.length; i++){
+                var xCollision = Math.abs((newPosition.x) - (players[i].x)) <= Constants.PLAYERWIDTH + 20;
+                var yCollision = Math.abs((newPosition.y) - (players[i].y)) <= Constants.PLAYERHEIGHT + 20;
                 if(xCollision && yCollision){
                     anyCollision = true;
                     break;
@@ -84,10 +127,10 @@ class Player {
                 }
             };
         }
-        this.reset(newPosition.x, newPosition.y);
+        this.reset(newPosition.x, newPosition.y, keepTeam);
     }
 
-    isCollision(player) {
+    isCollision(player: Player): boolean {
         if(player.type == "ball"){
             return player.isCollision(this);
         }
@@ -109,6 +152,10 @@ class Player {
         this.xVelocity = 0;
         this.yVelocity = 0;
     }
+
+    move(players: Player[], ticks: number, level: Level){
+        
+    }
 }
 
-module.exports = Player;
+export default Player;
