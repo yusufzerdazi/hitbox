@@ -6,6 +6,7 @@ import { HitboxRoomState } from '../rooms/schema/HitboxRoomState';
 import { Room } from 'colyseus';
 import Player from '../players/player';
 import Square from '../square';
+import EndStatus from '../ranking/endStatus';
 
 class Football extends GameMode {
     finished: boolean;
@@ -40,17 +41,20 @@ class Football extends GameMode {
         var players = Array.from(this.roomRef.state.players.values());
         var winningTeam = this.scores.team1 == 3 ? Constants.TEAM1 : this.scores.team2 === 3 ? Constants.TEAM2 : null
         if(!winningTeam){
-            return {end: false};
+            return new EndStatus(false);
         }
         this.finished = true;
         var winningPlayers = players.filter(c => c.team == winningTeam && c.type == null);
         var losingPlayers = players.filter(c => c.team != winningTeam && c.type == null);
-        
-        return { end: true, winners: winningPlayers, losers: losingPlayers, winningTeam: winningTeam };
+        return new EndStatus(true, null, winningPlayers, losingPlayers, winningTeam);
     }
 
     onGameStart(){
         this.allocateTeams();
+        this.roomRef.broadcast("event", {
+            type: "goal",
+            scores: this.scores
+        });
     }
 
     onPlayerJoin(){
@@ -80,7 +84,8 @@ class Football extends GameMode {
                         this.scores[scorerColour] += 1;
                         this.roomRef.broadcast("event", {
                             type: "goal",
-                            colour: goal.colour
+                            colour: goal.colour,
+                            scores: this.scores
                         });
                         player.respawn(players, this.roomRef.state.level);
                    }

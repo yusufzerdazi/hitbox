@@ -2,6 +2,7 @@ import GameMode from './gameMode';
 import Levels from '../levels';
 import { Room } from "colyseus";
 import { HitboxRoomState } from "../rooms/schema/HitboxRoomState";
+import EndStatus from '../ranking/endStatus';
 
 class BattleRoyale extends GameMode {
     title: string;
@@ -23,16 +24,16 @@ class BattleRoyale extends GameMode {
         var alive = alivePlayers.length;
         if(alive > 1 || this.roomRef.state.players.size < 2){
             if(!(this.roomRef.state.players.size == 1 && alive == 0)){
-                return { end: false };
+                return new EndStatus(false);
             }
         }
         if(alive == 1){
-            return { winner: alivePlayers[0], end: true };
+            return new EndStatus(true, alivePlayers[0]);
         }
         if(alive == 0){
-            return { end: true };
+            return new EndStatus(true);
         }
-        return { end: false };
+        return new EndStatus(false);
     }
 }
 

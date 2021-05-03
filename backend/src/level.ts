@@ -7,7 +7,9 @@ class Level extends Schema {
     @type("number") scale: number;
     @type(Square) spawnArea: Square;
     @type("number") gravity: number;
+    @type("number") currentDistance: number;
     @type("number") maxDistance: number;
+    @type("number") deathWallX: number;
 
     constructor(platforms: ArraySchema<Square>, spawnArea: Square, inAirBoostCooldown: number, scale: number, gravity: number = 1){
         super();
@@ -16,6 +18,7 @@ class Level extends Schema {
         this.scale = scale;
         this.spawnArea = spawnArea;
         this.gravity = gravity;
+        this.currentDistance = 0;
         this.maxDistance = 0;
     }
 }

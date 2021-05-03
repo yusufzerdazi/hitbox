@@ -7,6 +7,7 @@ import Level from '../level';
 import Square from '../square';
 import { Room } from "colyseus";
 import { HitboxRoomState } from "../rooms/schema/HitboxRoomState";
+import EndStatus from '../ranking/endStatus';
 
 class CaptureTheFlag extends GameMode {
     team1Flag: Flag;
@@ -41,13 +42,13 @@ class CaptureTheFlag extends GameMode {
 
     endCondition(){
         if(!this.winningTeam){
-            return {end: false};
+            return new EndStatus(false);
         }
         this.finished = true;
         var players = Array.from(this.roomRef.state.players.values());
         var winningPlayers = players.filter(c => c.team == this.winningTeam && c.type == null);
         var losingPlayers = players.filter(c => c.team != this.winningTeam && c.type == null);
-        return {end: true, winners: winningPlayers, losers: losingPlayers, winningTeam: this.winningTeam};
+        return new EndStatus(true, null, winningPlayers, losingPlayers, this.winningTeam);
     }
 
     onCollision(client1: Player, client2: Player){

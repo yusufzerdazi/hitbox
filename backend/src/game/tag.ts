@@ -5,6 +5,7 @@ import Levels from '../levels';
 import { Room } from 'colyseus';
 import { HitboxRoomState } from '../rooms/schema/HitboxRoomState';
 import Player from '../players/player';
+import EndStatus from '../ranking/endStatus';
 
 class Tag extends GameMode {
     finished: boolean;
@@ -37,9 +38,9 @@ class Tag extends GameMode {
         if(this.roomRef.state.serverTime > this.gameLength){
             var winner = players.filter(c => c.it);
             this.finished = true;
-            return { end: true, winner: players.length > 1 ? winner[0] : null };
+            return new EndStatus(true, players.length > 1 ? winner[0] : null);
         }
-        return { end: false }
+        return new EndStatus(false);
     }
 
     onCollision(player1: Player, player2: Player){
@@ -107,7 +108,9 @@ class Tag extends GameMode {
     }
 
     onTick(){
-        
+        if(this.gameLength - this.roomRef.state.serverTime >= 0){
+            this.roomRef.broadcast("gameCountdown", Math.floor((this.gameLength - this.roomRef.state.serverTime) * 3/50));
+        }
     }
 }
 

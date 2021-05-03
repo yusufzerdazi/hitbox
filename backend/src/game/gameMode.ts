@@ -7,6 +7,7 @@ import Constants from '../constants';
 import Utils from '../utils';
 import { Room } from "colyseus";
 import { HitboxRoomState } from "../rooms/schema/HitboxRoomState";
+import EndStatus from '../ranking/endStatus';
 
 const state = {
     STARTED: "started",
@@ -74,8 +75,8 @@ class GameMode {
         
     }
 
-    endCondition() {
-        return { end: false };
+    endCondition(): EndStatus {
+        return new EndStatus(false);
     }
 
     onCollision(player1: Player, player2: Player, players: Player[] = []){

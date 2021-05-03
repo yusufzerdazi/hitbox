@@ -6,10 +6,10 @@ import Utils from '../utils';
 import RunningAi from '../players/runningAi';
 import { Room } from 'colyseus';
 import { HitboxRoomState } from '../rooms/schema/HitboxRoomState';
+import EndStatus from '../ranking/endStatus';
 
 class DeathWall extends GameMode {
     jumpDistance: number;
-    deathWallX: number;
     maxDistance: number;
     deathWallSpeed: number;
     winner: any;
@@ -21,8 +21,7 @@ class DeathWall extends GameMode {
         this.title = "Death Wall";
         this.subtitle = "Don't touch the wall!";
         this.jumpDistance = 2 * ((2 * Constants.JUMPSPEED) / Constants.VERTICALACCELERATION) * Constants.TERMINAL;
-        this.deathWallX = - 2000;
-        this.maxDistance = this.roomRef.state.level.maxDistance || 0;
+        this.roomRef.state.level.deathWallX = - 2000;
         this.deathWallSpeed = 10;
         this.winner = null;
         this.setModeSpecificPlayers();
@@ -44,16 +43,20 @@ class DeathWall extends GameMode {
         var alive = alivePlayers.length;
         if(alive > 1 || players.length < 2){
             if(!(players.length == 1 && alive == 0)){
-                return { end:false };
+                return new EndStatus(false);
             }
         }
         if(alive == 1){
             this.winner = alivePlayers[0];
         }
         if(alive == 0){
-            return { end:true, winner: this.winner };
+            return new EndStatus(true, this.winner);
         }
-        return { end:false };
+        return new EndStatus(false);
+    }
+
+    onGameStart(){
+        this.roomRef.state.level.currentDistance = 0;
     }
 
     onTick(){
@@ -62,15 +65,15 @@ class DeathWall extends GameMode {
         var farthestRightPlayer = Math.max.apply(Math, players.map(c => c.x));
         this.deathWallSpeed = Math.min(Constants.TERMINAL + 1, this.deathWallSpeed * 1.001);
         if(players.length > 0){
-            this.deathWallX += this.deathWallSpeed;
+            this.roomRef.state.level.deathWallX += this.deathWallSpeed;
         } else {
-            this.deathWallX = - 2000;
+            this.roomRef.state.level.deathWallX = - 2000;
             this.deathWallSpeed = 10;
         }
-        this.roomRef.state.level.maxDistance = Math.max(farthestRightPlayer, this.roomRef.state.level.maxDistance);
-        this.maxDistance = Math.max(farthestRightPlayer, this.maxDistance);
+        this.roomRef.state.level.currentDistance = Math.max(farthestRightPlayer, this.roomRef.state.level.currentDistance);
+        this.roomRef.state.level.maxDistance = Math.max(this.roomRef.state.level.currentDistance, this.roomRef.state.level.maxDistance);
         players.forEach(p => {
-            if(p.x < this.deathWallX && p.health > 0){
+            if(p.x < this.roomRef.state.level.deathWallX && p.health > 0){
                 p.death();
                 this.roomRef.broadcast("event", {
                     type: "death",

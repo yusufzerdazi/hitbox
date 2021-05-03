@@ -47,11 +47,20 @@ export class GameRoom extends Room<HitboxRoomState> {
         });
 
         this.onMessage('play', (client, request) => {
+            if(Array.from(this.state.players.values()).filter(p => !p.ai).length == 0){
+                this.game.gameMode.addAiPlayer();
+            } else {
+                this.removeAiPlayer();
+            }
             this.onPlay(client, request);
         });
 
         this.onMessage('addAi', () => {
             this.game.gameMode.addAiPlayer();
+        });
+
+        this.onMessage('removeAi', () => {
+            
         });
 
         this.onMessage('quit', (client) => {
@@ -70,6 +79,16 @@ export class GameRoom extends Room<HitboxRoomState> {
         this.setSimulationInterval(dt => {
             this.state.serverTime += dt;
             this.game.gameLoop(this);
+        });
+    }
+
+    removeAiPlayer(){
+        var deleted = false;
+        this.state.players.forEach(p => {
+            if(p.ai && !p.type && !deleted){
+                this.state.players.delete(p.clientId);
+                deleted = true;
+            }
         });
     }
 
