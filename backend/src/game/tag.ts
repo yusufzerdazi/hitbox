@@ -11,7 +11,8 @@ class Tag extends GameMode {
     finished: boolean;
     gameLength: number;
     constructor(roomRef: Room<HitboxRoomState>){
-        super(false, roomRef);
+        super(roomRef);
+        this.damageEnabled = false;
         var possibleLevels = [Levels.Space, Levels.Complex, Levels.Maze];
         if(this.roomRef.state.players.size < 10){
             possibleLevels.push(Levels.Basic);

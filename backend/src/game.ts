@@ -16,8 +16,6 @@ import { HitboxRoomState } from './rooms/schema/HitboxRoomState';
 import Ranking from './ranking/ranking';
 import EndStatus from "./ranking/endStatus";
 
-const GameModes = [CaptureTheFlag, CollectTheBoxes, DeathWall, BattleRoyale, Tag, Football];
-
 const state = {
     STARTED: "started",
     STARTING: "starting"
@@ -28,14 +26,16 @@ class Game {
     physics: Physics;
     gameMode: GameMode;
     ranking: Ranking;
+    gameModes: (typeof GameMode)[];
 
     constructor(){
         this.physics = new Physics();
         this.ranking = new Ranking();
+        this.gameModes = [CaptureTheFlag, CollectTheBoxes, DeathWall, BattleRoyale, Tag, Football];
     }
 
     randomGameMode(roomRef: Room<HitboxRoomState>){
-        return new GameModes[Math.floor(Math.random() * GameModes.length)](roomRef);
+        return new this.gameModes[Math.floor(Math.random() * this.gameModes.length)](roomRef);
     }
     
     reset(players: MapSchema<Player>) {

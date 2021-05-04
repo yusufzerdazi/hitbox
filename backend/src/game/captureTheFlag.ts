@@ -16,7 +16,8 @@ class CaptureTheFlag extends GameMode {
     winningTeam: string;
 
     constructor(roomRef: Room<HitboxRoomState>){
-        super(true, roomRef);
+        super(roomRef);
+        this.damageEnabled = true;
         this.possibleLevels = [Levels.LongIsland, Levels.Mountain];
         this.roomRef.state.level = this.getLevel();
 

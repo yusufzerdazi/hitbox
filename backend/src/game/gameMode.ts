@@ -24,9 +24,8 @@ class GameMode {
     roomRef: Room<HitboxRoomState>;
     teamBased: boolean;
 
-    constructor(damageEnabled: boolean, roomRef: Room<HitboxRoomState>) {
+    constructor(roomRef: Room<HitboxRoomState>) {
         this.state = state.STARTING;
-        this.damageEnabled = damageEnabled;
         var keys = Object.keys(Levels);
         this.possibleLevels = [Levels.Space, Levels.Complex, Levels.Towers, Levels.Island, Levels.Maze];
         this.roomRef = roomRef;

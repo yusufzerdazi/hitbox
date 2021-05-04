@@ -15,7 +15,8 @@ class DeathWall extends GameMode {
     winner: any;
 
     constructor(roomRef: Room<HitboxRoomState>){
-        super(false, roomRef);
+        super(roomRef);
+        this.damageEnabled = false;
         this.possibleLevels = [Levels.DeathWall];
         this.roomRef.state.level = this.getLevel();
         this.title = "Death Wall";

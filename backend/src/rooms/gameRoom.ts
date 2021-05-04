@@ -15,6 +15,13 @@ export class GameRoom extends Room<HitboxRoomState> {
         this.setPatchRate(1000 / 60);
 
         this.game = new Game();
+        if(options.gameMode){
+            this.game.gameModes.forEach(g => {
+                if(g.name.toLowerCase() == options.gameMode.toLowerCase()){
+                    this.game.gameModes = [g];
+                }
+            });
+        }
 
         this.onMessage('right', (client, request) => {
             if(this.state.players.get(client.sessionId))

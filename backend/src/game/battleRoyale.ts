@@ -9,7 +9,8 @@ class BattleRoyale extends GameMode {
     subtitle: string;
 
     constructor(roomRef: Room<HitboxRoomState>){
-        super(true, roomRef);
+        super(roomRef);
+        this.damageEnabled = true;
         if(this.roomRef.state.players.size < 10){
             this.possibleLevels.push(Levels.Basic);
         }

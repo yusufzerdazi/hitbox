@@ -11,7 +11,8 @@ const gameServer = new Server({
     server
 });
 
-gameServer.define('Game', GameRoom);
+gameServer.define('Game', GameRoom)
+    .filterBy(['gameMode']);
 
 gameServer.listen(port);
 console.log(`Listening on ws://localhost:${ port }`)
