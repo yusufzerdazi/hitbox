@@ -48,7 +48,7 @@ class GameMode {
     }
 
     addAiPlayer(){
-        var newAI = Math.random() > 0.5 ? 
+        var newAI = Math.random() > 1 ? 
             new SimpleAi(Utils.randomColor(),Utils.generateName()) :
             new CleverAi(Utils.randomColor(), Utils.generateName())
         newAI.respawn(Array.from(this.roomRef.state.players.values()), this.roomRef.state.level, this.teamBased);

@@ -102,6 +102,7 @@ class Tag extends GameMode {
         }
         setTimeout(() => {
             if(!this.finished){
+                stillHasStar = stillHasStar || player.it;
                 player.respawn(players, this.roomRef.state.level);
                 player.it = stillHasStar;
             }

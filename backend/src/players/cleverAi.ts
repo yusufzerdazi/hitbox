@@ -1,6 +1,8 @@
 import Player from './player';
 import Constants from '../constants';
 import Utils from '../utils';
+import Level from '../level';
+import Square from '../square';
 
 class CleverAi extends Player {
     playerId: any;
@@ -62,8 +64,8 @@ class CleverAi extends Player {
     }
 
     followFirstPlayer(players: Player[], ticks: number){
-        var orb = players.filter(p => p.orb);
-        var followablePlayers = orb.length > 0 ? orb : players;
+        var followedPlayer = players.filter(p => p.type == "orb" || p.it || ((p.type == "flag" && p.colour != this.team && p.attachedToPlayer != this.name)));
+        var followablePlayers = followedPlayer.length > 0 ? followedPlayer : players;
         if(followablePlayers[0] && followablePlayers[0].x < this.x){
             var playerCloseToMeVertically = Math.abs(followablePlayers[0].y - this.y) < this.yBoostDistanceThreshold;
             if(playerCloseToMeVertically || (this.y > followablePlayers[0].y && this.x > 480)){
@@ -93,12 +95,29 @@ class CleverAi extends Player {
         }
     }
 
-    move(players: Player[], ticks: number){
+    jumpRandomly(){
+        this.space = Math.random() > 0.98;
+    }
+
+    captureTheFlag(level: Level){
+        if(this.attachedPlayers){
+            var myGoal: Square = level.platforms.filter(p => p.type == "goal" && p.colour == this.team)[0];
+            var leftOfGoal = this.x < (myGoal.leftX() + myGoal.rightX()) / 2;
+            this.right = leftOfGoal;
+            this.left = !leftOfGoal;
+        }
+    }
+
+    move(players: Player[], ticks: number, level: Level){
         this.duckBoostingPlayers(players);
         this.jumpDuckingPlayers(players);
         this.poundPlayersBelow(players);
         this.followFirstPlayer(players, ticks * 60 / 1000);
+        if(players.filter(p => p.type == "flag")){
+            this.captureTheFlag(level);
+        }
         this.dontFallToDeath();
+        this.jumpRandomly();
     }
 }
 

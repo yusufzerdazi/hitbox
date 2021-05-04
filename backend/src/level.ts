@@ -3,7 +3,8 @@ import { Schema, type, ArraySchema } from "@colyseus/schema";
 
 class Level extends Schema {
     @type([Square]) platforms: ArraySchema<Square>;
-    @type("number")inAirBoostCooldown: number;
+    @type("string") name: string;
+    @type("number") inAirBoostCooldown: number;
     @type("number") scale: number;
     @type(Square) spawnArea: Square;
     @type("number") gravity: number;
@@ -11,8 +12,9 @@ class Level extends Schema {
     @type("number") maxDistance: number;
     @type("number") deathWallX: number;
 
-    constructor(platforms: ArraySchema<Square>, spawnArea: Square, inAirBoostCooldown: number, scale: number, gravity: number = 1){
+    constructor(name: string, platforms: ArraySchema<Square>, spawnArea: Square, inAirBoostCooldown: number, scale: number, gravity: number = 1){
         super();
+        this.name = name;
         this.platforms = platforms;
         this.inAirBoostCooldown = inAirBoostCooldown;
         this.scale = scale;

@@ -73,7 +73,7 @@ class DeathWall extends GameMode {
             this.deathWallSpeed = 10;
         }
         this.roomRef.state.level.currentDistance = Math.max(farthestRightPlayer, this.roomRef.state.level.currentDistance);
-        this.roomRef.state.level.maxDistance = Math.max(this.roomRef.state.level.currentDistance, this.roomRef.state.level.maxDistance);
+        this.roomRef.state.maxDistance = Math.max(this.roomRef.state.level.currentDistance, this.roomRef.state.maxDistance);
         players.forEach(p => {
             if(p.x < this.roomRef.state.level.deathWallX && p.health > 0){
                 p.death();

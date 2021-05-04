@@ -91,7 +91,7 @@ class Game {
         var messages = this.physics.calculate(Array.from(roomRef.state.players.values()), roomRef.state.level, this.gameMode);
         messages.forEach(m => roomRef.broadcast(m[0], m[1]));
         var players = Array.from(roomRef.state.players.values());
-        players.filter(p => p.ai).forEach(p => p.move(players, roomRef.state.serverTime, roomRef.state.level));
+        players.filter(p => p.ai).forEach(p => p.move(players.filter(pl => pl.clientId != p.clientId), roomRef.state.serverTime, roomRef.state.level));
         this.calculateDeadPlayers(Array.from(roomRef.state.players.values()), this.gameMode, roomRef.state.level);
         return this.gameMode.endCondition();
     }

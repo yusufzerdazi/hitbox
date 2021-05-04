@@ -72,6 +72,7 @@ export class GameRoom extends Room<HitboxRoomState> {
 
         this.onMessage('quit', (client) => {
             this.onQuit(client);
+            this.removeAiPlayer();
         });
 
         this.onMessage('nameChange', (client, name) => {
