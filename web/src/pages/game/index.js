@@ -89,7 +89,8 @@ class Game extends React.Component {
         
         this.gameService
             .setCanvas(this.canvasRef)
-            .setMounted(true);
+            .setMounted(true)
+            .onToggleGui(this.props.toggleGui);
         
         this.gameService.spectate(this.state.room);
 
@@ -214,4 +215,4 @@ class Game extends React.Component {
     }
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(Game);
+export default connect(mapStateToProps, mapDispatchToProps, null, {forwardRef : true})(Game);

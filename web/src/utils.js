@@ -11,7 +11,7 @@ export default {
         return d.getTime();
     },
 
-    fillMixedText(ctx, args, x, y) {
+    fillMixedText(ctx, args, x, y, direction = -1) {
         let defaultFillStyle = ctx.fillStyle;
         let defaultFont = ctx.font;
       
@@ -20,7 +20,7 @@ export default {
           ctx.fillStyle = fillStyle || defaultFillStyle;
           ctx.font = font || defaultFont;
           ctx.fillText(text, x, y);
-          x -= ctx.measureText(text).width;
+          x += direction * ctx.measureText(text).width;
         });
         ctx.restore();
     },

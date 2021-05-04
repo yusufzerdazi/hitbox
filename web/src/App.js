@@ -14,13 +14,23 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 
 class App extends React.Component {
+  constructor(props){
+    super(props);
+    this.state = {showGui: true};
+    this.toggleGui = this.toggleGui.bind(this);
+  }
+
+  toggleGui(showGui){
+    this.setState({showGui: showGui});
+  }
+
   render() {
     return (
       <Provider store={store}>
         <Router>
           <Switch>
             <Route exact path="/">
-              <Game/>
+              <Game toggleGui={this.toggleGui}/>
             </Route>
             <Route exact path="/leaderboard">
               <Leaderboard />
@@ -29,11 +39,12 @@ class App extends React.Component {
               <Instructions />
             </Route>
           </Switch>
-          <div className="options">
+          <div className="options" style={{display: this.state.showGui ? 'block' : 'none'}}>
             <Scores/>
             <Options/>
           </div>
-          <Footer/>
+          { this.state.showGui ? 
+          <Footer/> : <></> }
         </Router>
       </Provider>
     );

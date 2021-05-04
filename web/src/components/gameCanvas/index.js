@@ -116,7 +116,9 @@ class GameCanvas extends React.Component {
         }
     }
 
-    draw(players, level, name, lastWinner) {
+    draw(state, name, lastWinner, showGui) {
+        var players = Array.from(state.players.values());
+        var level = state.level;
         if(this.drawing) {
             return;
         }
@@ -148,27 +150,48 @@ class GameCanvas extends React.Component {
         }
         this.drawWater();
 
-        this.drawDeathWall(level);
-        players.filter(p => p.type !== "ball").forEach(player => this.drawPlayer(player, name));
+        
+        players.filter(p => p.type !== "ball").forEach(player => this.drawPlayer(player, name, showGui));
         players.filter(p => p.type === "ball").forEach(player => this.drawBall(player));
-        players.filter(p => p.name === name).forEach(player => {
-            this.drawPlayerScore(player);
-            this.drawPlayerStats(player);
-        });
+        if(showGui){
+            players.filter(p => p.name === name).forEach(player => {
+                this.drawPlayerScore(player);
+                this.drawPlayerStats(player);
+            });
+        }
 
+        this.drawDeathWall(level);
+        
         this.animations = this.animations.filter(c => Utils.millis() - c.animationLength < c.timestamp);
         this.animations.forEach(c => c.drawAnimation(c, c.name ? players.filter(p => p.name === c.name)[0] : undefined));
-        this.drawStartingTimer();
-        this.drawGameCountdown();
-        this.drawGameMode(lastWinner);
-        this.drawEvents();
-        this.drawFootballScores();
+        if(showGui){
+            this.drawGameDetails(state);
+            this.drawStartingTimer();
+            this.drawGameMode(level, lastWinner);
+            this.drawEvents();
+        }
         if(players.filter(p => p.name === name).length === 0 && this.joining){
             this.drawNotification();
         }
         setTimeout(() => {
             this.drawing = false;
         }, 1);
+    }
+
+    drawGameDetails(state){
+        switch(this.gameMode.title){
+            case("Football"):
+                this.drawFootballScores();
+                break;
+            case("Death Wall"):
+                this.drawDeathWallDistance(state.level, state.maxDistance);
+                break;
+            case("Tag"):
+                this.drawGameCountdown();
+                break;
+            default:
+                break;
+        }
     }
 
     newGame(players){
@@ -216,12 +239,8 @@ class GameCanvas extends React.Component {
         ], 0, 0, "#002138", false, true);
     }
 
-    drawDeathWall(level){
-        if(level.deathWallX){
-            this.drawLevelPlatform({x: level.deathWallX, y:-(this.ctx.canvas.height / 2)/this.scale + this.camera.y,
-                width: -(((this.ctx.canvas.width) / 2)/this.scale) + this.camera.x - level.deathWallX, height: this.ctx.canvas.height / this.scale}, "#f0af00")
-        }
-        if(level.maxDistance){
+    drawDeathWallDistance(level, maxDistance){
+        if(maxDistance){
             this.ctx.save()
             this.ctx.fillStyle = 'black';
             this.ctx.globalCompositeOperation = "difference";
@@ -231,8 +250,15 @@ class GameCanvas extends React.Component {
             this.ctx.shadowOffsetY = 1;
             this.ctx.shadowBlur = 1;
             this.ctx.textAlign = "left";
-            this.ctx.fillText(Math.round(level.currentDistance / 50) + "m  (Max: " + Math.round(level.maxDistance / 50) + "m)", -(this.ctx.canvas.width / 2 - 10) / this.scale, -(this.ctx.canvas.height / 2 - 80) / this.scale);
+            this.ctx.fillText(Math.round(level.currentDistance / 50) + "m  (Max: " + Math.round(maxDistance / 50) + "m)", -(this.ctx.canvas.width / 2 - 10) / this.scale, -(this.ctx.canvas.height / 2 - 105) / this.scale);
             this.ctx.restore()
+        }
+    }
+
+    drawDeathWall(level){
+        if(level.deathWallX){
+            this.drawLevelPlatform({x: level.deathWallX, y:-(this.ctx.canvas.height / 2)/this.scale + this.camera.y,
+                width: -(((this.ctx.canvas.width) / 2)/this.scale) + this.camera.x - level.deathWallX, height: this.ctx.canvas.height / this.scale}, "#f0af00")
         }
     }
 
@@ -245,7 +271,7 @@ class GameCanvas extends React.Component {
             text.push({text: this.scores.team1, fillStyle: "red"});
             text.push({text: "-", fillStyle: "black"});
             text.push({text: this.scores.team2, fillStyle: "slateblue"});
-            Utils.fillMixedText(this.ctx, text, - (this.ctx.canvas.width - 68) / (2 * this.scale), - (this.ctx.canvas.height / 2 - 80) / this.scale);
+            Utils.fillMixedText(this.ctx, text, - (this.ctx.canvas.width - 68) / (2 * this.scale), - (this.ctx.canvas.height / 2 - 105) / this.scale);
             this.ctx.restore()
         }
     }
@@ -827,7 +853,7 @@ class GameCanvas extends React.Component {
         this.ctx.restore();
     }
 
-    drawPlayer(player, name) {
+    drawPlayer(player, name, showGui) {
         // If player is invincible make them flash.
         if (player.alive && player.invincibility !== 0 && (Math.round(Utils.millis() / 10)) % 2 === 0) return;
 
@@ -854,15 +880,16 @@ class GameCanvas extends React.Component {
             this.drawFlag(player);
         }
         this.drawPlayerCube(player, currentPlayerWidth, currentPlayerHeight, xOffset, yOffset);
-        this.drawPlayerName(player, currentPlayerHeight, xOffset, yOffset);
+        if(showGui){
+            this.drawPlayerName(player, currentPlayerHeight, xOffset, yOffset);
+        }
 
-        
         // If player is dead, don't draw the rest.
         if (!player.alive) {
             this.ctx.globalAlpha = 1;
             return;
         }
-        if(!player.ducked && player.boostCooldown !== 0){
+        if(!player.ducked && player.boostCooldown !== 0 && showGui){
             this.drawPlayerStamina(player, currentPlayerWidth, currentPlayerHeight, xOffset, yOffset, name);
         }
         this.ctx.globalAlpha = 1;
@@ -901,7 +928,7 @@ class GameCanvas extends React.Component {
             this.ctx.fillStyle = 'white';
             this.ctx.font = "bold " + (20/this.scale)+"px " + FONT;
             this.ctx.textAlign = "left";
-            this.ctx.fillText((this.gameCountdown / 60).toFixed(2), -(this.ctx.canvas.width / 2 - 10) / this.scale, -(this.ctx.canvas.height / 2 - 80) / this.scale);
+            this.ctx.fillText((this.gameCountdown / 60).toFixed(2), -(this.ctx.canvas.width / 2 - 10) / this.scale, -(this.ctx.canvas.height / 2 - 105) / this.scale);
             this.ctx.restore()
         }
     }
@@ -913,12 +940,12 @@ class GameCanvas extends React.Component {
             this.ctx.fillStyle = 'white';
             this.ctx.font = "bold " + (20/this.scale)+"px " + FONT;
             this.ctx.textAlign = "center";
-            this.ctx.fillText(player.lives, -(this.ctx.canvas.width / 2 - 16) / this.scale, -(this.ctx.canvas.height / 2 - 80) / this.scale);
+            this.ctx.fillText(player.lives, -(this.ctx.canvas.width / 2 - 16) / this.scale, -(this.ctx.canvas.height / 2 - 105) / this.scale);
             this.ctx.restore()
         }
     }
 
-    drawGameMode(lastWinner){
+    drawGameMode(level, lastWinner){
         var titleFontSize = 25/this.scale;
         var subtitleFontSize = 20/this.scale;
         var centerTitle = this.countdown;
@@ -943,9 +970,23 @@ class GameCanvas extends React.Component {
         if(centerTitle && showWinner && lastWinner){
             this.ctx.fillText(lastWinner.name + " won!" || "", 0, (yPosition + subtitleDiff) / this.scale);
         } else {
-            this.ctx.fillText(this.gameMode.title || "", xPosition, (yPosition) / this.scale);
+            var titleText = [];
+            var subtitleText = [];
+            var mapText = [];
+            if(!centerTitle){
+                titleText.push({text: "Game: ", fillStyle: "grey"});
+                subtitleText.push({text: "Goal: ", fillStyle: "grey"});
+                mapText.push({text: "Map: ", fillStyle: "grey"});
+                mapText.push({text: level.name, fillStyle: "white"});
+            }
+            titleText.push({text: this.gameMode.title || "", fillStyle: "white"});
+            subtitleText.push({text: this.gameMode.subtitle || "", fillStyle: "white"});
+
+
+            Utils.fillMixedText(this.ctx, titleText, xPosition, (yPosition) / this.scale, 1);
             this.ctx.font = "bold " + subtitleFontSize+"px " + FONT;
-            this.ctx.fillText(this.gameMode.subtitle || "", xPosition, (yPosition + subtitleDiff) / this.scale);
+            Utils.fillMixedText(this.ctx, subtitleText, xPosition, (yPosition + subtitleDiff) / this.scale, 1);
+            Utils.fillMixedText(this.ctx, mapText, xPosition, (yPosition + 2 * subtitleDiff) / this.scale, 1);
         }
         
         this.ctx.restore();

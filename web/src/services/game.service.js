@@ -32,6 +32,7 @@ class GameService {
         this.ePressed = false;
         this.aMillis = 0;
         this.eMillis = 0;
+        this.showGui = true;
 
         this.wallSound = [new THREE.Audio(this.listener), new THREE.Audio(this.listener), new THREE.Audio(this.listener)];
         this.playerSound = [new THREE.Audio(this.listener), new THREE.Audio(this.listener), new THREE.Audio(this.listener)];
@@ -278,7 +279,7 @@ class GameService {
         });
 
         document.addEventListener("keydown", e => {
-            if (e.keyCode === 68) {
+            if (e.keyCode === 68 || e.keyCode == 39) {
                 if (!this.ePressed) {
                     const currentMillis = Utils.millis();
                     if (currentMillis - this.eMillis < 500) {
@@ -290,7 +291,7 @@ class GameService {
                 this.moveRight(true);
             }
 
-            if (e.keyCode === 65) {
+            if (e.keyCode === 65 || e.keyCode == 37) {
                 if (!this.aPressed) {
                     const currentMillis = Utils.millis();
                     if (currentMillis - this.aMillis < 500) {
@@ -302,37 +303,51 @@ class GameService {
                 this.moveLeft(true);
             }
 
-            if (e.keyCode === 32 || e.keyCode === 87) {
+            if (e.keyCode === 32 || e.keyCode === 87 || e.keyCode == 38) {
                 if (e.keyCode === 32) {
                     e.preventDefault();
                 }
                 this.jump(true);
             }
 
-            if (e.keyCode === 83) {
+            if (e.keyCode === 83 || e.keyCode == 40) {
                 this.crouch(true);
+            }
+
+            if (e.keyCode === 72) {
+                this.toggleGui();
             }
         });
 
         document.addEventListener("keyup", e => {
-            if (e.keyCode === 68) {
+            if (e.keyCode === 68 || e.keyCode == 39) {
                 this.ePressed = false;
                 this.moveRight(false);
             }
 
-            if (e.keyCode === 65) {
+            if (e.keyCode === 65 || e.keyCode == 37) {
                 this.aPressed = false;
                 this.moveLeft(false);
             }
 
-            if (e.keyCode === 32 || e.keyCode === 87) {
+            if (e.keyCode === 32 || e.keyCode === 87 || e.keyCode == 38) {
                 this.jump(false)
             }
             
-            if (e.keyCode === 83) {
+            if (e.keyCode === 83 || e.keyCode == 40) {
                 this.crouch(false)
             }
         });
+    }
+
+    toggleGui(){
+        this.showGui = !this.showGui;
+        this.onToggleGui(this.showGui);
+    }
+
+    onToggleGui(callback){
+        this.onToggleGui = callback;
+        return this;
     }
 
     jump(enabled = true) {
@@ -373,12 +388,11 @@ class GameService {
 
     async spectate(room){
         const urlParams = new URLSearchParams(window.location.search);
-        console.log(await this.client.getAvailableRooms());
         this.room = await this.client.joinOrCreate("Game", { gameMode: urlParams.get('gameMode') });
         this.addListeners();
 
         this.room.onStateChange((newState) => {
-            this.canvasRef.current.draw(Array.from(newState.players.values()), newState.level, this.name, this.lastWinner);
+            this.canvasRef.current.draw(newState, this.name, this.lastWinner, this.showGui);
             this.updateRunning(newState.runningPlayers);
         });
     }
