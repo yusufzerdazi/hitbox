@@ -52,14 +52,29 @@ class CaptureTheFlag extends GameMode {
         return new EndStatus(true, null, winningPlayers, losingPlayers, this.winningTeam);
     }
 
-    onCollision(client1: Player, client2: Player){
-        var flag = client1.type == "flag" ? client1 : client2.type == "flag" ? client2 : null;
-        var player = !client1.type ? client1 : !client2.type ? client2 : null;
+    onCollision(player1: Player, player2: Player, players: Player[]){
+        var flag = player1.type == "flag" ? player1 : player2.type == "flag" ? player2 : null;
+        var player = !player1.type ? player1 : !player2.type ? player2 : null;
         if(flag && player){
             if(flag.colour != player.team){
                 flag.attachedToPlayer = player.name;
             } else {
                 flag.respawn();
+            }
+        } else if (!player1.type && !player2.type && (player1.attachedPlayers || player2.attachedPlayers)){
+            if(player1.speed() >= Constants.THWACKSPEED){
+                Array.from(this.roomRef.state.players.values()).filter(p => p.attachedToPlayer == player2.name)
+                    .forEach(p => {
+                        p.attachedToPlayer = null;
+                        p.invincibility = 1000;
+                    });
+            }
+            if(player2.speed() >= Constants.THWACKSPEED){
+                Array.from(this.roomRef.state.players.values()).filter(p => p.attachedToPlayer == player1.name)
+                    .forEach(p => {
+                        p.attachedToPlayer = null;
+                        p.invincibility = 1000;
+                    });
             }
         }
     }

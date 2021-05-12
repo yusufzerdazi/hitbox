@@ -42,6 +42,7 @@ class GameMode {
                     new SimpleAi(player.colour, player.name) :
                     new CleverAi(player.colour, player.name)
                 newAI.score = player.score;
+                newAI.clientId = player.clientId;
                 this.roomRef.state.players.set(clientId, newAI);
             }
         });
@@ -51,10 +52,10 @@ class GameMode {
         var newAI = Math.random() > 1 ? 
             new SimpleAi(Utils.randomColor(),Utils.generateName()) :
             new CleverAi(Utils.randomColor(), Utils.generateName())
-        newAI.respawn(Array.from(this.roomRef.state.players.values()), this.roomRef.state.level, this.teamBased);
         newAI.clientId = Utils.uuidv4();
         this.roomRef.state.players.set(newAI.clientId, newAI);
         this.onPlayerJoin();
+        newAI.respawn(Array.from(this.roomRef.state.players.values()), this.roomRef.state.level, this.teamBased);
     }
 
     allocateTeams(){

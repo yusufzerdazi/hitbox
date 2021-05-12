@@ -97,12 +97,13 @@ class Player extends Schema {
         var newPosition;
         var anyCollision = true
         var onLand = false;
+        var spawnArea = level.platforms.filter(p => p.colour && p.colour == this.team)[0] || level.spawnArea;
         while(anyCollision || !onLand){
             anyCollision = false;
 
             newPosition = {
-                x: level.spawnArea.leftX() + Utils.getRandomInt(level.spawnArea.width),
-                y: level.spawnArea.topY() + Constants.PLAYERHEIGHT + Utils.getRandomInt(level.spawnArea.height)
+                x: spawnArea.leftX() + Utils.getRandomInt(spawnArea.width),
+                y: spawnArea.topY() + Constants.PLAYERHEIGHT + Utils.getRandomInt(spawnArea.height)
             };
 
             for(var i = 0; i < players.length; i++){
@@ -116,6 +117,9 @@ class Player extends Schema {
 
             onLand = false;
             for(var i = 0; i < level.platforms.length; i++){
+                if(level.platforms[i].type == "goal"){
+                    continue;
+                }
                 var xCollision = newPosition.x <= level.platforms[i].rightX() + 20 && newPosition.x >= (level.platforms[i].leftX() - Constants.PLAYERWIDTH) - 20;
                 var yCollision = newPosition.y >= level.platforms[i].topY() - 20 && newPosition.y <= (level.platforms[i].bottomY() + Constants.PLAYERHEIGHT) + 20;
                 if((xCollision && yCollision) || level.platforms[i].type == "border" && newPosition.y <= level.platforms[i].topY()){

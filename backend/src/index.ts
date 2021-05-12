@@ -1,6 +1,10 @@
 import express from 'express';
 import { Server } from 'colyseus';
 import { GameRoom } from './rooms/gameRoom';
+import { PlayFabServer } from 'playfab-sdk';
+
+PlayFabServer.settings.titleId = 'B15E8';
+PlayFabServer.settings.developerSecretKey = "***REMOVED***";
 
 const app = express();
 const server = require('http').createServer(app);

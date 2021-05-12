@@ -108,9 +108,9 @@ export class GameRoom extends Room<HitboxRoomState> {
             clientId: client.id,
             sessionId: client.sessionId,
         });
-        newPlayer.respawn(Array.from(this.state.players.values()), this.state.level);
         this.state.players.set(client.sessionId, newPlayer);
         this.game.gameMode.onPlayerJoin();
+        newPlayer.respawn(Array.from(this.state.players.values()), this.state.level, this.game.gameMode.teamBased);
     }
 
     onQuit(client: Client){

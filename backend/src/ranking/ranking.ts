@@ -4,9 +4,6 @@ import { HitboxRoomState } from '../rooms/schema/HitboxRoomState';
 import EndStatus from './endStatus';
 var EloRating = require('elo-rating');
 
-PlayFabServer.settings.titleId = 'B15E8';
-PlayFabServer.settings.developerSecretKey = "***REMOVED***";
-
 class Ranking {
     calculateRank(endStatus: EndStatus, roomRef: Room<HitboxRoomState>) {
         if(endStatus.winner) {

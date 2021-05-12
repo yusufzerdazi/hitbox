@@ -22,5 +22,6 @@ export default Object.freeze({
     DEATHMETHODS: [" murdered ", " boxed ", " destroyed ", " hit ", " killed "],
     SUICIDEMETHODS: [" drowned", " killed themself", " died"],
     TEAM1: "red",
-    TEAM2: "blue"
+    TEAM2: "blue",
+    THWACKSPEED: 30
 });
