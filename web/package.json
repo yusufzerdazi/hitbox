@@ -10,6 +10,7 @@
     "bisonjs": "^2.0.2",
     "bootstrap": "^4.6.0",
     "colyseus.js": "^0.14.12",
+    "playfab-sdk": "^2.67.210427",
     "react": "^16.14.0",
     "react-bootstrap": "^1.4.3",
     "react-collapsible": "^2.8.1",

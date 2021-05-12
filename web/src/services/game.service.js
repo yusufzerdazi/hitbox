@@ -213,50 +213,6 @@ class GameService {
             }
         });
 
-        this.room.onMessage('win', () => {
-            if (this.mounted) window.PlayFabClientSDK.ExecuteCloudScript({
-                FunctionName: "playerWins",
-                GeneratePlayStreamEvent: true
-            });
-        });
-
-        this.room.onMessage('beaten', beaten => {
-            if (this.mounted) window.PlayFabClientSDK.ExecuteCloudScript({
-                FunctionName: "playerBeaten",
-                FunctionParameter: beaten,
-                GeneratePlayStreamEvent: true
-            });
-        });
-
-        this.room.onMessage('kill', () => {
-            if (this.mounted) window.PlayFabClientSDK.ExecuteCloudScript({
-                FunctionName: "playerKills",
-                GeneratePlayStreamEvent: true
-            });
-        })
-
-        this.room.onMessage('death', () => {
-            if (this.mounted) window.PlayFabClientSDK.ExecuteCloudScript({
-                FunctionName: "playerDies",
-                GeneratePlayStreamEvent: true
-            });
-        })
-
-        this.room.onMessage('loss', () => {
-            if (this.mounted) window.PlayFabClientSDK.ExecuteCloudScript({
-                FunctionName: "playerLoses",
-                GeneratePlayStreamEvent: true
-            });
-        });
-
-        this.room.onMessage('rank', (rank) => {
-            if (this.mounted) window.PlayFabClientSDK.ExecuteCloudScript({
-                FunctionName: "playerRankUpdated",
-                GeneratePlayStreamEvent: true,
-                FunctionParameter: rank
-            });
-        });
-
         this.room.onMessage('event', (event) => {
             if(this.mounted){
                 this.canvasRef.current.event(event);

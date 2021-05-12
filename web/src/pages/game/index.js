@@ -3,6 +3,7 @@ import React from 'react';
 import Gamepad from 'react-gamepad';
 import { connect } from "react-redux";
 import { store } from '../../redux/store';
+import { PlayFabClient } from 'playfab-sdk';
 
 import GameCanvas from '../../components/gameCanvas';
 import GameService from '../../services/game.service';
@@ -54,9 +55,9 @@ class Game extends React.Component {
             this.setState({name: state.logIn.user.name});
         }
         if(state.logIn?.user?.name && !this.state.playing && state.options?.playing){
-            window.PlayFabClientSDK.GetPlayerStatistics({
+            PlayFabClient.GetPlayerStatistics({
                 StatisticNames: ["rank"]
-            }).then(s => {
+            }, (error, s) => {
                 var rank = s.data?.Statistics[0]?.Value || 1000;
                 this.gameService.play(state.logIn.user, this.state.room, rank);
                 this.setState({playing: true, name: state.logIn.user.name});

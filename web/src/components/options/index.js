@@ -9,6 +9,7 @@ import Instructions from '../../pages/instructions';
 import { connect } from "react-redux";
 import Collapsible from 'react-collapsible';
 import axios from 'axios';
+import { PlayFabClient } from 'playfab-sdk';
 
 import { LOG_IN, CAMERA, USERNAME_UPDATED, IMAGE_UPDATED, PLAYING, ADDAI, REMOVEAI } from '../../constants/actionTypes';
 import { FOLLOWING, DRAG } from '../../constants/cameraTypes';
@@ -82,24 +83,24 @@ class Options extends React.Component {
     });
   }
 
-  onPlayFabResponse(response, error) {
+  onPlayFabResponse(error, response) {
     if (response)
-      window.PlayFabClientSDK.GetPlayerProfile({
+      PlayFabClient.GetPlayerProfile({
         ProfileConstraints: { ShowDisplayName: true, ShowAvatarUrl: true },
         PlayFabId: response.data.PlayFabId
-      }).then((response2) => {
-        if(!response2.data.PlayerProfile.DisplayName){
+      }, (userError, userResponse) => {
+        if(!userResponse.data.PlayerProfile.DisplayName){
           this.setName(true);
         }
-        if(!response2.data.PlayerProfile.AvatarUrl){
+        if(!userResponse.data.PlayerProfile.AvatarUrl){
           this.selectRandomAvatar(response.data.PlayFabId);
         }
-        this.props.logIn(response2.data.PlayerProfile);
+        this.props.logIn(userResponse.data.PlayerProfile);
         setInterval(() => {
-          window.PlayFabClientSDK.GetPlayerStatistics({
+          PlayFabClient.GetPlayerStatistics({
             StatisticNames: ["rank"]
-          }).then(s => {
-            var rank = s.data?.Statistics[0]?.Value || 1000;
+          }, (rankError, rankResponse) => {
+            var rank = rankResponse.data?.Statistics[0]?.Value || 1000;
             this.setState({score: rank});
           });
         }, 5000);        
@@ -114,7 +115,7 @@ class Options extends React.Component {
     var user = window.gapi.auth2.getAuthInstance().currentUser.get();
     this.setState({accessToken: user.getAuthResponse(true).access_token});
     
-    window.PlayFabClientSDK.LoginWithGoogleAccount({
+    PlayFabClient.LoginWithGoogleAccount({
         AccessToken: this.state.accessToken,
         CreateAccount : true,
         TitleId: "B15E8",
@@ -131,7 +132,7 @@ class Options extends React.Component {
       customId = Utils.uuidv4();
       localStorage.setItem("customId", customId);
     }
-    window.PlayFabClientSDK.LoginWithCustomID({
+    PlayFabClient.LoginWithCustomID({
       CreateAccount: true,
       TitleId: "B15E8",
       CustomId: customId
@@ -159,16 +160,19 @@ class Options extends React.Component {
       return;
     }
     var name = this.state.updatedUsername || "Hitboxer" + Math.floor(Math.random() * 10000);
-    return window.PlayFabClientSDK.UpdateUserTitleDisplayName({
+    return PlayFabClient.UpdateUserTitleDisplayName({
       DisplayName: name
-    }).then(response => {
-      this.props.updateName(name);
-    }).catch((error) => {
-      if(error.error === "NameNotAvailable"){
-        this.setState({updatedUsername: null, usernameError: "The name '" + this.state.updatedUsername + "' is already in use."});
-      } else {
-        if(!this.props.user?.name){
-          this.setName();
+    }, (error, response) => {
+      if(response){
+        this.props.updateName(name);
+      }
+      if(error){
+        if(error.error === "NameNotAvailable"){
+          this.setState({updatedUsername: null, usernameError: "The name '" + this.state.updatedUsername + "' is already in use."});
+        } else {
+          if(!this.props.user?.name){
+            this.setName();
+          }
         }
       }
     });
@@ -219,7 +223,7 @@ class Options extends React.Component {
     var etag = Utils.uuidv4();
     this.setState({etag: etag});
     this.props.updateImage(`${url}?etag=${etag}`);
-    window.PlayFabClientSDK.UpdateAvatarUrl({
+    PlayFabClient.UpdateAvatarUrl({
       ImageUrl: `${url}?etag=${etag}`
     });
   }

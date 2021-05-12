@@ -5,6 +5,7 @@ import DataTable, { createTheme } from 'react-data-table-component';
 import { store } from '../../redux/store';
 import styles from './styles.module.css';
 import Utils from '../../utils';
+import { PlayFabClient } from 'playfab-sdk';
 
 const mapStateToProps = state => {
   return {
@@ -47,11 +48,11 @@ const columns = [
     sortFunction: (rowA, rowB) => Utils.sortFunction(rowA, rowB, 'kills')
   },
   {
-    name: 'Players beaten',
-    selector: 'beaten',
+    name: 'Deaths',
+    selector: 'deaths',
     sortable: true,
     right: true,
-    sortFunction: (rowA, rowB) => Utils.sortFunction(rowA, rowB, 'beaten')
+    sortFunction: (rowA, rowB) => Utils.sortFunction(rowA, rowB, 'deaths')
   },
   {
     name: 'Losses',
@@ -61,7 +62,7 @@ const columns = [
     sortFunction: (rowA, rowB) => Utils.sortFunction(rowA, rowB, 'losses')
   },
   {
-    name: 'Beaten/Losses',
+    name: 'Kill/Death',
     selector: 'killdeath',
     sortable: true,
     right: true,
@@ -88,37 +89,39 @@ class Leaderboard extends React.Component {
     var leaderboardsArray = [];
     for (var key in this.state.consolidatedLeaderboards) {
       var value = this.state.consolidatedLeaderboards[key];
-      value.killdeath = value.losses && value.beaten ? Math.round((value.beaten / value.losses) * 100) / 100 : undefined;
+      value.killdeath = value.kills && value.deaths ? Math.round((value.kills / value.deaths) * 100) / 100 : undefined;
       leaderboardsArray.push(value);
     }
     return leaderboardsArray
   }
 
-  getLeaderboard(name, tranformation = (x) => x){
-    return window.PlayFabClientSDK.GetLeaderboard({
+  getLeaderboard(name, callback){
+    var transformation = (x) => x;
+    return PlayFabClient.GetLeaderboard({
       MaxResultsCount: 100,
       StatisticName: name
-    }).then(l => {
+    }, (error, l) => {
         var consolidatedLeaderboards = this.state.consolidatedLeaderboards;
         l.data.Leaderboard.forEach(row => {
           if(!consolidatedLeaderboards[row.PlayFabId]){
             consolidatedLeaderboards[row.PlayFabId] = {};
           }
           consolidatedLeaderboards[row.PlayFabId]['name'] = row.DisplayName ? row.DisplayName : row.PlayFabId;
-          consolidatedLeaderboards[row.PlayFabId][name] = tranformation(row.StatValue);
+          consolidatedLeaderboards[row.PlayFabId][name] = transformation(row.StatValue);
         })
-        this.setState({consolidatedLeaderboards: consolidatedLeaderboards})
+        this.setState({consolidatedLeaderboards: consolidatedLeaderboards});
+        callback();
     });
   }
 
   loadLeaderboards(){
     var state = store.getState();
     if(state.logIn.user?.loggedIn){
-      this.getLeaderboard('wins').then(() => {
-        this.getLeaderboard('losses').then(() => {
-          this.getLeaderboard('kills').then(() => {
-            this.getLeaderboard('beaten').then(() => {
-              this.getLeaderboard('rank').then(() => {
+      this.getLeaderboard('wins', () => {
+        this.getLeaderboard('losses', () => {
+          this.getLeaderboard('kills', () => {
+            this.getLeaderboard('deaths', () => {
+              this.getLeaderboard('rank', () => {
                 this.setState({leaderboardsArray:this.convertLeaderboardsToArray()});
               })
             })
@@ -141,6 +144,8 @@ class Leaderboard extends React.Component {
           columns={columns}
           onRowClicked={this.props.click}
           data={this.state.leaderboardsArray}
+          defaultSortField={'rank'}
+          defaultSortAsc={false}
         /> : null}
       </div>
     );
