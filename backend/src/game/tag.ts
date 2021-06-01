@@ -1,7 +1,7 @@
 import GameMode from './gameMode';
 import Utils from '../utils';
 import Constants from '../constants';
-import Levels from '../levels';
+import Levels from '../level/levels';
 import { Room } from 'colyseus';
 import { HitboxRoomState } from '../rooms/schema/HitboxRoomState';
 import Player from '../players/player';

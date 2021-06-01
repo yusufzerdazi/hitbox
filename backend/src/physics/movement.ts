@@ -1,8 +1,8 @@
 import Constants from "../constants";
-import Level from "../level";
+import Level from "../level/level";
 import Player from "../players/player";
 import PlayerTypes from "../players/playerTypes";
-import Square from "../square";
+import Square from "../level/square";
 import Calculation from "./calculation";
 
 

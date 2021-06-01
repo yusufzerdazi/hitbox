@@ -1,5 +1,5 @@
 import GameMode from "../game/gameMode";
-import Level from "../level";
+import Level from "../level/level";
 import Player from "../players/player";
 import Calculation from "./calculation";
 

@@ -10,7 +10,7 @@ import CaptureTheFlag from './game/captureTheFlag';
 import Physics from './physics/physics';
 import PlayerTypes from './players/playerTypes';
 import GameMode from './game/gameMode';
-import Level from './level';
+import Level from './level/level';
 import { Room } from 'colyseus';
 import { HitboxRoomState } from './rooms/schema/HitboxRoomState';
 import Ranking from './ranking/ranking';

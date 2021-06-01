@@ -1,8 +1,8 @@
 import Player from './player';
 import Constants from '../constants';
 import Utils from '../utils';
-import Level from '../level';
-import Square from '../square';
+import Level from '../level/level';
+import Square from '../level/square';
 
 class CleverAi extends Player {
     playerId: any;

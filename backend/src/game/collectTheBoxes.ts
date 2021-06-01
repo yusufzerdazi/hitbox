@@ -1,5 +1,5 @@
 import GameMode from './gameMode';
-import Levels from '../levels';
+import Levels from '../level/levels';
 import Orb from '../players/orb';
 import Player from '../players/player';
 import { Room } from 'colyseus';
