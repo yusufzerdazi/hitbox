@@ -1,7 +1,7 @@
 import GameMode from './gameMode';
-import Levels from '../levels';
+import Levels from '../level/levels';
 import Constants from '../constants';
-import Square from '../square';
+import Square from '../level/square';
 import Utils from '../utils';
 import RunningAi from '../players/runningAi';
 import { Room } from 'colyseus';

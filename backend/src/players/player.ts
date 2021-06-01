@@ -1,6 +1,6 @@
 import { Schema, type, MapSchema } from "@colyseus/schema";
 import Constants from '../constants';
-import Level from "../level";
+import Level from "../level/level";
 import Utils from '../utils';
 
 class Player extends Schema {

@@ -1,6 +1,6 @@
 import { Schema, type, MapSchema } from "@colyseus/schema";
 import Player from '../../players/player';
-import Level from '../../level';
+import Level from '../../level/level';
 
 export class HitboxRoomState extends Schema {
     @type("number") serverTime = 0;

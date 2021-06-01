@@ -1,8 +1,8 @@
 import SimpleAi from '../players/simpleAi';
 import CleverAi from '../players/cleverAi';
 import Player from '../players/player';
-import Levels from '../levels';
-import Level from '../level';
+import Levels from '../level/levels';
+import Level from '../level/level';
 import Constants from '../constants';
 import Utils from '../utils';
 import { Room } from "colyseus";

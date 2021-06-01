@@ -1,5 +1,5 @@
 import Constants from "../constants";
-import Level from "../level";
+import Level from "../level/level";
 import Player from "../players/player";
 import Utils from "../utils";
 import Calculation from "./calculation";

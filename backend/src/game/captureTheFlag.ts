@@ -1,10 +1,10 @@
 import GameMode from './gameMode';
-import Levels from '../levels';
+import Levels from '../level/levels';
 import Flag from '../players/flag';
 import Constants from '../constants';
 import Player from '../players/player';
-import Level from '../level';
-import Square from '../square';
+import Level from '../level/level';
+import Square from '../level/square';
 import { Room } from "colyseus";
 import { HitboxRoomState } from "../rooms/schema/HitboxRoomState";
 import EndStatus from '../ranking/endStatus';

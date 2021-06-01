@@ -8,7 +8,7 @@ class Square extends Schema {
     @type("string") type: string;
     @type("string") colour: string;
     
-    constructor(x: number, y: number, width: number, height: number, type: string = null, colour: string = null){
+    constructor(x: number, y: number, width: number, height: number, type: string = "platform", colour: string = null){
         super();
         this.x = x;
         this.y = y;

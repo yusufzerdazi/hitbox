@@ -1,5 +1,5 @@
 import GameMode from './gameMode';
-import Levels from '../levels';
+import Levels from '../level/levels';
 import { Room } from "colyseus";
 import { HitboxRoomState } from "../rooms/schema/HitboxRoomState";
 import EndStatus from '../ranking/endStatus';
