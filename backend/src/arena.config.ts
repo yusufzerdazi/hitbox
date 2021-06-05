@@ -1,5 +1,6 @@
 import Arena from "@colyseus/arena";
 import { monitor } from "@colyseus/monitor";
+import cors from "cors";
 
 import { GameRoom } from './rooms/gameRoom';
 import { PlayFabServer } from 'playfab-sdk';
@@ -21,6 +22,10 @@ export default Arena({
     },
 
     initializeExpress: (app) => {
+        app.use(cors({
+            origin: ['http://localhost:3000', 'https://hitbox.online']
+        }));
+
         /**
          * Bind your custom express routes here:
          */
