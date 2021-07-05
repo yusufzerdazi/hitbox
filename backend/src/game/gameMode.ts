@@ -8,6 +8,7 @@ import Utils from '../utils';
 import { Room } from "colyseus";
 import { HitboxRoomState } from "../rooms/schema/HitboxRoomState";
 import EndStatus from '../ranking/endStatus';
+import Square from '../level/square';
 
 const state = {
     STARTED: "started",
@@ -26,13 +27,14 @@ class GameMode {
 
     constructor(roomRef: Room<HitboxRoomState>) {
         this.state = state.STARTING;
-        var keys = Object.keys(Levels);
         this.possibleLevels = [Levels.Space, Levels.Complex, Levels.Towers, Levels.Island, Levels.Maze];
         this.roomRef = roomRef;
     }
 
     getLevel(){
-        return this.possibleLevels[Math.floor(this.possibleLevels.length * Math.random())]();
+        var matchingLevels = this.possibleLevels.filter(l => l.name.toLowerCase() == this.roomRef.state?.map?.toLowerCase());
+        matchingLevels = matchingLevels.length > 0 ? matchingLevels : this.possibleLevels;
+        return matchingLevels[Math.floor(matchingLevels.length * Math.random())]();
     }
 
     setModeSpecificPlayers() {
@@ -95,6 +97,10 @@ class GameMode {
 
     onTick(){
         
+    }
+
+    onLanding(platform: Square, player: Player) {
+
     }
 }
 

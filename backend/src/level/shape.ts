@@ -7,6 +7,7 @@ class Shape extends Schema {
     @type("number") height: number;
     @type("string") type: string;
     @type("string") colour: string;
+    @type("number") durability: number;
     
     constructor(x: number, y: number, width: number, height: number, type: string = "platform", colour: string = null){
         super();
@@ -16,6 +17,7 @@ class Shape extends Schema {
         this.height = height;
         this.type = type;
         this.colour = colour;
+        this.durability = 100;
     }
 
     leftX(){

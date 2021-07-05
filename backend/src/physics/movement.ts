@@ -4,10 +4,11 @@ import Player from "../players/player";
 import PlayerTypes from "../players/playerTypes";
 import Square from "../level/square";
 import Calculation from "./calculation";
+import GameMode from "../game/gameMode";
 
 
 class Movement extends Calculation {
-    calculate(players: Player[], level: Level){
+    calculate(players: Player[], level: Level, gameMode: GameMode){
         var messages: any[] = [];
 
         PlayerTypes.movingPlayers(players).forEach(player => player.attachedPlayers = 0);
@@ -27,7 +28,7 @@ class Movement extends Calculation {
             var previouslyOnSurface = player.onSurface == true;
             var currentSpeed = player.speed();
             player.onSurface = false;
-            level.platforms.filter(x => x.type != "goal").forEach((platform: Square) => {
+            level.platforms.filter(x => !['goal', 'backgroundleaves'].includes(x.type)).forEach((platform: Square) => {
                 if(player.x >= platform.rightX() &&
                         player.x + player.xVelocity < platform.rightX() && 
                         player.y + player.yVelocity > platform.topY() && 
@@ -82,6 +83,7 @@ class Movement extends Calculation {
                         player.x + player.xVelocity <= platform.rightX() &&
                         player.x + player.xVelocity >= (platform.leftX() - player.width)) {
                     player.y = platform.topY();
+                    gameMode.onLanding(platform, player);
                     if(player.type == "ball"){
                         player.yVelocity = -Math.floor(player.yVelocity * Constants.WALLDAMPING);
                     } else {
@@ -110,6 +112,14 @@ class Movement extends Calculation {
             player.x += player.xVelocity;
             player.y = player.y+player.yVelocity
         });
+        players.forEach(player => {
+            if(level.platforms.filter(platform => player.y <= platform.topY() && // Currently above platform
+                    player.y + player.yVelocity >= platform.topY() && // Will be below on next time step
+                    player.x + player.xVelocity <= platform.rightX() &&
+                    player.x + player.xVelocity >= (platform.leftX() - player.width)).length === 0){
+                player.onSurface = false;
+            }
+        })
         return messages;
     }
 }

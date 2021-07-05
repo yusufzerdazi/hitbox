@@ -15,6 +15,7 @@ import { Room } from 'colyseus';
 import { HitboxRoomState } from './rooms/schema/HitboxRoomState';
 import Ranking from './ranking/ranking';
 import EndStatus from "./ranking/endStatus";
+import Spleef from "./game/spleef";
 
 const state = {
     STARTED: "started",
@@ -31,7 +32,7 @@ class Game {
     constructor(){
         this.physics = new Physics();
         this.ranking = new Ranking();
-        this.gameModes = [CaptureTheFlag, CollectTheBoxes, DeathWall, BattleRoyale, Tag, Football];
+        this.gameModes = [CaptureTheFlag, CollectTheBoxes, DeathWall, BattleRoyale, Tag, Football, Spleef];
     }
 
     randomGameMode(roomRef: Room<HitboxRoomState>){

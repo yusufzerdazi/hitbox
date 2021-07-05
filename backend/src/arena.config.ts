@@ -17,7 +17,7 @@ export default Arena({
          */
 
         gameServer.define('Game', GameRoom)
-            .filterBy(['gameMode']);
+            .filterBy(['gameMode', 'map']);
 
     },
 

@@ -34,7 +34,7 @@ class Football extends GameMode {
 
     setModeSpecificPlayers() {
         super.setModeSpecificPlayers();
-        var ball = new Ball(0, -500);
+        var ball = new Ball(Constants.WIDTH / 2, -500);
         this.roomRef.state.players.set(ball.clientId, ball);
     }
     
