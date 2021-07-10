@@ -1,6 +1,6 @@
 import Player from './player';
 import Constants from '../constants';
-import Level from '../level';
+import Level from '../level/level';
 
 class Ball extends Player {
     angularVelocity: number;

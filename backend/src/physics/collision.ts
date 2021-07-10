@@ -1,6 +1,6 @@
 import Constants from "../constants";
 import GameMode from "../game/gameMode";
-import Level from "../level";
+import Level from "../level/level";
 import Player from "../players/player";
 import PlayerTypes from "../players/playerTypes";
 import Utils from "../utils";

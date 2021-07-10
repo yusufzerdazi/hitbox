@@ -1,11 +1,11 @@
 import GameMode from './gameMode';
-import Levels from '../levels';
+import Levels from '../level/levels';
 import Ball from '../players/ball';
 import Constants from '../constants';
 import { HitboxRoomState } from '../rooms/schema/HitboxRoomState';
 import { Room } from 'colyseus';
 import Player from '../players/player';
-import Square from '../square';
+import Square from '../level/square';
 import EndStatus from '../ranking/endStatus';
 
 class Football extends GameMode {
@@ -34,7 +34,7 @@ class Football extends GameMode {
 
     setModeSpecificPlayers() {
         super.setModeSpecificPlayers();
-        var ball = new Ball(0, -500);
+        var ball = new Ball(Constants.WIDTH / 2, -500);
         this.roomRef.state.players.set(ball.clientId, ball);
     }
     

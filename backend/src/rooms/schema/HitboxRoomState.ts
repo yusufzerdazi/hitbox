@@ -1,6 +1,6 @@
 import { Schema, type, MapSchema } from "@colyseus/schema";
 import Player from '../../players/player';
-import Level from '../../level';
+import Level from '../../level/level';
 
 export class HitboxRoomState extends Schema {
     @type("number") serverTime = 0;
@@ -8,4 +8,5 @@ export class HitboxRoomState extends Schema {
     @type("number") maxDistance = 0;
     @type({ map: Player }) players = new MapSchema<Player>();
     @type(Level) level: Level;
+    @type("string") map: string
 }

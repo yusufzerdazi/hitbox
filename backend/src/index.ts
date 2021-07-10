@@ -1,22 +1,15 @@
-import express from 'express';
-import { Server } from 'colyseus';
-import { GameRoom } from './rooms/gameRoom';
-import { PlayFabServer } from 'playfab-sdk';
+/**
+ * IMPORTANT: 
+ * ---------
+ * Do not manually edit this file if you'd like to use Colyseus Arena
+ * 
+ * If you're self-hosting (without Arena), you can manually instantiate a
+ * Colyseus Server as documented here: 👉 https://docs.colyseus.io/server/api/#constructor-options 
+ */
+import { listen } from "@colyseus/arena";
 
-PlayFabServer.settings.titleId = 'B15E8';
-PlayFabServer.settings.developerSecretKey = "***REMOVED***";
+// Import arena config
+import arenaConfig from "./arena.config";
 
-const app = express();
-const server = require('http').createServer(app);
-
-const port = Number(process.env.PORT || 3001);
-
-const gameServer = new Server({
-    server
-});
-
-gameServer.define('Game', GameRoom)
-    .filterBy(['gameMode']);
-
-gameServer.listen(port);
-console.log(`Listening on ws://localhost:${ port }`)
+// Create and listen on 2567 (or PORT environment variable.)
+listen(arenaConfig);

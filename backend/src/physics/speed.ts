@@ -1,11 +1,12 @@
 import Constants from "../constants";
-import Level from "../level";
+import GameMode from "../game/gameMode";
+import Level from "../level/level";
 import Player from "../players/player";
 import Utils from "../utils";
 import Calculation from "./calculation";
 
 class Speed extends Calculation {
-    calculate(players: Player[], level: Level): any[]{
+    calculate(players: Player[], level: Level, gameMode: GameMode): any[]{
         var messages: any[] = [];
 
         players.forEach(player => {
@@ -26,6 +27,13 @@ class Speed extends Calculation {
             }
 
             if(player.down && player.onSurface && player.yVelocity >= 0){
+                var onPlatform = level.platforms.filter(platform => player.y <= platform.topY() && // Currently above platform
+                        player.y + player.yVelocity >= platform.topY() && // Will be below on next time step
+                        player.x + player.xVelocity <= platform.rightX() &&
+                        player.x + player.xVelocity >= (platform.leftX() - player.width))[0];
+                if(onPlatform){
+                    gameMode.onLanding(onPlatform, player);
+                }
                 player.ducked = true;
                 player.yVelocity = 0;
                 player.boostCooldown = Math.max(player.boostCooldown, 50);

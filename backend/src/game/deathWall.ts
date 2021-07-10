@@ -1,12 +1,13 @@
 import GameMode from './gameMode';
-import Levels from '../levels';
+import Levels from '../level/levels';
 import Constants from '../constants';
-import Square from '../square';
+import Square from '../level/square';
 import Utils from '../utils';
 import RunningAi from '../players/runningAi';
 import { Room } from 'colyseus';
 import { HitboxRoomState } from '../rooms/schema/HitboxRoomState';
 import EndStatus from '../ranking/endStatus';
+import Tree from '../level/tree';
 
 class DeathWall extends GameMode {
     jumpDistance: number;
@@ -104,6 +105,11 @@ class DeathWall extends GameMode {
         var newPlatformHeight = 200;
 
         this.roomRef.state.level.platforms.push(new Square(newPlatformX, newPlatformY, newPlatformWidth, newPlatformHeight));
+        if(Math.random() > 0.75){
+            new Tree(newPlatformX + newPlatformWidth / 2, newPlatformY, 400, 400).components.forEach(t => {
+                this.roomRef.state.level.platforms.push(t);
+            });
+        }
         return true;
     }
 }

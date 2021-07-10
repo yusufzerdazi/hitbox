@@ -1,20 +1,28 @@
-# Introduction 
-TODO: Give a short introduction of your project. Let this section explain the objectives or the motivation behind this project. 
+# Welcome to Colyseus!
 
-# Getting Started
-TODO: Guide users through getting your code up and running on their own system. In this section you can talk about:
-1.	Installation process
-2.	Software dependencies
-3.	Latest releases
-4.	API references
+This project has been created using [⚔️ `create-colyseus-app`](https://github.com/colyseus/create-colyseus-app/) - an npm init template for kick starting a Colyseus project in TypeScript.
 
-# Build and Test
-TODO: Describe and show how to build your code and run the tests. 
+[Documentation](http://docs.colyseus.io/)
 
-# Contribute
-TODO: Explain how other users and developers can contribute to make your code better. 
+## :crossed_swords: Usage
 
-If you want to learn more about creating good readme files then refer the following [guidelines](https://docs.microsoft.com/en-us/azure/devops/repos/git/create-a-readme?view=azure-devops). You can also seek inspiration from the below readme files:
-- [ASP.NET Core](https://github.com/aspnet/Home)
-- [Visual Studio Code](https://github.com/Microsoft/vscode)
-- [Chakra Core](https://github.com/Microsoft/ChakraCore)
+```
+npm start
+```
+
+## Structure
+
+- `index.ts`: main entry point, register an empty room handler and attach [`@colyseus/monitor`](https://github.com/colyseus/colyseus-monitor)
+- `src/rooms/MyRoom.ts`: an empty room handler for you to implement your logic
+- `src/rooms/schema/MyRoomState.ts`: an empty schema used on your room's state.
+- `loadtest/example.ts`: scriptable client for the loadtest tool (see `npm run loadtest`)
+- `package.json`:
+    - `scripts`:
+        - `npm start`: runs `ts-node-dev index.ts`
+        - `npm run loadtest`: runs the [`@colyseus/loadtest`](https://github.com/colyseus/colyseus-loadtest/) tool for testing the connection, using the `loadtest/example.ts` script.
+- `tsconfig.json`: TypeScript configuration file
+
+
+## License
+
+MIT

@@ -14,6 +14,7 @@ export class GameRoom extends Room<HitboxRoomState> {
 
         this.setPatchRate(1000 / 60);
 
+        this.state.map = options.map;
         this.game = new Game();
         if(options.gameMode){
             this.game.gameModes.forEach(g => {
@@ -22,7 +23,7 @@ export class GameRoom extends Room<HitboxRoomState> {
                 }
             });
         }
-
+        
         this.onMessage('right', (client, request) => {
             if(this.state.players.get(client.sessionId))
                 this.state.players.get(client.sessionId).right = request;

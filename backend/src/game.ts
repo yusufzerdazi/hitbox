@@ -10,11 +10,12 @@ import CaptureTheFlag from './game/captureTheFlag';
 import Physics from './physics/physics';
 import PlayerTypes from './players/playerTypes';
 import GameMode from './game/gameMode';
-import Level from './level';
+import Level from './level/level';
 import { Room } from 'colyseus';
 import { HitboxRoomState } from './rooms/schema/HitboxRoomState';
 import Ranking from './ranking/ranking';
 import EndStatus from "./ranking/endStatus";
+import Spleef from "./game/spleef";
 
 const state = {
     STARTED: "started",
@@ -31,7 +32,7 @@ class Game {
     constructor(){
         this.physics = new Physics();
         this.ranking = new Ranking();
-        this.gameModes = [CaptureTheFlag, CollectTheBoxes, DeathWall, BattleRoyale, Tag, Football];
+        this.gameModes = [CaptureTheFlag, CollectTheBoxes, DeathWall, BattleRoyale, Tag, Football, Spleef];
     }
 
     randomGameMode(roomRef: Room<HitboxRoomState>){
