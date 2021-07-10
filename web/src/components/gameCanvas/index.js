@@ -283,17 +283,21 @@ class GameCanvas extends React.Component {
     drawLevelPlatform(level, colour, useExistingFillStyle = false){
         this.ctx.save();
         if(!useExistingFillStyle){
-            this.ctx.fillStyle = colour || "#1a1001";
+            this.ctx.fillStyle = level.colour || colour || "#1a1001";
         }
-        if(level.type === "goal"){
+        if(['goal', 'backgroundleaves'].includes(level.type)){
             this.ctx.fillStyle = level.colour;
             this.ctx.globalAlpha = 0.3;
         }
+        console.log(level.durability);
+        if(level.durability && level.durability !== 100){
+            this.ctx.globalAlpha = level.durability / 100;
+        }
         this.ctx.beginPath();
-        Utils.roundRect(this.ctx, level.x - this.camera.x, level.y - this.camera.y, level.width, level.height, useExistingFillStyle ? 0 : PLATFORMRADIUS, true, false);
+        Utils.roundRect(this.ctx, level.x - this.camera.x, level.y - this.camera.y, level.width, level.height, (useExistingFillStyle || ['border', 'trunk', 'house'].includes(level.type)) ? 0 : PLATFORMRADIUS, true, false);
         this.ctx.fill();
 
-        if(!colour && level.type !== "goal" && !useExistingFillStyle){
+        if(!colour && !['trunk', 'leaves', 'goal', 'border', 'backgroundleaves', 'house', 'roof'].includes(level.type) && !useExistingFillStyle){
             this.ctx.beginPath();
             this.ctx.fillStyle = colour || "green";
             Utils.roundRect(this.ctx, level.x - 5 - this.camera.x, level.y - this.camera.y, level.width + 10, 30, 8, true, false);
