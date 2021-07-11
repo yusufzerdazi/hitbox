@@ -85,9 +85,11 @@ export class GameRoom extends Room<HitboxRoomState> {
             this.broadcast('changeAvatar', avatar);
         });
 
-        this.setSimulationInterval(dt => {
+        this.setSimulationInterval(async dt => {
             this.state.serverTime += dt;
-            this.game.gameLoop(this);
+            if(!this.game.training){
+                await this.game.gameLoop(this);
+            }
         });
     }
 

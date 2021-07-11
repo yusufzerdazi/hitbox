@@ -9,6 +9,7 @@ import { Room } from "colyseus";
 import { HitboxRoomState } from "../rooms/schema/HitboxRoomState";
 import EndStatus from '../ranking/endStatus';
 import Square from '../level/square';
+import TensorflowAi from '../players/tensorflowAi';
 
 const state = {
     STARTED: "started",
@@ -38,11 +39,14 @@ class GameMode {
     }
 
     setModeSpecificPlayers() {
+        var i = 0;
         this.roomRef.state.players.forEach((player, clientId) => {
             if(player.ai){
+                // var newAI = i == 0 ? new TensorflowAi(player.colour, player.name) : new CleverAi(player.colour, player.name);
+                // i++;
                 var newAI = Math.random() > 0.5 ? 
-                    new SimpleAi(player.colour, player.name) :
-                    new CleverAi(player.colour, player.name)
+                    new TensorflowAi(player.colour, player.name) :
+                    new TensorflowAi(player.colour, player.name)
                 newAI.score = player.score;
                 newAI.clientId = player.clientId;
                 this.roomRef.state.players.set(clientId, newAI);
@@ -52,7 +56,7 @@ class GameMode {
 
     addAiPlayer(){
         var newAI = Math.random() > 1 ? 
-            new SimpleAi(Utils.randomColor(),Utils.generateName()) :
+            new SimpleAi(Utils.randomColor(), Utils.generateName()) :
             new CleverAi(Utils.randomColor(), Utils.generateName())
         newAI.clientId = Utils.uuidv4();
         this.roomRef.state.players.set(newAI.clientId, newAI);

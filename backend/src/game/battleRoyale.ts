@@ -13,6 +13,7 @@ class BattleRoyale extends GameMode {
         this.damageEnabled = true;
         if(this.roomRef.state.players.size < 10){
             this.possibleLevels.push(Levels.Basic);
+            this.possibleLevels.push(Levels.Box);
         }
         this.roomRef.state.level = this.getLevel();
         this.title = "Battle Royale";

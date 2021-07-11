@@ -21,6 +21,7 @@
     "@colyseus/arena": "^0.14.9",
     "@colyseus/monitor": "^0.14.0",
     "@colyseus/social": "^0.10.9",
+    "@tensorflow/tfjs-node-gpu": "^3.7.0",
     "bisonjs": "^2.0.2",
     "colyseus": "^0.14.0",
     "cors": "^2.8.5",
