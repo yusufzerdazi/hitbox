@@ -8,6 +8,7 @@ import { Room } from 'colyseus';
 import { HitboxRoomState } from '../rooms/schema/HitboxRoomState';
 import EndStatus from '../ranking/endStatus';
 import Tree from '../level/tree';
+import TensorflowAi from '../players/tensorflowAi';
 
 class DeathWall extends GameMode {
     jumpDistance: number;
@@ -30,9 +31,11 @@ class DeathWall extends GameMode {
     }
 
     setModeSpecificPlayers() {
+        var tfPlayer = false;
         this.roomRef.state.players.forEach((player, clientId) => {
             if(player.ai){
-                var newAI = new RunningAi(player.colour, player.name);
+                var newAI = !tfPlayer ? new TensorflowAi(player.colour, "tensorflow") : new RunningAi(player.colour, player.name);
+                tfPlayer = true;
                 newAI.clientId = Utils.uuidv4();
                 newAI.score = player.score;
                 this.roomRef.state.players.set(clientId, newAI);
