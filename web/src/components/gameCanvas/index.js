@@ -289,7 +289,6 @@ class GameCanvas extends React.Component {
             this.ctx.fillStyle = level.colour;
             this.ctx.globalAlpha = 0.3;
         }
-        console.log(level.durability);
         if(level.durability && level.durability !== 100){
             this.ctx.globalAlpha = level.durability / 100;
         }
