@@ -17,7 +17,6 @@ import Ranking from './ranking/ranking';
 import EndStatus from "./ranking/endStatus";
 import Spleef from "./game/spleef";
 import Archiver from "./ai/archiver";
-import Trainer from "./ai/trainer";
 
 const state = {
     STARTED: "started",
@@ -31,14 +30,13 @@ class Game {
     ranking: Ranking;
     gameModes: (typeof GameMode)[];
     archiver: Archiver;
-    //trainer: Trainer;
     training: boolean;
+    ending: any;
 
     constructor(){
         this.physics = new Physics();
         this.ranking = new Ranking();
         this.archiver = new Archiver();
-        //this.trainer = new Trainer();
         this.gameModes = [CaptureTheFlag, CollectTheBoxes, DeathWall, BattleRoyale, Tag, Football, Spleef];
     }
 
@@ -83,9 +81,10 @@ class Game {
     }
 
     private async endGameLogic(endStatus: EndStatus, roomRef: Room<HitboxRoomState, any>) {
-        if(endStatus.winner){
+        this.ending = true;
+        if(endStatus.winner && !Ranking.anyAiPlayers(roomRef)){
             //this.training = true;
-            this.archiver.saveToFile(endStatus.winner, this.gameMode);
+            await this.archiver.saveToBlob(endStatus.winner, this.gameMode);
             //await this.trainer.train();
             //this.training = false;
         }
@@ -97,6 +96,7 @@ class Game {
         this.respawn(roomRef.state.players, roomRef.state.level, this.gameMode.teamBased);
         this.gameMode.onGameStart();
         this.state = state.STARTING;
+        this.ending = false;
     }
 
     private runGameLogic(roomRef: Room<HitboxRoomState, any>) {
@@ -124,7 +124,7 @@ class Game {
         switch(this.state){
             case state.STARTED:
                 var endStatus = this.runGameLogic(roomRef);
-                if(endStatus.end) {
+                if(endStatus.end && !this.ending) {
                     await this.endGameLogic(endStatus, roomRef);
                 }
                 break;
