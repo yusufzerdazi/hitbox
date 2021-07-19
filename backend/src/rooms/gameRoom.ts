@@ -87,9 +87,7 @@ export class GameRoom extends Room<HitboxRoomState> {
 
         this.setSimulationInterval(async dt => {
             this.state.serverTime += dt;
-            if(!this.game.training){
-                await this.game.gameLoop(this);
-            }
+            await this.game.gameLoop(this);
         });
     }
 

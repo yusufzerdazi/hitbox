@@ -120,11 +120,14 @@ class Game {
     }
 
     async gameLoop(roomRef: Room<HitboxRoomState>){
+        if(this.ending){
+            return;
+        }
         this.initialiseGame(roomRef);
         switch(this.state){
             case state.STARTED:
                 var endStatus = this.runGameLogic(roomRef);
-                if(endStatus.end && !this.ending) {
+                if(endStatus.end) {
                     await this.endGameLogic(endStatus, roomRef);
                 }
                 break;
