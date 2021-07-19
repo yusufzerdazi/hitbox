@@ -38,15 +38,11 @@ class Archiver {
                 finalData.push([d]);
             }
         }
-        let csvContent = finalData.map(e => e.join(",")).join("\n") + "\n";
+        let csvContent = this.data[winner.clientId].map(e => e.join(",")).join("\n") + "\n";
         if(!FileSystem.existsSync(`./src/ai/data/data.csv`)){
-            FileSystem.appendFile(`./src/ai/data/data.csv`, "playersCloseLeft,playersCloseRight,playersCloseTop,playersCloseBottom,playersLeft,playersRight,playersTop,playersBottom,platformCloseLeft,platformCloseRight,platformCloseTop,platformCloseBottom,playerAction\n", (error) => {
-                if (error) throw error;
-            });
+            FileSystem.appendFileSync(`./src/ai/data/data.csv`, "x,y,xVelocity,yVelocity,playersLeftDistance,playersRightDistance,playersTopDistance,playersBottomDistance,playersLeft,playersRight,playersTop,playersBottom,platformCloseLeft,platformCloseRight,platformCloseTop,platformCloseBottom,playerAction\n");
         }
-        FileSystem.appendFile(`./src/ai/data/data.csv`, csvContent, (error) => {
-            if (error) throw error;
-        });
+        FileSystem.appendFileSync(`./src/ai/data/data.csv`, csvContent);
     }
 
     calculateAndSave(player: Player, players: Player[], level: Level){
@@ -60,15 +56,20 @@ class Archiver {
     calculateState(player: Player, players: Player[], level: Level) : any {
         var otherPlayers = players.filter(p => p.clientId != player.clientId);
 
-        var playersCloseLeft = otherPlayers.filter(p => (this.playerX(p) < this.playerX(player)) && (Math.abs(this.playerX(p) - this.playerX(player)) < CLOSEDISTANCE) && (Math.abs(this.playerY(p) - this.playerY(player)) < CLOSEOPPDISTANCE)).length > 0;
-        var playersCloseRight = otherPlayers.filter(p => (this.playerX(p) > this.playerX(player)) && (Math.abs(this.playerX(p) - this.playerX(player)) < CLOSEDISTANCE) && (Math.abs(this.playerY(p) - this.playerY(player)) < CLOSEOPPDISTANCE)).length > 0;
-        var playersCloseTop = otherPlayers.filter(p => (this.playerY(p) < this.playerY(player)) && (Math.abs(this.playerY(p) - this.playerY(player)) < CLOSEDISTANCE) && (Math.abs(this.playerX(p) - this.playerX(player)) < CLOSEOPPDISTANCE)).length > 0;
-        var playersCloseBottom = otherPlayers.filter(p => (this.playerY(p) > this.playerY(player)) && (Math.abs(this.playerY(p) - this.playerY(player)) < CLOSEDISTANCE) && (Math.abs(this.playerX(p) - this.playerX(player)) < CLOSEOPPDISTANCE)).length > 0;
+        var playersCloseLeft = otherPlayers.filter(p => (this.playerX(p) < this.playerX(player)) && (Math.abs(this.playerY(p) - this.playerY(player)) < CLOSEOPPDISTANCE));
+        var playersCloseRight = otherPlayers.filter(p => (this.playerX(p) > this.playerX(player)) && (Math.abs(this.playerY(p) - this.playerY(player)) < CLOSEOPPDISTANCE));
+        var playersCloseTop = otherPlayers.filter(p => (this.playerY(p) < this.playerY(player)) && (Math.abs(this.playerX(p) - this.playerX(player)) < CLOSEOPPDISTANCE));
+        var playersCloseBottom = otherPlayers.filter(p => (this.playerY(p) > this.playerY(player)) && (Math.abs(this.playerX(p) - this.playerX(player)) < CLOSEOPPDISTANCE));
 
-        var playersLeft = otherPlayers.filter(p => (this.playerX(p) < this.playerX(player))).length > 0;
-        var playersRight = otherPlayers.filter(p => (this.playerX(p) > this.playerX(player))).length > 0;
-        var playersTop = otherPlayers.filter(p => (this.playerY(p) < this.playerY(player))).length > 0;
-        var playersBottom = otherPlayers.filter(p => (this.playerY(p) > this.playerY(player))).length > 0;
+        var playersLeftDistance = !playersCloseLeft ? 1000 : Math.min(...playersCloseLeft.map(p => Math.abs(p.x - player.x)), 1000);
+        var playersRightDistance = !playersCloseRight ? 1000 : Math.min(...playersCloseRight.map(p => Math.abs(p.x - player.x)), 1000);
+        var playersTopDistance = !playersCloseTop ? 1000 : Math.min(...playersCloseTop.map(p => Math.abs(p.y - player.y)), 1000);
+        var playersBottomDistance = !playersCloseBottom ? 1000 : Math.min(...playersCloseBottom.map(p => Math.abs(p.y - player.y)), 1000);
+
+        var playersLeft = otherPlayers.filter(p => (this.playerX(p) < this.playerX(player))).length;
+        var playersRight = otherPlayers.filter(p => (this.playerX(p) > this.playerX(player))).length;
+        var playersTop = otherPlayers.filter(p => (this.playerY(p) < this.playerY(player))).length;
+        var playersBottom = otherPlayers.filter(p => (this.playerY(p) > this.playerY(player))).length;
 
         var platformCloseLeft = level.platforms.filter(p => (p.rightX() < this.playerX(player)) && (Math.abs(p.rightX() - this.playerX(player)) < CLOSEDISTANCE) && (p.topY() < this.playerY(player)) && (p.bottomY() > this.playerY(player))).length > 0;
         var platformCloseRight = level.platforms.filter(p => (p.leftX() > this.playerX(player)) && (Math.abs(p.leftX() - this.playerX(player)) < CLOSEDISTANCE) && (p.topY() < this.playerY(player)) && (p.bottomY() > this.playerY(player))).length > 0;
@@ -78,10 +79,14 @@ class Archiver {
         var playerAction = this.getPlayerAction(player);
 
         return [
-            +playersCloseLeft,
-            +playersCloseRight,
-            +playersCloseTop,
-            +playersCloseBottom,
+            player.x / 1000,
+            player.y / 1000,
+            player.xVelocity / 50,
+            player.yVelocity / 50,
+            +playersLeftDistance / 1000,
+            +playersRightDistance / 1000,
+            +playersTopDistance / 1000,
+            +playersBottomDistance / 1000,
             +playersLeft,
             +playersRight,
             +playersTop,
