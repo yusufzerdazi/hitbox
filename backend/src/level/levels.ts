@@ -13,6 +13,12 @@ export default {
         new Square(-450, Constants.HEIGHT / 2, Constants.WIDTH + 900, Constants.HEIGHT / 2), // Standing platform
         new Square(-1500, -Constants.HEIGHT / 2 - 1000, 3000 + Constants.WIDTH, 500, "border") // Roof
     ), new Square(-1000, -Constants.HEIGHT / 2 - 500, 2000 + Constants.WIDTH, 500 + Constants.HEIGHT), null, null),
+    Box: () => new Level("Box", new ArraySchema<Square>(
+        new Square(-1500, -Constants.HEIGHT / 2 - 1000, 500, 3 * Constants.HEIGHT / 2 + 1000, "border"), // Left wall
+        new Square(Constants.WIDTH + 1000, -Constants.HEIGHT / 2 - 1000, 500, 3 * Constants.HEIGHT / 2 + 1000, "border"), // Right wall
+        new Square(-1000, Constants.HEIGHT / 2, Constants.WIDTH + 2000, Constants.HEIGHT / 2), // Standing platform
+        new Square(-1500, -Constants.HEIGHT / 2 - 1000, 3000 + Constants.WIDTH, 500, "border") // Roof
+    ), new Square(-1000, -Constants.HEIGHT / 2 - 500, 2000 + Constants.WIDTH, 500 + Constants.HEIGHT), null, null),
     Complex: () => new  Level("Complex", new ArraySchema<Square>(
         new Square(-1000, -Constants.HEIGHT / 2, 500, 500), // Left square
         new Square(Constants.WIDTH + 500, -Constants.HEIGHT / 2, 500, 500), // Right square

@@ -16,6 +16,7 @@ import { HitboxRoomState } from './rooms/schema/HitboxRoomState';
 import Ranking from './ranking/ranking';
 import EndStatus from "./ranking/endStatus";
 import Spleef from "./game/spleef";
+import Archiver from "./ai/archiver";
 
 const state = {
     STARTED: "started",
@@ -28,10 +29,14 @@ class Game {
     gameMode: GameMode;
     ranking: Ranking;
     gameModes: (typeof GameMode)[];
+    archiver: Archiver;
+    training: boolean;
+    ending: any;
 
     constructor(){
         this.physics = new Physics();
         this.ranking = new Ranking();
+        this.archiver = new Archiver();
         this.gameModes = [CaptureTheFlag, CollectTheBoxes, DeathWall, BattleRoyale, Tag, Football, Spleef];
     }
 
@@ -45,6 +50,7 @@ class Game {
                 players.delete(player.clientId);
             }
         });
+        this.archiver = new Archiver();
     }
 
     respawn(players: MapSchema<Player>, level: Level, keepTeam: boolean){
@@ -74,7 +80,15 @@ class Game {
         roomRef.broadcast("starting", countdown);
     }
 
-    private endGameLogic(endStatus: EndStatus, roomRef: Room<HitboxRoomState, any>) {
+    private async endGameLogic(endStatus: EndStatus, roomRef: Room<HitboxRoomState, any>) {
+        this.ending = true;
+        if(endStatus.winner && !Ranking.anyAiPlayers(roomRef)){
+            //this.training = true;
+            await this.archiver.saveToBlob(endStatus.winner, this.gameMode);
+            //await this.trainer.train();
+            //this.training = false;
+        }
+
         this.ranking.calculateRank(endStatus, roomRef);
         roomRef.state.serverTime = 0;
         this.reset(roomRef.state.players);
@@ -82,6 +96,7 @@ class Game {
         this.respawn(roomRef.state.players, roomRef.state.level, this.gameMode.teamBased);
         this.gameMode.onGameStart();
         this.state = state.STARTING;
+        this.ending = false;
     }
 
     private runGameLogic(roomRef: Room<HitboxRoomState, any>) {
@@ -94,6 +109,7 @@ class Game {
         var players = Array.from(roomRef.state.players.values());
         players.filter(p => p.ai).forEach(p => p.move(players.filter(pl => pl.clientId != p.clientId), roomRef.state.serverTime, roomRef.state.level));
         this.calculateDeadPlayers(Array.from(roomRef.state.players.values()), this.gameMode, roomRef.state.level);
+        players.forEach(p => this.archiver.calculateAndSave(p, players, roomRef.state.level));
         return this.gameMode.endCondition();
     }
 
@@ -103,13 +119,16 @@ class Game {
         }
     }
 
-    gameLoop(roomRef: Room<HitboxRoomState>){
+    async gameLoop(roomRef: Room<HitboxRoomState>){
+        if(this.ending){
+            return;
+        }
         this.initialiseGame(roomRef);
         switch(this.state){
             case state.STARTED:
                 var endStatus = this.runGameLogic(roomRef);
                 if(endStatus.end) {
-                    this.endGameLogic(endStatus, roomRef);
+                    await this.endGameLogic(endStatus, roomRef);
                 }
                 break;
             default: 

@@ -14,7 +14,7 @@ class Ranking {
     }
 
     private calculateIndividualRank(endStatus: EndStatus, roomRef: Room<HitboxRoomState>){
-        if(!this.anyAiPlayers(roomRef)){
+        if(!Ranking.anyAiPlayers(roomRef)){
             var eloRatingChanges: any = {};
             PlayFabServer.UpdatePlayerStatistics({
                 Statistics: [
@@ -62,7 +62,7 @@ class Ranking {
     }
 
     private calculateTeamRank(endStatus: EndStatus, roomRef: Room<HitboxRoomState>){
-        if(!this.anyAiPlayers(roomRef)){
+        if(!Ranking.anyAiPlayers(roomRef)){
             var eloRatingChanges: any = {};
             endStatus.winners.forEach(w => {
                 endStatus.losers.forEach(l => {
@@ -110,7 +110,7 @@ class Ranking {
         roomRef.broadcast('winner', {name: endStatus.winningTeam + " team"});
     }
 
-    private anyAiPlayers(roomRef: Room<HitboxRoomState>){
+    static anyAiPlayers(roomRef: Room<HitboxRoomState>){
         var aiPlayers = false;
         roomRef.state.players.forEach(p => {
             if(p.ai && !p.type){
