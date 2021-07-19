@@ -1,12 +1,11 @@
 import constants from "../constants";
 import Level from "../level/level";
 import Player from "../players/player";
-import FileSystem from 'fs';
 import {BlobServiceClient, ContainerClient} from '@azure/storage-blob';
 import GameMode from "../game/gameMode";
 
 const CLOSEDISTANCE = 300;
-const CSVHEADER = "y,xVelocity,yVelocity,stamina,health,closestPlayerXDistance,closestPlayerYDistance,playersLeft,playersRight,playersTop,playersBottom,platformBelow,platformBelowRight,platformBelowLeft,playerAction\n";
+const CSVHEADER = "y,xVelocity,yVelocity,stamina,health,closestPlayerXDistance,closestPlayerYDistance,playersLeft,playersRight,playersTop,playersBottom,platformBelow,platformBelowRight,platformBelowLeft,platformLeft,platformRight,platformAbove,playerAction\n";
 
 class Archiver {
     data: any;
@@ -24,8 +23,7 @@ class Archiver {
         return str.replace(new RegExp(find, 'g'), replace);
     }
 
-    async saveToFile(winner: Player, gameMode: GameMode){
-        FileSystem.mkdirSync("./src/ai/data/", { recursive: true });
+    async saveToBlob(winner: Player, gameMode: GameMode){
         var winnerData = this.data[winner.clientId];
         var winnerDataByAction : any = {};
         winnerData.forEach((d: any) => {
@@ -35,8 +33,9 @@ class Archiver {
                 winnerDataByAction[d[d.length - 1]] = [[d]];
             }
         });
-        let csvContent = CSVHEADER + this.data[winner.clientId].map(e => e.join(",")).join("\n") + "\n";
-        var blobClient = this.containerClient.getBlobClient(`${gameMode.constructor.name}/${gameMode.roomRef.state.level.name}/${this.replaceAll(new Date().toISOString(), ":", "-")}.csv`);
+        let csvContent = CSVHEADER + this.data[winner.clientId].map((e: any) => e.join(",")).join("\n") + "\n";
+        var fileName = `${gameMode.constructor.name}/${gameMode.roomRef.state.level.name}/${winner.name}/${this.replaceAll(new Date().toISOString(), ":", "-")}.csv`;
+        var blobClient = this.containerClient.getBlobClient(fileName);
         await blobClient.getBlockBlobClient().upload(csvContent, csvContent.length);
     }
 
@@ -75,6 +74,9 @@ class Archiver {
         var platformBelow = level.platforms.filter(p => (p.topY() > this.playerY(player)) && (Math.abs(p.topY() - this.playerY(player)) < CLOSEDISTANCE) && (p.leftX() < this.playerX(player)) && (p.rightX() > this.playerX(player))).length > 0;
         var platformBelowRight = level.platforms.filter(p => (p.topY() > this.playerY(player)) && (Math.abs(p.topY() - this.playerY(player)) < CLOSEDISTANCE) && (p.leftX() < (this.playerX(player) + 100)) && (p.rightX() > (this.playerX(player) + 100))).length > 0;
         var platformBelowLeft = level.platforms.filter(p => (p.topY() > this.playerY(player)) && (Math.abs(p.topY() - this.playerY(player)) < CLOSEDISTANCE) && (p.leftX() < (this.playerX(player) - 100)) && (p.rightX() > (this.playerX(player) - 100))).length > 0;
+        var platformLeft = level.platforms.filter(p => (p.rightX() < this.playerX(player)) && (Math.abs(p.rightX() - this.playerX(player)) < CLOSEDISTANCE) && (p.topY() < this.playerY(player)) && (p.bottomY() > this.playerY(player))).length > 0;
+        var platformRight = level.platforms.filter(p => (p.leftX() > this.playerX(player)) && (Math.abs(p.leftX() - this.playerX(player)) < CLOSEDISTANCE) && (p.topY() < this.playerY(player)) && (p.bottomY() > this.playerY(player))).length > 0;
+        var platformAbove = level.platforms.filter(p => (p.bottomY() < this.playerY(player)) && (Math.abs(p.bottomY() - this.playerY(player)) < CLOSEDISTANCE) && (p.leftX() < this.playerX(player)) && (p.rightX() > this.playerX(player))).length > 0;
 
         var playerAction = this.getPlayerAction(player);
 
@@ -93,6 +95,9 @@ class Archiver {
             +platformBelow,
             +platformBelowRight,
             +platformBelowLeft,
+            +platformLeft,
+            +platformRight,
+            +platformAbove,
             playerAction
         ];
     }
