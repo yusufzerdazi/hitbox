@@ -31,14 +31,14 @@ class Game {
     ranking: Ranking;
     gameModes: (typeof GameMode)[];
     archiver: Archiver;
-    trainer: Trainer;
+    //trainer: Trainer;
     training: boolean;
 
     constructor(){
         this.physics = new Physics();
         this.ranking = new Ranking();
         this.archiver = new Archiver();
-        this.trainer = new Trainer();
+        //this.trainer = new Trainer();
         this.gameModes = [CaptureTheFlag, CollectTheBoxes, DeathWall, BattleRoyale, Tag, Football, Spleef];
     }
 
@@ -84,10 +84,10 @@ class Game {
 
     private async endGameLogic(endStatus: EndStatus, roomRef: Room<HitboxRoomState, any>) {
         if(endStatus.winner){
-            this.training = true;
-            this.archiver.saveToFile(endStatus.winner);
-            await this.trainer.train();
-            this.training = false;
+            //this.training = true;
+            this.archiver.saveToFile(endStatus.winner, this.gameMode);
+            //await this.trainer.train();
+            //this.training = false;
         }
 
         this.ranking.calculateRank(endStatus, roomRef);

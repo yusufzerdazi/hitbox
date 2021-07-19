@@ -2,21 +2,29 @@ import constants from "../constants";
 import Level from "../level/level";
 import Player from "../players/player";
 import FileSystem from 'fs';
+import {BlobServiceClient, ContainerClient} from '@azure/storage-blob';
+import GameMode from "../game/gameMode";
+
 const CLOSEDISTANCE = 300;
-const CLOSEOPPDISTANCE = 100;
+const CSVHEADER = "y,xVelocity,yVelocity,stamina,health,closestPlayerXDistance,closestPlayerYDistance,playersLeft,playersRight,playersTop,playersBottom,platformBelow,platformBelowRight,platformBelowLeft,playerAction\n";
 
 class Archiver {
     data: any;
+    blobServiceClient: BlobServiceClient;
+    containerClient: ContainerClient;
 
     constructor(){
-       this.data = {};
+        this.data = {};
+        this.blobServiceClient = BlobServiceClient.fromConnectionString("DefaultEndpointsProtocol=https;AccountName=hitbox;AccountKey=/jPP0NL4UzS/+0VBso2FzWKEqM8Md0I0I5O91q6rE8fis7rLrrlRwXd3KS7yaQv5y9rqU3VguIa1y+NN3NxUTA==;EndpointSuffix=core.windows.net");
+        this.containerClient = this.blobServiceClient.getContainerClient('history');
+        this.containerClient.createIfNotExists();
     }
 
     replaceAll(str : string, find: string, replace : string) {
         return str.replace(new RegExp(find, 'g'), replace);
     }
 
-    saveToFile(winner: Player){
+    async saveToFile(winner: Player, gameMode: GameMode){
         FileSystem.mkdirSync("./src/ai/data/", { recursive: true });
         var winnerData = this.data[winner.clientId];
         var winnerDataByAction : any = {};
@@ -27,22 +35,9 @@ class Archiver {
                 winnerDataByAction[d[d.length - 1]] = [[d]];
             }
         });
-        var minData = null;
-        for(var key of Object.keys(winnerDataByAction)){
-            minData = Math.min(minData || 10000, winnerDataByAction[key].length);
-        }
-        console.log(minData);
-        var finalData = [];
-        for(var key of Object.keys(winnerDataByAction)){
-            for(var d of winnerDataByAction[key].slice(0,minData)){
-                finalData.push([d]);
-            }
-        }
-        let csvContent = this.data[winner.clientId].map(e => e.join(",")).join("\n") + "\n";
-        if(!FileSystem.existsSync(`./src/ai/data/data.csv`)){
-            FileSystem.appendFileSync(`./src/ai/data/data.csv`, "x,y,xVelocity,yVelocity,playersLeftDistance,playersRightDistance,playersTopDistance,playersBottomDistance,playersLeft,playersRight,playersTop,playersBottom,platformCloseLeft,platformCloseRight,platformCloseTop,platformCloseBottom,playerAction\n");
-        }
-        FileSystem.appendFileSync(`./src/ai/data/data.csv`, csvContent);
+        let csvContent = CSVHEADER + this.data[winner.clientId].map(e => e.join(",")).join("\n") + "\n";
+        var blobClient = this.containerClient.getBlobClient(`${gameMode.constructor.name}/${gameMode.roomRef.state.level.name}/${this.replaceAll(new Date().toISOString(), ":", "-")}.csv`);
+        await blobClient.getBlockBlobClient().upload(csvContent, csvContent.length);
     }
 
     calculateAndSave(player: Player, players: Player[], level: Level){
@@ -53,48 +48,51 @@ class Archiver {
         this.data[player.clientId].push(state);
     }
 
+    normaliseToUnit(number: number){
+        return (Math.exp(number / 500) - 1) / (Math.exp(number / 500) + 1);
+    }
+
     calculateState(player: Player, players: Player[], level: Level) : any {
         var otherPlayers = players.filter(p => p.clientId != player.clientId);
+        var closestPlayer : Player = null;
+        var closestDistance = 10000;
+        otherPlayers.forEach(p => {
+            var distance = Math.sqrt(Math.pow(p.x - player.x, 2) + Math.pow(p.y - player.y, 2));
+            if(distance < closestDistance){
+                closestDistance = distance;
+                closestPlayer = p;
+            }
+        });
 
-        var playersCloseLeft = otherPlayers.filter(p => (this.playerX(p) < this.playerX(player)) && (Math.abs(this.playerY(p) - this.playerY(player)) < CLOSEOPPDISTANCE));
-        var playersCloseRight = otherPlayers.filter(p => (this.playerX(p) > this.playerX(player)) && (Math.abs(this.playerY(p) - this.playerY(player)) < CLOSEOPPDISTANCE));
-        var playersCloseTop = otherPlayers.filter(p => (this.playerY(p) < this.playerY(player)) && (Math.abs(this.playerX(p) - this.playerX(player)) < CLOSEOPPDISTANCE));
-        var playersCloseBottom = otherPlayers.filter(p => (this.playerY(p) > this.playerY(player)) && (Math.abs(this.playerX(p) - this.playerX(player)) < CLOSEOPPDISTANCE));
-
-        var playersLeftDistance = !playersCloseLeft ? 1000 : Math.min(...playersCloseLeft.map(p => Math.abs(p.x - player.x)), 1000);
-        var playersRightDistance = !playersCloseRight ? 1000 : Math.min(...playersCloseRight.map(p => Math.abs(p.x - player.x)), 1000);
-        var playersTopDistance = !playersCloseTop ? 1000 : Math.min(...playersCloseTop.map(p => Math.abs(p.y - player.y)), 1000);
-        var playersBottomDistance = !playersCloseBottom ? 1000 : Math.min(...playersCloseBottom.map(p => Math.abs(p.y - player.y)), 1000);
+        var closestPlayerXDistance = closestPlayer ? player.x - closestPlayer.x : 0;
+        var closestPlayerYDistance = closestPlayer ? player.y - closestPlayer.y : 0;
 
         var playersLeft = otherPlayers.filter(p => (this.playerX(p) < this.playerX(player))).length;
         var playersRight = otherPlayers.filter(p => (this.playerX(p) > this.playerX(player))).length;
         var playersTop = otherPlayers.filter(p => (this.playerY(p) < this.playerY(player))).length;
         var playersBottom = otherPlayers.filter(p => (this.playerY(p) > this.playerY(player))).length;
 
-        var platformCloseLeft = level.platforms.filter(p => (p.rightX() < this.playerX(player)) && (Math.abs(p.rightX() - this.playerX(player)) < CLOSEDISTANCE) && (p.topY() < this.playerY(player)) && (p.bottomY() > this.playerY(player))).length > 0;
-        var platformCloseRight = level.platforms.filter(p => (p.leftX() > this.playerX(player)) && (Math.abs(p.leftX() - this.playerX(player)) < CLOSEDISTANCE) && (p.topY() < this.playerY(player)) && (p.bottomY() > this.playerY(player))).length > 0;
-        var platformCloseTop = level.platforms.filter(p => (p.bottomY() < this.playerY(player)) && (Math.abs(p.bottomY() - this.playerY(player)) < CLOSEDISTANCE) && (p.leftX() < this.playerX(player)) && (p.rightX() > this.playerX(player))).length > 0;
-        var platformCloseBottom = level.platforms.filter(p => (p.topY() > this.playerY(player)) && (Math.abs(p.topY() - this.playerY(player)) < CLOSEDISTANCE) && (p.leftX() < this.playerX(player)) && (p.rightX() > this.playerX(player))).length > 0;
+        var platformBelow = level.platforms.filter(p => (p.topY() > this.playerY(player)) && (Math.abs(p.topY() - this.playerY(player)) < CLOSEDISTANCE) && (p.leftX() < this.playerX(player)) && (p.rightX() > this.playerX(player))).length > 0;
+        var platformBelowRight = level.platforms.filter(p => (p.topY() > this.playerY(player)) && (Math.abs(p.topY() - this.playerY(player)) < CLOSEDISTANCE) && (p.leftX() < (this.playerX(player) + 100)) && (p.rightX() > (this.playerX(player) + 100))).length > 0;
+        var platformBelowLeft = level.platforms.filter(p => (p.topY() > this.playerY(player)) && (Math.abs(p.topY() - this.playerY(player)) < CLOSEDISTANCE) && (p.leftX() < (this.playerX(player) - 100)) && (p.rightX() > (this.playerX(player) - 100))).length > 0;
 
         var playerAction = this.getPlayerAction(player);
 
         return [
-            player.x / 1000,
-            player.y / 1000,
-            player.xVelocity / 50,
-            player.yVelocity / 50,
-            +playersLeftDistance / 1000,
-            +playersRightDistance / 1000,
-            +playersTopDistance / 1000,
-            +playersBottomDistance / 1000,
+            this.normaliseToUnit(player.y),
+            player.xVelocity / constants.TERMINAL,
+            player.yVelocity / constants.TERMINAL,
+            player.boostCooldown / 100,
+            player.health / 100,
+            this.normaliseToUnit(closestPlayerXDistance),
+            this.normaliseToUnit(closestPlayerYDistance),
             +playersLeft,
             +playersRight,
             +playersTop,
             +playersBottom,
-            +platformCloseLeft,
-            +platformCloseRight,
-            +platformCloseTop,
-            +platformCloseBottom,
+            +platformBelow,
+            +platformBelowRight,
+            +platformBelowLeft,
             playerAction
         ];
     }
