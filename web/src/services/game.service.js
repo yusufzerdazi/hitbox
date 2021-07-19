@@ -344,7 +344,11 @@ class GameService {
 
     async spectate(room){
         const urlParams = new URLSearchParams(window.location.search);
-        this.room = await this.client.joinOrCreate("Game", { gameMode: urlParams.get('gameMode'), map: urlParams.get('map') });
+        this.room = await this.client.joinOrCreate("Game", { 
+            gameMode: urlParams.get('gameMode'), 
+            map: urlParams.get('map'),
+            room: urlParams.get('room')
+        });
         this.addListeners();
 
         this.room.onStateChange((newState) => {
