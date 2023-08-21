@@ -9,7 +9,7 @@
 import { listen } from "@colyseus/tools";
 
 // Import arena config
-import arenaConfig from "./arena.config";
+import arenaConfig from "./app.config";
 
 // Create and listen on 2567 (or PORT environment variable.)
 listen(arenaConfig);

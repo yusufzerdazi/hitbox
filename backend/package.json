@@ -22,6 +22,7 @@
     "@colyseus/monitor": "^0.14.0",
     "@colyseus/social": "^0.10.9",
     "@colyseus/tools": "^0.15.18",
+    "@types/debug": "^4.1.8",
     "bisonjs": "^2.0.2",
     "colyseus": "^0.14.0",
     "cors": "^2.8.5",
