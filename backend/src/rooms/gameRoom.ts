@@ -1,4 +1,4 @@
-import { Room, Client, generateId } from 'colyseus';
+import { Room, Client, generateId } from '@colyseus/core';
 import Player from '../players/player';
 import Utils from '../utils';
 import { HitboxRoomState } from "./schema/HitboxRoomState";
@@ -92,8 +92,6 @@ export class GameRoom extends Room<HitboxRoomState> {
             await this.game.gameLoop(this);
         });
     }
-
-    async onAuth (client: Client, options: any, request: http.IncomingMessage) { }
 
     async onJoin(client: Client, options: any, auth: any) {
         https.get('https://maker.ifttt.com/trigger/hitbox_player_joined/json/with/key/***REMOVED***');
