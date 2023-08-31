@@ -12,7 +12,7 @@ class Avatars extends React.Component {
   }
 
   componentDidMount(){
-    fetch("https://hitbox.blob.core.windows.net/options?restype=container&comp=list")
+    fetch("https://hitbox.blob.core.windows.net/options?restype=container&comp=list", { mode: "cors" })
       .then(response => {
         response.text().then(xml => {
           var json = xmlToJSON.parseString(xml);
@@ -30,11 +30,7 @@ class Avatars extends React.Component {
   }
 
   selectAvatar(option){
-    fetch(`${process.env.REACT_APP_FUNCTION_URL}/api/SelectAvatar/${this.props.playerId}?option=${encodeURIComponent(option)}&code=eBvuZ/g3HtoMqsreW6JpIYeYTOfvxiATIlM8q4l3wwMF/ogBFa3dXw==`)
-    .then((response) => response.json())
-    .then((json) => {
-      this.props.onChange(json.url)
-    });
+    this.props.onChange(option);
   }
 
   render() {
@@ -44,7 +40,7 @@ class Avatars extends React.Component {
           <Row xs={3}>
             { this.state.blobs ? this.state.blobs.map((blob, i) => {
               return <Col key={i}>
-                  <img alt={`Avatar ${i + 1}`} onClick={() => this.selectAvatar(blob.title)} className={styles.avatar} src={blob.url} />
+                  <img alt={`Avatar ${i + 1}`} onClick={() => this.selectAvatar(blob.url)} className={styles.avatar} src={blob.url} />
                 </Col>
             }) : <Col></Col>}
           </Row>

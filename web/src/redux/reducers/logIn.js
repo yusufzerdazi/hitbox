@@ -9,7 +9,7 @@ export default (state = {}, action) => {
                     loggedIn: true,
                     name: action.payload.DisplayName,
                     id: action.payload.PlayerId,
-                    image: `https://hitbox.blob.core.windows.net/avatars/${action.payload.PlayerId}.svg`
+                    image: action.payload.AvatarUrl
                 }
             };
         case USERNAME_UPDATED:

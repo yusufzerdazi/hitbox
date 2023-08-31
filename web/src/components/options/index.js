@@ -67,7 +67,6 @@ class Options extends React.Component {
     this.setName = this.setName.bind(this);
     this.validateUserName = this.validateUserName.bind(this);
     this.onFileUpload = this.onFileUpload.bind(this);
-    this.uploadAvatar = this.uploadAvatar.bind(this);
     this.onAvatarChange = this.onAvatarChange.bind(this);
   }
 
@@ -93,7 +92,7 @@ class Options extends React.Component {
           this.setName(true);
         }
         if(!userResponse.data.PlayerProfile.AvatarUrl){
-          this.selectRandomAvatar(response.data.PlayFabId);
+          this.selectRandomAvatar();
         }
         this.props.logIn(userResponse.data.PlayerProfile);
         setInterval(() => {
@@ -198,25 +197,8 @@ class Options extends React.Component {
     this.setState({file: event.target.files[0]});
   }
 
-  uploadAvatar(){
-    const data = new FormData() 
-    data.append('file', this.state.file);
-    data.append('playerId', this.props.user.id);
-    axios.post(`${process.env.REACT_APP_FUNCTION_URL}/api/UploadAvatar?code=CPb1i3KdhSwsewc2mWSM4SbeTdvCTq1Rrn5B3X7PaKjP2hehNEdtDQ==`, data, {})
-    .then(res => {
-      this.setState({etag: Utils.uuidv4()});
-    })
-    .catch(err => {
-
-    })
-  }
-
-  selectRandomAvatar(playerId){
-    fetch(`${process.env.REACT_APP_FUNCTION_URL}/api/SelectAvatar/${playerId}?option=${Math.floor(Math.random()*40 + 1)}&code=eBvuZ/g3HtoMqsreW6JpIYeYTOfvxiATIlM8q4l3wwMF/ogBFa3dXw==`)
-    .then((response) => response.json())
-    .then((json) => {
-      this.onAvatarChange(json.url)
-    });
+  selectRandomAvatar(){
+    this.onAvatarChange(`https://hitbox.blob.core.windows.net/options/${Math.floor(Math.random()*40 + 1)}.svg`);
   }
 
   onAvatarChange(url){
