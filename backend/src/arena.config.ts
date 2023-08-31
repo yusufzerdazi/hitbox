@@ -1,4 +1,4 @@
-import Arena from "@colyseus/tools";
+import config from "@colyseus/tools";
 import { monitor } from "@colyseus/monitor";
 import cors from "cors";
 
@@ -8,7 +8,7 @@ import { PlayFabServer } from 'playfab-sdk';
 PlayFabServer.settings.titleId = 'B15E8';
 PlayFabServer.settings.developerSecretKey = "***REMOVED***";
 
-export default Arena({
+export default config({
     getId: () => "Your Colyseus App",
 
     initializeGameServer: (gameServer) => {

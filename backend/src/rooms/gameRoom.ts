@@ -4,6 +4,7 @@ import Utils from '../utils';
 import { HitboxRoomState } from "./schema/HitboxRoomState";
 import Game from '../game';
 import https from 'https';
+import http from 'http';
 
 export class GameRoom extends Room<HitboxRoomState> {
     game: Game;
@@ -92,6 +93,18 @@ export class GameRoom extends Room<HitboxRoomState> {
         });
     }
 
+    async onAuth (client: Client, options: any, request: http.IncomingMessage) { }
+
+    async onJoin(client: Client, options: any, auth: any) {
+        https.get('https://maker.ifttt.com/trigger/hitbox_player_joined/json/with/key/***REMOVED***');
+    }
+
+    async onLeave(client: Client, consented: boolean) {
+        this.state.players.delete(client.sessionId);
+    }
+
+    async onDispose () { }
+
     removeAiPlayer(){
         var deleted = false;
         this.state.players.forEach(p => {
@@ -116,16 +129,6 @@ export class GameRoom extends Room<HitboxRoomState> {
     }
 
     onQuit(client: Client){
-        this.state.players.delete(client.sessionId);
-    }
-
-    // client joined: bring your own logic
-    async onJoin(client: Client, options: any) {
-        https.get('https://maker.ifttt.com/trigger/hitbox_player_joined/json/with/key/***REMOVED***');
-    }
-
-    // client left: bring your own logic
-    async onLeave(client: Client, consented: boolean) {
         this.state.players.delete(client.sessionId);
     }
 }
