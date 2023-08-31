@@ -3,6 +3,7 @@ import Player from '../players/player';
 import Utils from '../utils';
 import { HitboxRoomState } from "./schema/HitboxRoomState";
 import Game from '../game';
+import https from 'https';
 
 export class GameRoom extends Room<HitboxRoomState> {
     game: Game;
@@ -120,6 +121,7 @@ export class GameRoom extends Room<HitboxRoomState> {
 
     // client joined: bring your own logic
     async onJoin(client: Client, options: any) {
+        https.get('https://maker.ifttt.com/trigger/hitbox_player_joined/json/with/key/***REMOVED***');
     }
 
     // client left: bring your own logic

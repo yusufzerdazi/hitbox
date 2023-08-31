@@ -16,7 +16,6 @@ import { HitboxRoomState } from './rooms/schema/HitboxRoomState';
 import Ranking from './ranking/ranking';
 import EndStatus from "./ranking/endStatus";
 import Spleef from "./game/spleef";
-import Archiver from "./ai/archiver";
 
 const state = {
     STARTED: "started",
@@ -29,14 +28,12 @@ class Game {
     gameMode: GameMode;
     ranking: Ranking;
     gameModes: (typeof GameMode)[];
-    archiver: Archiver;
     training: boolean;
     ending: any;
 
     constructor(){
         this.physics = new Physics();
         this.ranking = new Ranking();
-        this.archiver = new Archiver();
         this.gameModes = [CaptureTheFlag, CollectTheBoxes, DeathWall, BattleRoyale, Tag, Football, Spleef];
     }
 
@@ -50,7 +47,6 @@ class Game {
                 players.delete(player.clientId);
             }
         });
-        this.archiver = new Archiver();
     }
 
     respawn(players: MapSchema<Player>, level: Level, keepTeam: boolean){
@@ -82,13 +78,6 @@ class Game {
 
     private async endGameLogic(endStatus: EndStatus, roomRef: Room<HitboxRoomState, any>) {
         this.ending = true;
-        if(endStatus.winner && !Ranking.anyAiPlayers(roomRef)){
-            //this.training = true;
-            await this.archiver.saveToBlob(endStatus.winner, this.gameMode);
-            //await this.trainer.train();
-            //this.training = false;
-        }
-
         this.ranking.calculateRank(endStatus, roomRef);
         roomRef.state.serverTime = 0;
         this.reset(roomRef.state.players);
@@ -109,7 +98,6 @@ class Game {
         var players = Array.from(roomRef.state.players.values());
         players.filter(p => p.ai).forEach(p => p.move(players.filter(pl => pl.clientId != p.clientId), roomRef.state.serverTime, roomRef.state.level));
         this.calculateDeadPlayers(Array.from(roomRef.state.players.values()), this.gameMode, roomRef.state.level);
-        players.forEach(p => this.archiver.calculateAndSave(p, players, roomRef.state.level));
         return this.gameMode.endCondition();
     }
 
