@@ -15,11 +15,7 @@ class Footer extends React.Component {
             <img alt="Yusuf Zerdazi" className={styles.footerImage} src={yz}></img>
           </OverlayTrigger>
         </a>
-        <a href="https://buymeacoffee.com/yusufzerdazi">
-          <OverlayTrigger placement="top" overlay={<Tooltip id={`donate`}>Buy me a beer</Tooltip> }>
-            <img alt="Donate" className={styles.footerImage} src={beer}></img>
-          </OverlayTrigger>
-        </a>
+        <a href="https://www.buymeacoffee.com/yusufzerdazi"><img className={styles.footerImage} src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" /></a>
       </div>
     );
   }
