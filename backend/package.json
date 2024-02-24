@@ -23,6 +23,7 @@
   "homepage": "https://github.com/colyseus/create-colyseus#readme",
   "dependencies": {
     "@azure/storage-blob": "^12.15.0",
+    "@colyseus/core": "^0.15.25",
     "@colyseus/monitor": "^0.15.5",
     "@colyseus/playground": "^0.15.11",
     "@colyseus/tools": "^0.15.35",

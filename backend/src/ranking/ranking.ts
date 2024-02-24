@@ -1,4 +1,4 @@
-import { Room } from 'colyseus';
+import { Room } from '@colyseus/core';
 import { PlayFabServer } from 'playfab-sdk';
 import { HitboxRoomState } from '../rooms/schema/HitboxRoomState';
 import EndStatus from './endStatus';
@@ -26,7 +26,7 @@ class Ranking {
                 PlayFabId: endStatus.winner.id
             }, () => {});
             
-            roomRef.state.players.forEach(p => {
+            roomRef.state.players.forEach((p: any) => {
                 if(p.clientId != endStatus.winner.clientId && !p.type){
                     var newElo = EloRating.calculate(endStatus.winner.rank || 1000, p.rank || 1000);
                     eloRatingChanges[endStatus.winner.clientId] = (eloRatingChanges[endStatus.winner.clientId] || 0) + (newElo.playerRating - (endStatus.winner.rank || 1000));
@@ -112,7 +112,7 @@ class Ranking {
 
     static anyAiPlayers(roomRef: Room<HitboxRoomState>){
         var aiPlayers = false;
-        roomRef.state.players.forEach(p => {
+        roomRef.state.players.forEach((p: any) => {
             if(p.ai && !p.type){
                 aiPlayers = true;
             }
