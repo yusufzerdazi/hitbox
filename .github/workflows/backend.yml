@@ -27,7 +27,7 @@ jobs:
 
     - uses: cschleiden/replace-tokens@v1
       with:
-        files: '["**/*.json"]'
+        files: '["backend/.colyseus-cloud.json"]'
       env:
         COLYSEUS_TOKEN: ${{ secrets.COLYSEUS_TOKEN }}
 
