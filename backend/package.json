@@ -2,7 +2,7 @@
   "private": true,
   "name": "hitbox-backend",
   "version": "1.0.0",
-  "type": "module",
+  "type": "commonjs",
   "description": "npm init template for bootstrapping an empty Colyseus project",
   "main": "lib/index.js",
   "engines": {
