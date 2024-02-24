@@ -93,10 +93,6 @@ export class GameRoom extends Room<HitboxRoomState> {
         });
     }
 
-    async onJoin(client: Client, options: any, auth: any) {
-        https.get('https://maker.ifttt.com/trigger/hitbox_player_joined/json/with/key/***REMOVED***');
-    }
-
     async onLeave(client: Client, consented: boolean) {
         this.state.players.delete(client.sessionId);
     }
@@ -124,6 +120,7 @@ export class GameRoom extends Room<HitboxRoomState> {
         this.state.players.set(client.sessionId, newPlayer);
         this.game.gameMode.onPlayerJoin();
         newPlayer.respawn(Array.from(this.state.players.values()), this.state.level, this.game.gameMode.teamBased);
+        https.get('https://maker.ifttt.com/trigger/hitbox_player_joined/json/with/key/***REMOVED***');
     }
 
     onQuit(client: Client){
