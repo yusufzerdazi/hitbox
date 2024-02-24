@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "type": "commonjs",
   "description": "npm init template for bootstrapping an empty Colyseus project",
-  "main": "lib/index.js",
+  "main": "build/index.js",
   "engines": {
     "node": ">= 16.13.0"
   },
