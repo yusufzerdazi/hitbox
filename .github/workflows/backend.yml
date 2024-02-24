@@ -30,6 +30,7 @@ jobs:
       run: find *.json -type f -exec sed -i ''s/#{COLYSEUS_TOKEN}#/${{ secrets.COLYSEUS_TOKEN }}/g'' {} \;
 
     - name: Bash - Show JSON Contents
+      working-directory: ./backend
       run: cat .colyseus-cloud.json
         
     - name: Deploy to Colyseus
