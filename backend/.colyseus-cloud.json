@@ -1,6 +1,6 @@
 {
   "production": {
-    "applicationId": "111-hitbox",
+    "applicationId": "308-hitbox",
     "token": "***REMOVED***",
     "remote": "https://github.com/yusufzerdazi/hitbox.git"
   }

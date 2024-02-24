@@ -6,7 +6,7 @@ import { GameRoom } from './rooms/gameRoom';
 import { PlayFabServer } from 'playfab-sdk';
 
 PlayFabServer.settings.titleId = 'B15E8';
-PlayFabServer.settings.developerSecretKey = "***REMOVED***";
+PlayFabServer.settings.developerSecretKey = process.env.PLAYFAB_KEY;
 
 export default config({    
     getId: () => "Your Colyseus App",

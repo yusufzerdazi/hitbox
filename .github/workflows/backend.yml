@@ -25,12 +25,14 @@ jobs:
       with:
         node-version: '20.x'
 
-    - name: Bash - Show JSON Contents
-      working-directory: ./backend
-      run: cat .colyseus-cloud.json
+    - uses: cschleiden/replace-tokens@v1
+      with:
+        files: '["backend/.colyseus-cloud.json"]'
+      env:
+        COLYSEUS_TOKEN: ${{ secrets.COLYSEUS_TOKEN }}
         
     - name: Deploy to Colyseus
-      run: npx @colyseus/cloud deploy
+      run: echo "Y" | npx @colyseus/cloud deploy
       working-directory: ./backend
       env:
         CI: ""
