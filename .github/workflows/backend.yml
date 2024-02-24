@@ -24,9 +24,12 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: '20.x'
+
+    - name: Replace Colyseus Token
+      run: find *.json -type f -exec sed -i ''s/#{COLYSEUS_TOKEN}#/${{ secrets.COLYSEUS_TOKEN }}/g'' {} \;
         
-    - name: npm run build
-      run: npx @colyseus/cloud deploy --remote https://github.com/yusufzerdazi/hitbox.git
+    - name: Deploy to Colyseus
+      run: npx @colyseus/cloud deploy
       working-directory: ./web
       env:
         CI: ""
