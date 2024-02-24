@@ -1,4 +1,3 @@
-
 resource blobStorage 'Microsoft.Storage/storageAccounts@2023-01-01' = {
   sku: {
     name: 'Standard_LRS'
@@ -114,6 +113,7 @@ resource endpoint 'Microsoft.Cdn/profiles/endpoints@2023-05-01' = {
     deliveryPolicy: {
       rules: [
         {
+          name: 'HTTPS'
           actions: [
             {
               name: 'UrlRedirect'
