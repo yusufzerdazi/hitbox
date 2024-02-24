@@ -5,7 +5,7 @@ resource blobStorage 'Microsoft.Storage/storageAccounts@2023-01-01' = {
   }
   kind: 'StorageV2'
   name: 'hitbox'
-  location: 'westeurope'
+  location: 'northeurope'
   tags: {}
   properties: {
     minimumTlsVersion: 'TLS1_2'
@@ -38,7 +38,7 @@ resource blobStorage 'Microsoft.Storage/storageAccounts@2023-01-01' = {
 
 resource cdn 'Microsoft.Cdn/profiles@2023-05-01' = {
   name: 'hitbox'
-  location: 'SouthCentralUs'
+  location: 'Global'
   tags: {}
   sku: {
     name: 'Standard_Verizon'
@@ -51,7 +51,7 @@ resource cdn 'Microsoft.Cdn/profiles@2023-05-01' = {
 resource endpoint 'Microsoft.Cdn/profiles/endpoints@2023-05-01' = {
   parent: cdn
   name: 'hitbox'
-  location: 'SouthCentralUs'
+  location: 'Global'
   tags: {}
   properties: {
     originHostHeader: 'hitbox.z16.web.core.windows.net'
