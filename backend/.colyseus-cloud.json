@@ -1,7 +1,7 @@
 {
   "production": {
     "applicationId": "308-hitbox",
-    "token": "***REMOVED***",
+    "token": "#{COLYSEUS_TOKEN}#",
     "remote": "https://github.com/yusufzerdazi/hitbox.git"
   }
 }
