@@ -28,6 +28,9 @@ jobs:
     - name: Replace Colyseus Token
       working-directory: ./backend
       run: find *.json -type f -exec sed -i ''s/#{COLYSEUS_TOKEN}#/${{ secrets.COLYSEUS_TOKEN }}/g'' {} \;
+
+    - name: Bash - Show JSON Contents
+      run: cat .colyseus-cloud.json
         
     - name: Deploy to Colyseus
       run: npx @colyseus/cloud deploy
