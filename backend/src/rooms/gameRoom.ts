@@ -120,7 +120,7 @@ export class GameRoom extends Room<HitboxRoomState> {
         this.state.players.set(client.sessionId, newPlayer);
         this.game.gameMode.onPlayerJoin();
         newPlayer.respawn(Array.from(this.state.players.values()), this.state.level, this.game.gameMode.teamBased);
-        https.get('https://maker.ifttt.com/trigger/hitbox_player_joined/json/with/key/***REMOVED***');
+        https.get('https://maker.ifttt.com/trigger/hitbox_player_joined/json/with/key/' + process.env.IFTTT_KEY);
     }
 
     onQuit(client: Client){
