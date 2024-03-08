@@ -42,5 +42,3 @@ jobs:
         resource-group-name: hitbox
         type: Static
         target-path: home/site/wwwroot
-        clean: true
-        restart: true
