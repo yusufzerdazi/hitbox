@@ -27,13 +27,14 @@ jobs:
         npm install
         npm run build
 
-    - name: Zip artifact for deployment
-      run: zip release.zip ./backend/build/* -r
+    # Log into Azure
+    - uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS_ASOS }}
 
     - name: 'Deploy to Azure WebApp'
       id: deploy-to-webapp
       uses: azure/webapps-deploy@v2
       with:
         app-name: ${{ env.AZURE_WEBAPP_NAME }}
-        publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_ASOS }}
-        package: ./release.zip
+        package: ./backend/build
