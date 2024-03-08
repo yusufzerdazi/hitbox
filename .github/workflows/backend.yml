@@ -9,7 +9,7 @@ on:
 env:
   AZURE_WEBAPP_NAME: hitbox
   AZURE_WEBAPP_PACKAGE_PATH: './backend'
-  NODE_VERSION: '18.x'
+  NODE_VERSION: '21.x'
 
 jobs:
   build:
@@ -17,11 +17,10 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
+    - name: Use Node.js
+      uses: actions/setup-node@v3
       with:
-        node-version: ${{ env.NODE_VERSION }}
-        cache: 'npm'
+        node-version: NODE_VERSION
 
     - name: npm install, build, and test
       working-directory: ./backend
