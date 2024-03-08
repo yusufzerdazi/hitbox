@@ -1,8 +1,8 @@
 @description('Playfab Key')
-param playFabKey string
+param playFabKey
 
 @description('IFTTT Key')
-param iftttKey string
+param iftttKey
 
 @description('Name of the App Service')
 var webAppName = 'hitbox'
@@ -40,14 +40,6 @@ resource appService 'Microsoft.Web/sites@2022-03-01' = {
         {
           name: 'WEBSITE_NODE_DEFAULT_VERSION'
           value: '~21'
-        }
-        {
-          name: 'PLAYFAB_KEY'
-          value: playFabKey
-        }
-        {
-          name: 'IFTTT_KEY'
-          value: iftttKey
         }
       ]
       linuxFxVersion: 'NODE|20-lts'

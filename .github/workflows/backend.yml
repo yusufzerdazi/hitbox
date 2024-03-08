@@ -40,3 +40,10 @@ jobs:
         package: ./backend/build
         clean: true
         restart: true
+
+    - name: 'Deploy App Settings'
+      id: app-settings
+      uses: azure/appservice-settings@v3
+      with:
+        app-name: ${{ env.AZURE_WEBAPP_NAME }}
+        general-settings-json: '{"PLAYFAB_KEY": "${{ secrets.PLAYFAB_KEY }}", "IFTTT_KEY": "${{ secrets.IFTTT_KEY }}"}'
