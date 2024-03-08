@@ -27,5 +27,5 @@ jobs:
         subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION_ASOS }}
         resourceGroupName: hitbox
         template: ./bicep/backend.bicep
-        failOnStdErr: false
+        failOnStdErr: false     
         scope: resourcegroup

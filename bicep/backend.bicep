@@ -1,21 +1,5 @@
-@description('Specifies the environment of the container apps.')
-@allowed  ([
-  'test'
-  'dev'
-  'qa'
-  'prod'
-])
-param env string
-
-@description('Specify the app name')
-@allowed([
-  'frontend'
-  'backend'
-])
-param appName string 
-
 @description('Name of the App Service')
-var webAppName = 'hitbox-${appName}-${env}'
+var webAppName = 'hitbox'
 
 @description('Spcify the SKU type')
 var sku = 'P2v3'
@@ -24,14 +8,11 @@ var sku = 'P2v3'
 param location string = resourceGroup().location
 
 @description('Name of the App Service Plan')
-var appServicePlanName = 'hitbox-${env}'
+var appServicePlanName = 'hitbox'
 
 resource appServicePlan 'Microsoft.Web/serverfarms@2022-03-01' = {
   name: appServicePlanName
   location: location
-  tags: {
-    env: env
-  }
   properties: {
     reserved: true
   }
@@ -45,9 +26,6 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2022-03-01' = {
 resource appService 'Microsoft.Web/sites@2022-03-01' = {
   name: webAppName
   location: location
-  tags: {
-    env: env
-  }
   properties: {
     serverFarmId: appServicePlan.id
     httpsOnly: true
