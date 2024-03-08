@@ -43,7 +43,7 @@ jobs:
 
     - name: 'Deploy App Settings'
       id: app-settings
-      uses: azure/appservice-settings@v3
+      uses: azure/appservice-settings@v1
       with:
         app-name: ${{ env.AZURE_WEBAPP_NAME }}
         general-settings-json: '{"PLAYFAB_KEY": "${{ secrets.PLAYFAB_KEY }}", "IFTTT_KEY": "${{ secrets.IFTTT_KEY }}"}'
