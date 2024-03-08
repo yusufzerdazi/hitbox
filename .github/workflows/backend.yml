@@ -27,6 +27,9 @@ jobs:
         npm install
         npm run build
 
+    - name: Zip artifact for deployment
+      run: zip release.zip ./backend/build/* -r
+
     # Log into Azure
     - uses: azure/login@v1
       with:
@@ -37,7 +40,7 @@ jobs:
       uses: azure/webapps-deploy@v3
       with:
         app-name: ${{ env.AZURE_WEBAPP_NAME }}
-        package: ./backend/build
-        type: Static
+        package: '*.zip'
+        type: ZIP
         clean: true
         restart: true

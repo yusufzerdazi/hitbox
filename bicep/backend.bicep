@@ -38,6 +38,12 @@ resource appService 'Microsoft.Web/sites@2022-03-01' = {
       ]
       linuxFxVersion: 'NODE|20-lts'
       appCommandLine: 'pm2 start index.js'
+      cors:{
+        allowedOrigins:[
+          'http://localhost:3000'
+          'https://www.hitbox.online'
+        ]
+      }
     }
     publicNetworkAccess: 'Enabled'
   }
