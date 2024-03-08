@@ -29,3 +29,4 @@ jobs:
         template: ./bicep/backend.bicep
         failOnStdErr: false     
         scope: resourcegroup
+        parameters: playFabKey=${{ secrets.PLAYFAB_KEY }} iftttKey=${{ secrets.IFTTT_KEY }}
