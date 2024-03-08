@@ -38,7 +38,7 @@ jobs:
       with:
         app-name: ${{ env.AZURE_WEBAPP_NAME }}
         package: ./backend
-        clean: true
+        clean: false
         restart: true
 
     - name: 'Deploy App Settings'
@@ -46,4 +46,4 @@ jobs:
       uses: azure/appservice-settings@v1
       with:
         app-name: ${{ env.AZURE_WEBAPP_NAME }}
-        app-settings-json: '{"PLAYFAB_KEY": "${{ secrets.PLAYFAB_KEY }}", "IFTTT_KEY": "${{ secrets.IFTTT_KEY }}"}'
+        app-settings-json: '[{"name":"PLAYFAB_KEY", "value": "${{ secrets.PLAYFAB_KEY }}"}, {"name": "IFTTT_KEY", "value": "${{ secrets.IFTTT_KEY }}"}]'

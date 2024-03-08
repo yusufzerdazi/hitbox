@@ -2,7 +2,7 @@ on:
   push:
     paths:
     - '**.bicep'
-    - .github/workflows/bicep.yml
+    - .github/workflows/infra_web.yml
   workflow_dispatch:
 
 name: infra_web
