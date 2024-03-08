@@ -38,3 +38,9 @@ jobs:
       with:
         app-name: ${{ env.AZURE_WEBAPP_NAME }}
         package: ./backend/build
+        startup-command: pm2 start index.js
+        resource-group-name: hitbox
+        type: Static
+        target-path: home/site/wwwroot
+        clean: true
+        restart: true
