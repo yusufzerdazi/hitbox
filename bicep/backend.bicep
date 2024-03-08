@@ -35,10 +35,6 @@ resource appService 'Microsoft.Web/sites@2022-03-01' = {
           name: 'WEBSITE_NODE_DEFAULT_VERSION'
           value: '~21'
         }
-        {
-          name: 'WEBSITE_RUN_FROM_PACKAGE'
-          value: '1'
-        }
       ]
       linuxFxVersion: 'NODE|20-lts'
       appCommandLine: 'pm2 start index.js'
