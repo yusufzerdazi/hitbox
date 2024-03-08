@@ -5,7 +5,7 @@ on:
     - .github/workflows/bicep.yml
   workflow_dispatch:
 
-name: infrastructure
+name: infra_web
 
 jobs:
   provision:
@@ -28,6 +28,7 @@ jobs:
         resourceGroupName: hitbox
         template: ./bicep/main.bicep
         failOnStdErr: false
+        scope: resourcegroup
       
     - name: Azure CLI script
       uses: azure/CLI@v1
