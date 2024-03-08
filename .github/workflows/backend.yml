@@ -46,11 +46,11 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: hitbox
-
+    
     - name: 'Deploy to Azure WebApp'
       id: deploy-to-webapp
-      uses: azure/webapps-deploy@v2
+      uses: azure/webapps-deploy@85270a1854658d167ab239bce43949edb336fa7c
       with:
         app-name: ${{ env.AZURE_WEBAPP_NAME }}
-        publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+        publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_ASOS }}
         package: .

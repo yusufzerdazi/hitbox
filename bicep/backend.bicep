@@ -40,6 +40,8 @@ resource appService 'Microsoft.Web/sites@2022-03-01' = {
           value: '1'
         }
       ]
+      linuxFxVersion: 'NODE|20-lts'
+      appCommandLine: 'pm2 start index.js'
     }
     publicNetworkAccess: 'Enabled'
   }
