@@ -41,7 +41,7 @@ resource appService 'Microsoft.Web/sites@2022-03-01' = {
       cors:{
         allowedOrigins:[
           'http://localhost:3000'
-          'https://hitbox.online'
+          'https://www.hitbox.online'
         ]
       }
       alwaysOn: true
