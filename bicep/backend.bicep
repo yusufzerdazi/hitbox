@@ -1,9 +1,3 @@
-@description('Playfab Key')
-param playFabKey
-
-@description('IFTTT Key')
-param iftttKey
-
 @description('Name of the App Service')
 var webAppName = 'hitbox'
 
