@@ -37,7 +37,7 @@ resource appService 'Microsoft.Web/sites@2022-03-01' = {
         }
       ]
       linuxFxVersion: 'NODE|20-lts'
-      appCommandLine: 'pm2 start index.js --no-daemon'
+      appCommandLine: 'pm2 start build/index.js --no-daemon'
       cors:{
         allowedOrigins:[
           'http://localhost:3000'
