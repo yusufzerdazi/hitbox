@@ -27,12 +27,14 @@ jobs:
         npm install
         npm run build
 
+    # Log into Azure
+    - uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS_ASOS }}
+
     - name: 'Deploy to Azure WebApp'
       id: deploy-to-webapp
       uses: azure/webapps-deploy@v3
       with:
         app-name: ${{ env.AZURE_WEBAPP_NAME }}
-        package: ./backend/build
-        publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_ASOS }}
-        target-path: /home/site/wwwroot
-        type: Static
+        package: ./backend/build/*
