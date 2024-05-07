@@ -7,7 +7,7 @@ on:
     - .github/workflows/backend.yml
 
 env:
-  AZURE_WEBAPP_NAME: hitbox
+  AZURE_WEBAPP_NAME: hitbox2
   NODE_VERSION: '20.x'
 
 jobs:
