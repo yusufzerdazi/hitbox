@@ -1,5 +1,5 @@
 @description('Name of the App Service')
-var webAppName = 'hitbox'
+var webAppName = 'hitbox2'
 
 @description('Spcify the SKU type')
 var sku = 'P2v3'
