@@ -5,6 +5,7 @@ on:
     paths:
     - backend/**
     - .github/workflows/backend.yml
+  workflow_dispatch:
 
 env:
   AZURE_WEBAPP_NAME: hitbox2
