@@ -2,7 +2,7 @@
 var webAppName = 'hitbox'
 
 @description('Spcify the SKU type')
-var sku = 'P2v3'
+var sku = 'B1'
 
 @description('Location for all resources.')
 param location string = resourceGroup().location
