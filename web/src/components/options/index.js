@@ -117,7 +117,7 @@ class Options extends React.Component {
     PlayFabClient.LoginWithGoogleAccount({
         AccessToken: this.state.accessToken,
         CreateAccount : true,
-        TitleId: "B15E8",
+        TitleId: "5B7C3",
     }, this.onPlayFabResponse);
   }
 
@@ -133,7 +133,7 @@ class Options extends React.Component {
     }
     PlayFabClient.LoginWithCustomID({
       CreateAccount: true,
-      TitleId: "B15E8",
+      TitleId: "5B7C3",
       CustomId: customId
     }, this.onPlayFabResponse);
   }

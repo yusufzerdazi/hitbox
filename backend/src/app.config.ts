@@ -5,7 +5,7 @@ import cors from "cors";
 import { GameRoom } from './rooms/gameRoom';
 import { PlayFabServer } from 'playfab-sdk';
 
-PlayFabServer.settings.titleId = 'B15E8';
+PlayFabServer.settings.titleId = '5B7C3';
 PlayFabServer.settings.developerSecretKey = process.env.PLAYFAB_KEY;
 
 export default config({    

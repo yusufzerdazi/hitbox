@@ -14,7 +14,7 @@ import { store } from './redux/store';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 
-PlayFabClient.settings.titleId = "B15E8";
+PlayFabClient.settings.titleId = "5B7C3";
 
 class App extends React.Component {
   constructor(props){
