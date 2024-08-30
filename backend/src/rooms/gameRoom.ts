@@ -2,14 +2,72 @@ import { Room, Client, generateId } from '@colyseus/core';
 import Player from '../players/player';
 import Utils from '../utils';
 import { HitboxRoomState } from "./schema/HitboxRoomState";
+import { matchMaker } from "colyseus";
 import Game from '../game';
 import https from 'https';
 import http from 'http';
+
+import { DefaultAzureCredential } from '@azure/identity';
+import { AppServicePlan, AppServicePlanPatchResource, SkuDescription, WebSiteManagementClient } from '@azure/arm-appservice';
+
+const subscriptionId = '4b89f88e-13f2-4990-bf5f-3ab2e4d5301f';
+const resourceGroupName = 'hitbox';
+const appServiceName = 'hitbox';
+
+const credential = new DefaultAzureCredential();
+const client = new WebSiteManagementClient(credential, subscriptionId);
+
+async function getAppServicePlanDetails() {
+    // Get the App Service details to find its App Service Plan
+    const appService = await client.webApps.get(resourceGroupName, appServiceName);
+
+    // The App Service Plan ID is in the serverFarmId property of the App Service
+    const appServicePlanId = appService.serverFarmId;
+    const appServicePlanResourceGroupName = appServicePlanId.split('/')[4];
+    const appServicePlanName = appServicePlanId.split('/')[8];
+    
+    // Get the App Service Plan details
+    const appServicePlan = await client.appServicePlans.get(appServicePlanResourceGroupName, appServicePlanName);
+
+    return appServicePlan.sku;
+}
+
+async function scaleAppServicePlan(newSku: any) {
+    // Get the App Service details to find its App Service Plan
+    const appService = await client.webApps.get(resourceGroupName, appServiceName);
+
+    // The App Service Plan ID is in the serverFarmId property of the App Service
+    const appServicePlanId = appService.serverFarmId;
+    const appServicePlanResourceGroupName = appServicePlanId.split('/')[4];
+    const appServicePlanName = appServicePlanId.split('/')[8];
+    
+    // Get the App Service Plan details
+    const appServicePlan = await client.appServicePlans.get(appServicePlanResourceGroupName, appServicePlanName);
+    const patch : AppServicePlan = {
+        sku: newSku,
+        location: 'North Europe',
+        kind: 'app'
+    }
+    console.log(`Starting scaling to ${newSku.name}.`);
+    var updated = await client.appServicePlans.beginCreateOrUpdateAndWait(appServicePlanResourceGroupName, appServicePlanName, patch);
+    console.log("Scaling complete.");
+    return updated;
+}
+
+const downSku : SkuDescription =  { name: 'B1', tier: 'Basic', size: 'B1', family: 'B', capacity: 1 };
+const upSku : SkuDescription = { name: 'P0v3', tier: 'Premium0V3', size: 'P0v3', family: 'Pv3', capacity: 1 };
 
 export class GameRoom extends Room<HitboxRoomState> {
     game: Game;
 
     async onCreate(options: any) {
+        getAppServicePlanDetails().then(sku => {
+            if (sku.name == "B1") {
+                this.broadcast("scaling");
+                scaleAppServicePlan(upSku);
+            }
+        })
+
         this.maxClients = 100;
 
         this.setState(new HitboxRoomState());
@@ -97,7 +155,12 @@ export class GameRoom extends Room<HitboxRoomState> {
         this.state.players.delete(client.sessionId);
     }
 
-    async onDispose () { }
+    async onDispose () {
+        console.log(matchMaker.stats.local.ccu);
+        if (matchMaker.stats.local.ccu <= 1) {
+            scaleAppServicePlan(downSku);
+        }
+    }
 
     removeAiPlayer(){
         var deleted = false;

@@ -21,6 +21,7 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2022-03-01' = {
     capacity: 0
   }
   kind: 'linux'
+  
 }
 
 resource appService 'Microsoft.Web/sites@2022-03-01' = {
@@ -47,5 +48,17 @@ resource appService 'Microsoft.Web/sites@2022-03-01' = {
       alwaysOn: true
     }
     publicNetworkAccess: 'Enabled'
+  }
+  identity: {
+    type: 'SystemAssigned'
+  }
+}
+
+resource roleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
+  name: guid(appServicePlan.id, appServicePlan.id, 'Contributor') // Role ID for 'Contributor' is predefined by Azure
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c') // Contributor Role ID
+    principalId: appService.identity.principalId
+    scope: appService.id
   }
 }

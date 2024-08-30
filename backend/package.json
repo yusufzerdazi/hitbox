@@ -22,6 +22,8 @@
   },
   "homepage": "https://github.com/colyseus/create-colyseus#readme",
   "dependencies": {
+    "@azure/arm-appservice": "^15.0.0",
+    "@azure/identity": "^4.4.1",
     "@azure/storage-blob": "^12.15.0",
     "@colyseus/core": "^0.15.25",
     "@colyseus/monitor": "^0.15.5",

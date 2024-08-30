@@ -8,6 +8,7 @@ import { PlayFabServer } from 'playfab-sdk';
 PlayFabServer.settings.titleId = '5B7C3';
 PlayFabServer.settings.developerSecretKey = process.env.PLAYFAB_KEY;
 
+
 export default config({    
     getId: () => "Your Colyseus App",
 
@@ -39,12 +40,7 @@ export default config({
          * Read more: https://docs.colyseus.io/tools/monitor/
          */
         app.use("/colyseus", monitor());
-    },
 
-
-    beforeListen: () => {
-        /**
-         * Before before gameServer.listen() is called.
-         */
     }
+
 });
