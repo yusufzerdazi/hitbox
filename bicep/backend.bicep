@@ -58,6 +58,9 @@ resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
   name: webAppName
   location: location
   kind: 'web'
+  properties: {
+    Application_Type: 'web'
+  }
 }
 
 resource roleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
