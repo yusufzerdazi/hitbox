@@ -5,7 +5,7 @@ import cors from "cors";
 import { GameRoom } from './rooms/gameRoom';
 import { PlayFabServer } from 'playfab-sdk';
 
-import appInsights from 'applicationinsights';
+let appInsights = require("applicationinsights");
 appInsights.setup("c21377b2-7f52-4b26-b54c-69916d75e54c")
     .start();
 

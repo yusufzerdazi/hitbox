@@ -9,7 +9,7 @@ import http from 'http';
 
 import { DefaultAzureCredential } from '@azure/identity';
 import { AppServicePlan, AppServicePlanPatchResource, SkuDescription, WebSiteManagementClient } from '@azure/arm-appservice';
-import appInsights from 'applicationinsights';
+let appInsights = require("applicationinsights");
 
 const subscriptionId = '4b89f88e-13f2-4990-bf5f-3ab2e4d5301f';
 const resourceGroupName = 'hitbox';
