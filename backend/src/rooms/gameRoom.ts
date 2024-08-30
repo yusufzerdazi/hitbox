@@ -157,8 +157,10 @@ export class GameRoom extends Room<HitboxRoomState> {
     }
 
     async onDispose () {
-        console.log(matchMaker.stats.local.ccu);
-        if (matchMaker.stats.local.ccu <= 1) {
+        await new Promise(r => setTimeout(r, 2000));
+        var activePlayers = matchMaker.stats.local.ccu;
+        appInsights.defaultClient.trackTrace({ message: `There are ${activePlayers} players active.`});
+        if (activePlayers <= 1) {
             scaleAppServicePlan(downSku);
         }
     }
