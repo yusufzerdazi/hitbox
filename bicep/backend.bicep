@@ -73,7 +73,7 @@ resource roleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-prev
 }
 
 resource roleAssignmentSite 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
-  name: guid('b24988ac-6180-42a0-ab88-20f7382dd24c', appServicePlan.id, 'Contributor') // Role ID for 'Contributor' is predefined by Azure
+  name: guid('b24988ac-6180-42a0-ab88-20f7382dd24c', appService.id, 'Contributor') // Role ID for 'Contributor' is predefined by Azure
   scope: appService
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c') // Contributor Role ID
