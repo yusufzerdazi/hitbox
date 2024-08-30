@@ -9,6 +9,7 @@ import http from 'http';
 
 import { DefaultAzureCredential } from '@azure/identity';
 import { AppServicePlan, AppServicePlanPatchResource, SkuDescription, WebSiteManagementClient } from '@azure/arm-appservice';
+import appInsights from 'applicationinsights';
 
 const subscriptionId = '4b89f88e-13f2-4990-bf5f-3ab2e4d5301f';
 const resourceGroupName = 'hitbox';
@@ -48,9 +49,9 @@ async function scaleAppServicePlan(newSku: any) {
         location: 'North Europe',
         kind: 'app'
     }
-    console.log(`Starting scaling to ${newSku.name}.`);
+    appInsights.defaultClient.trackTrace({ message: `Starting scaling to ${newSku.name}.`});
     var updated = await client.appServicePlans.beginCreateOrUpdateAndWait(appServicePlanResourceGroupName, appServicePlanName, patch);
-    console.log("Scaling complete.");
+    appInsights.defaultClient.trackTrace({ message: "Scaling complete."});
     return updated;
 }
 

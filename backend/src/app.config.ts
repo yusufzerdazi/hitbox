@@ -5,9 +5,12 @@ import cors from "cors";
 import { GameRoom } from './rooms/gameRoom';
 import { PlayFabServer } from 'playfab-sdk';
 
+import appInsights from 'applicationinsights';
+appInsights.setup("c21377b2-7f52-4b26-b54c-69916d75e54c")
+    .start();
+
 PlayFabServer.settings.titleId = '5B7C3';
 PlayFabServer.settings.developerSecretKey = process.env.PLAYFAB_KEY;
-
 
 export default config({    
     getId: () => "Your Colyseus App",
@@ -40,7 +43,12 @@ export default config({
          * Read more: https://docs.colyseus.io/tools/monitor/
          */
         app.use("/colyseus", monitor());
+    },
 
+
+    beforeListen: () => {
+        /**
+         * Before before gameServer.listen() is called.
+         */
     }
-
 });

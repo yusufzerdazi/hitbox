@@ -30,6 +30,7 @@
     "@colyseus/playground": "^0.15.11",
     "@colyseus/tools": "^0.15.35",
     "@types/debug": "^4.1.8",
+    "applicationinsights": "^3.2.2",
     "bisonjs": "^2.0.2",
     "colyseus": "^0.15.15",
     "cors": "^2.8.5",
