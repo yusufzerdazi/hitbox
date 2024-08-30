@@ -54,6 +54,12 @@ resource appService 'Microsoft.Web/sites@2022-03-01' = {
   }
 }
 
+resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
+  name: webAppName
+  location: location
+  kind: 'web'
+}
+
 resource roleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
   name: guid('b24988ac-6180-42a0-ab88-20f7382dd24c', appServicePlan.id, 'Contributor') // Role ID for 'Contributor' is predefined by Azure
   scope: appServicePlan
