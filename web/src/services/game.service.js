@@ -273,6 +273,14 @@ class GameService {
             if (e.keyCode === 72) {
                 this.toggleGui();
             }
+
+            if (e.keyCode === 61) {
+                this.addAi();
+            }
+
+            if (e.keyCode === 173) {
+                this.removeAi();
+            }
         });
 
         document.addEventListener("keyup", e => {
