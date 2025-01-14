@@ -141,7 +141,7 @@ class GameCanvas extends React.Component {
                 };
             }
         }
-        if(this.scale !== Math.min(Math.max(0.2, this.scale * this.zoomRate), 1.5)) {
+        if(this.scale !== Math.min(this.scale * this.zoomRate, 1.5)) {
             this.setScale(this.scale * this.zoomRate);
         }
         this.drawBackground();
