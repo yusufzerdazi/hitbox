@@ -274,11 +274,11 @@ class GameService {
                 this.toggleGui();
             }
 
-            if (e.keyCode === 61) {
+            if (e.keyCode === 187) {
                 this.addAi();
             }
 
-            if (e.keyCode === 173) {
+            if (e.keyCode === 189) {
                 this.removeAi();
             }
         });
