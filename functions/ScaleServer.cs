@@ -78,5 +78,29 @@ namespace Hitbox
 
             return new OkResult();
         }
+
+        [Function("GetServerScale")]
+        public IActionResult GetServerScale([HttpTrigger(AuthorizationLevel.Function, "get")] HttpRequest req)
+        {
+            var subscriptionId = "4b89f88e-13f2-4990-bf5f-3ab2e4d5301f";
+            var resourceGroupName = "hitbox";
+            var appServiceName = "hitbox";
+
+            var client = new ArmClient(new DefaultAzureCredential());
+
+            var subscription = client.GetSubscriptions().First(x => x.Data.SubscriptionId == subscriptionId);
+            var resourceGroup = subscription.GetResourceGroup(resourceGroupName).Value;
+
+            var appServices = resourceGroup.GetWebSites();
+            var appService = appServices.Get(appServiceName).Value;
+
+            var appServicePlanId = appService.Data.AppServicePlanId;
+            var appServicePlanResourceGroupName = appServicePlanId.ResourceGroupName;
+            var appServicePlanName = appServicePlanId.Name;
+
+            var appServicePlan = resourceGroup.GetAppServicePlan(appServicePlanName).Value;
+
+            return new OkObjectResult(appService.Data.Sku);
+        }
     }
 }
