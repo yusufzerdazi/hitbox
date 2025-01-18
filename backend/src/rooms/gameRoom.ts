@@ -62,12 +62,7 @@ export class GameRoom extends Room<HitboxRoomState> {
     game: Game;
 
     async onCreate(options: any) {
-        // getAppServicePlanDetails().then(sku => {
-        //     if (sku.name == "B1") {
-        //         this.broadcast("scaling");
-        //         scaleAppServicePlan(upSku);
-        //     }
-        // })
+        appInsights.defaultClient.trackMetric({name: "Online players", value: matchMaker.stats.local.ccu});
 
         this.maxClients = 100;
 
@@ -152,17 +147,17 @@ export class GameRoom extends Room<HitboxRoomState> {
         });
     }
 
+    async onJoin(client: Client, options: any, auth: any) {
+        appInsights.defaultClient.trackMetric({name: "Online players", value: matchMaker.stats.local.ccu});
+    }
+
     async onLeave(client: Client, consented: boolean) {
+        appInsights.defaultClient.trackMetric({name: "Online players", value: matchMaker.stats.local.ccu});
         this.state.players.delete(client.sessionId);
     }
 
     async onDispose () {
-        // await new Promise(r => setTimeout(r, 2000));
-        // var activePlayers = matchMaker.stats.local.ccu;
-        // appInsights.defaultClient.trackTrace({ message: `There are ${activePlayers} players active.`});
-        // if (activePlayers <= 1) {
-        //     scaleAppServicePlan(downSku);
-        // }
+        appInsights.defaultClient.trackMetric({name: "Online players", value: matchMaker.stats.local.ccu});
     }
 
     removeAiPlayer(){
