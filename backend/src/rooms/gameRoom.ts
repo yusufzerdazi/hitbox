@@ -157,7 +157,7 @@ export class GameRoom extends Room<HitboxRoomState> {
     }
 
     async onDispose () {
-        appInsights.defaultClient.trackMetric({name: "Online players", value: matchMaker.stats.local.ccu});
+        appInsights.defaultClient.trackMetric({name: "Online players", value: 0});
     }
 
     removeAiPlayer(){
