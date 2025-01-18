@@ -84,7 +84,7 @@ resource roleAssignmentSite 'Microsoft.Authorization/roleAssignments@2020-04-01-
 
 resource hostingPlan 'Microsoft.Web/serverfarms@2022-09-01' = {
   name: 'hitboxfunctions'
-  location: location
+  location: 'UK South'
   sku: {
     name: 'Y1'
     tier: 'Consumption'
@@ -100,7 +100,7 @@ resource blobStorage 'Microsoft.Storage/storageAccounts@2023-04-01' existing = {
 
 resource functionApp 'Microsoft.Web/sites@2022-09-01' = {
   name: 'hitboxfunctions'
-  location: location
+  location: 'UK South'
   kind: 'functionapp,linux'
   identity: {
     type: 'SystemAssigned'
