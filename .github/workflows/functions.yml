@@ -1,4 +1,4 @@
-name: backend
+name: functions
 
 on:
   push:
