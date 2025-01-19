@@ -304,6 +304,33 @@ class GameService {
         });
     }
 
+    checkUrl(attempts) {
+        if (process.env.REACT_APP_FUNCTION_CHECK_SCALE_URL == "local")
+        {
+            return;
+        }
+        fetch(process.env.REACT_APP_FUNCTION_CHECK_SCALE_URL)
+            .then(response => response.text())
+            .then(data => {
+                console.log(data)
+                if (!data.includes("Basic")) {
+                    if (attempts != 0){
+                        window.location.reload();
+                    }
+                    else
+                    {
+                        return;
+                    }
+                } else {
+                    setTimeout(() => this.checkUrl(attempts + 1), 1000);
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching the URL:', error);
+                setTimeout(() => this.checkUrl(attempts + 1), 1000);
+            });
+    }
+
     toggleGui(){
         this.showGui = !this.showGui;
         this.onToggleGui(this.showGui);
@@ -352,12 +379,16 @@ class GameService {
 
     async spectate(room){
         const urlParams = new URLSearchParams(window.location.search);
+        
         this.room = await this.client.joinOrCreate("Game", { 
             gameMode: urlParams.get('gameMode'), 
             map: urlParams.get('map'),
             room: urlParams.get('room')
         });
+
         this.addListeners();
+
+        this.checkUrl();
 
         this.room.onStateChange((newState) => {
             this.canvasRef.current.draw(newState, this.name, this.lastWinner, this.showGui);

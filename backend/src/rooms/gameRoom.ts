@@ -5,7 +5,6 @@ import { HitboxRoomState } from "./schema/HitboxRoomState";
 import { matchMaker } from "colyseus";
 import Game from '../game';
 import https from 'https';
-import http from 'http';
 
 import { DefaultAzureCredential } from '@azure/identity';
 import { AppServicePlan, AppServicePlanPatchResource, SkuDescription, WebSiteManagementClient } from '@azure/arm-appservice';
@@ -32,31 +31,6 @@ async function getAppServicePlanDetails() {
 
     return appServicePlan.sku;
 }
-
-async function scaleAppServicePlan(newSku: any) {
-    // Get the App Service details to find its App Service Plan
-    const appService = await client.webApps.get(resourceGroupName, appServiceName);
-
-    // The App Service Plan ID is in the serverFarmId property of the App Service
-    const appServicePlanId = appService.serverFarmId;
-    const appServicePlanResourceGroupName = appServicePlanId.split('/')[4];
-    const appServicePlanName = appServicePlanId.split('/')[8];
-    
-    // Get the App Service Plan details
-    const appServicePlan = await client.appServicePlans.get(appServicePlanResourceGroupName, appServicePlanName);
-    const patch : AppServicePlan = {
-        sku: newSku,
-        location: 'North Europe',
-        kind: 'app'
-    }
-    appInsights.defaultClient.trackTrace({ message: `Starting scaling to ${newSku.name}.`});
-    var updated = await client.appServicePlans.beginCreateOrUpdateAndWait(appServicePlanResourceGroupName, appServicePlanName, patch);
-    appInsights.defaultClient.trackTrace({ message: "Scaling complete."});
-    return updated;
-}
-
-const downSku : SkuDescription =  { name: 'B1', tier: 'Basic', size: 'B1', family: 'B', capacity: 1 };
-const upSku : SkuDescription = { name: 'P0v3', tier: 'Premium0V3', size: 'P0v3', family: 'Pv3', capacity: 1 };
 
 export class GameRoom extends Room<HitboxRoomState> {
     game: Game;
@@ -110,7 +84,12 @@ export class GameRoom extends Room<HitboxRoomState> {
                 this.state.players.get(client.sessionId).boostRight = request;
         });
 
-        this.onMessage('play', (client, request) => {
+        this.onMessage('play', async (client, request) => {
+            if ((await getAppServicePlanDetails()).tier == "Basic")
+            {
+                return;
+            }
+
             if(Array.from(this.state.players.values()).filter(p => !p.ai).length == 0){
                 this.game.gameMode.addAiPlayer();
             } else {

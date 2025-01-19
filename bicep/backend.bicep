@@ -111,7 +111,7 @@ resource functionApp 'Microsoft.Web/sites@2022-09-01' = {
       linuxFxVersion: 'DOTNET-ISOLATED|8.0'
       cors: {
         allowedOrigins:[
-          'http://localhost:5173'
+          'http://localhost:3000'
           'https://www.hitbox.online'
           'https://hitbox.online'
           'https://portal.azure.com'
@@ -178,5 +178,148 @@ resource functionRoleAssignmentResourceGroup 'Microsoft.Authorization/roleAssign
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'acdd72a7-3385-48ef-bd42-f606fba81ae7') // Reader Role ID
     principalId: functionApp.identity.principalId
+  }
+}
+
+@description('Generated from /subscriptions/4b89f88e-13f2-4990-bf5f-3ab2e4d5301f/resourceGroups/hitbox/providers/microsoft.insights/actiongroups/HitboxScaleDown')
+resource HitboxScaleDown 'Microsoft.Insights/actionGroups@2024-10-01-preview' = {
+  name: 'HitboxScaleDown'
+  location: 'Global'
+  properties: {
+    groupShortName: 'ScaleDown'
+    enabled: true
+    emailReceivers: []
+    smsReceivers: []
+    webhookReceivers: []
+    eventHubReceivers: []
+    itsmReceivers: []
+    azureAppPushReceivers: []
+    automationRunbookReceivers: []
+    voiceReceivers: []
+    logicAppReceivers: []
+    azureFunctionReceivers: [
+      {
+        name: 'ScaleDown'
+        functionAppResourceId: functionApp.id
+        functionName: 'ScaleDown'
+        httpTriggerUrl: 'https://hitboxfunctions.azurewebsites.net/api/scaledown?code=P38YZSJdefEDfPifRkITK6xWibfqm9J_osFNozve2L7lAzFuvtGm9Q=='
+        useCommonAlertSchema: true
+      }
+    ]
+    armRoleReceivers: []
+  }
+}
+
+
+@description('Generated from /subscriptions/4b89f88e-13f2-4990-bf5f-3ab2e4d5301f/resourceGroups/hitbox/providers/microsoft.insights/actiongroups/HitboxScaleUp')
+resource HitboxScaleUp 'Microsoft.Insights/actionGroups@2024-10-01-preview' = {
+  name: 'HitboxScaleUp'
+  location: 'Global'
+  properties: {
+    groupShortName: 'ScaleUp'
+    enabled: true
+    emailReceivers: []
+    smsReceivers: []
+    webhookReceivers: []
+    eventHubReceivers: []
+    itsmReceivers: []
+    azureAppPushReceivers: []
+    automationRunbookReceivers: []
+    voiceReceivers: []
+    logicAppReceivers: []
+    azureFunctionReceivers: [
+      {
+        name: 'ScaleServerUp'
+        functionAppResourceId: functionApp.id
+        functionName: 'ScaleUp'
+        httpTriggerUrl: 'https://hitboxfunctions.azurewebsites.net/api/scaleup?code=CMHEEkFJEuI0eETU1T0Pbwbd1a-vGF8NLLH7vZiFd3oiAzFu_NxE6g=='
+        useCommonAlertSchema: true
+      }
+    ]
+    armRoleReceivers: []
+  }
+}
+
+
+@description('Generated from /subscriptions/4b89f88e-13f2-4990-bf5f-3ab2e4d5301f/resourceGroups/hitbox/providers/microsoft.insights/metricalerts/HitboxScaleDown')
+resource HitboxScaleDownAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
+  name: 'HitboxScaleDown'
+  location: 'global'
+  tags: {}
+  properties: {
+    description: ''
+    severity: 3
+    enabled: true
+    scopes: [
+      applicationInsights.id
+    ]
+    evaluationFrequency: 'PT5M'
+    windowSize: 'PT15M'
+    criteria: {
+      allOf: [
+        {
+          threshold: json('0.0')
+          name: 'Metric1'
+          metricNamespace: 'Azure.ApplicationInsights'
+          metricName: 'Online players'
+          operator: 'LessThanOrEqual'
+          timeAggregation: 'Total'
+          skipMetricValidation: false
+          criterionType: 'StaticThresholdCriterion'
+        }
+      ]
+      'odata.type': 'Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria'
+    }
+    autoMitigate: true
+    targetResourceType: 'microsoft.insights/components'
+    targetResourceRegion: 'northeurope'
+    actions: [
+      {
+        actionGroupId: HitboxScaleDown.id
+        webHookProperties: {}
+      }
+    ]
+  }
+}
+
+
+@description('Generated from /subscriptions/4b89f88e-13f2-4990-bf5f-3ab2e4d5301f/resourceGroups/hitbox/providers/microsoft.insights/metricalerts/HitboxScaleUp')
+resource HitboxScaleUpAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
+  name: 'HitboxScaleUp'
+  location: 'global'
+  tags: {}
+  properties: {
+    description: ''
+    severity: 3
+    enabled: true
+    scopes: [
+      applicationInsights.id
+    ]
+    evaluationFrequency: 'PT1M'
+    windowSize: 'PT1M'
+    criteria: {
+      allOf: [
+        {
+          threshold: json('1.0')
+          name: 'Metric1'
+          metricNamespace: 'Azure.ApplicationInsights'
+          metricName: 'Online players'
+          operator: 'GreaterThanOrEqual'
+          timeAggregation: 'Maximum'
+          skipMetricValidation: false
+          criterionType: 'StaticThresholdCriterion'
+        }
+      ]
+      'odata.type': 'Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria'
+    }
+    autoMitigate: true
+    targetResourceType: 'microsoft.insights/components'
+    targetResourceRegion: 'northeurope'
+    actions: [
+      {
+        actionGroupId: HitboxScaleUp.id
+        webHookProperties: {}
+      }
+    ]
   }
 }
