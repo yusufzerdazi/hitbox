@@ -24,9 +24,6 @@ class Spleef extends BattleRoyale {
         } else {
             platform.durability -= 10;
         }
-        if(platform.durability <= 0){
-            this.roomRef.state.level.platforms = this.roomRef.state.level.platforms.filter(p => p != platform);
-        }
     }
 }
 

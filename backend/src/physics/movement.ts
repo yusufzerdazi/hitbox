@@ -28,7 +28,7 @@ class Movement extends Calculation {
             var previouslyOnSurface = player.onSurface == true;
             var currentSpeed = player.speed();
             player.onSurface = false;
-            level.platforms.filter(x => !['goal', 'backgroundleaves'].includes(x.type)).forEach((platform: Square) => {
+            level.platforms.filter(x => !['trunk', 'leaves', 'goal', 'backgroundleaves'].includes(x.type) && x.durability > 0).forEach((platform: Square) => {
                 if(player.x >= platform.rightX() &&
                         player.x + player.xVelocity < platform.rightX() && 
                         player.y + player.yVelocity > platform.topY() && 

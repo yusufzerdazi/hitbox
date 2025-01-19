@@ -181,6 +181,7 @@ resource functionRoleAssignmentResourceGroup 'Microsoft.Authorization/roleAssign
   }
 }
 
+
 @description('Generated from /subscriptions/4b89f88e-13f2-4990-bf5f-3ab2e4d5301f/resourceGroups/hitbox/providers/microsoft.insights/actiongroups/HitboxScaleDown')
 resource HitboxScaleDown 'Microsoft.Insights/actionGroups@2024-10-01-preview' = {
   name: 'HitboxScaleDown'
@@ -202,7 +203,7 @@ resource HitboxScaleDown 'Microsoft.Insights/actionGroups@2024-10-01-preview' = 
         name: 'ScaleDown'
         functionAppResourceId: functionApp.id
         functionName: 'ScaleDown'
-        httpTriggerUrl: 'https://hitboxfunctions.azurewebsites.net/api/scaledown?code=P38YZSJdefEDfPifRkITK6xWibfqm9J_osFNozve2L7lAzFuvtGm9Q=='
+        httpTriggerUrl: 'https://hitboxfunctions.azurewebsites.net/api/scaledown?code=${listKeys('${functionApp.id}/functions/ScaleDown', '2022-09-01').default}'
         useCommonAlertSchema: true
       }
     ]
@@ -232,7 +233,7 @@ resource HitboxScaleUp 'Microsoft.Insights/actionGroups@2024-10-01-preview' = {
         name: 'ScaleServerUp'
         functionAppResourceId: functionApp.id
         functionName: 'ScaleUp'
-        httpTriggerUrl: 'https://hitboxfunctions.azurewebsites.net/api/scaleup?code=CMHEEkFJEuI0eETU1T0Pbwbd1a-vGF8NLLH7vZiFd3oiAzFu_NxE6g=='
+        httpTriggerUrl: 'https://hitboxfunctions.azurewebsites.net/api/scaleup?code=${listKeys('${functionApp.id}/functions/ScaleUp', '2022-09-01').default}'
         useCommonAlertSchema: true
       }
     ]
@@ -261,7 +262,7 @@ resource HitboxScaleDownAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
           threshold: json('0.0')
           name: 'Metric1'
           metricNamespace: 'Azure.ApplicationInsights'
-          metricName: 'Online players'
+          metricName: 'OnlinePlayers'
           operator: 'LessThanOrEqual'
           timeAggregation: 'Total'
           skipMetricValidation: false
@@ -303,7 +304,7 @@ resource HitboxScaleUpAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
           threshold: json('1.0')
           name: 'Metric1'
           metricNamespace: 'Azure.ApplicationInsights'
-          metricName: 'Online players'
+          metricName: 'OnlinePlayers'
           operator: 'GreaterThanOrEqual'
           timeAggregation: 'Maximum'
           skipMetricValidation: false

@@ -1,4 +1,4 @@
-import { Room, Client, generateId } from '@colyseus/core';
+import { Room, Client, generateId, Delayed } from '@colyseus/core';
 import Player from '../players/player';
 import Utils from '../utils';
 import { HitboxRoomState } from "./schema/HitboxRoomState";
@@ -8,6 +8,7 @@ import https from 'https';
 
 import { DefaultAzureCredential } from '@azure/identity';
 import { AppServicePlan, AppServicePlanPatchResource, SkuDescription, WebSiteManagementClient } from '@azure/arm-appservice';
+import { PlayFabServer } from 'playfab-sdk';
 let appInsights = require("applicationinsights");
 
 const subscriptionId = '4b89f88e-13f2-4990-bf5f-3ab2e4d5301f';
@@ -16,6 +17,9 @@ const appServiceName = 'hitbox';
 
 const credential = new DefaultAzureCredential();
 const client = new WebSiteManagementClient(credential, subscriptionId);
+
+PlayFabServer.settings.titleId = '5B7C3';
+PlayFabServer.settings.developerSecretKey = process.env.PLAYFAB_KEY;
 
 async function getAppServicePlanDetails() {
     // Get the App Service details to find its App Service Plan
@@ -34,10 +38,19 @@ async function getAppServicePlanDetails() {
 
 export class GameRoom extends Room<HitboxRoomState> {
     game: Game;
+    delayedInterval!: Delayed;
 
     async onCreate(options: any) {
-        appInsights.defaultClient.trackMetric({name: "Online players", value: matchMaker.stats.local.ccu});
+        
+        // start the clock ticking
+        this.clock.start();
 
+        // Set an interval and store a reference to it
+        // so that we may clear it later
+        this.delayedInterval = this.clock.setInterval(() => {
+            appInsights.defaultClient.trackMetric({name: "OnlinePlayers", value: matchMaker.stats.local.ccu});
+        }, 10000);
+        
         this.maxClients = 100;
 
         this.setState(new HitboxRoomState());
@@ -124,19 +137,23 @@ export class GameRoom extends Room<HitboxRoomState> {
             this.state.serverTime += dt;
             await this.game.gameLoop(this);
         });
-    }
 
-    async onJoin(client: Client, options: any, auth: any) {
-        appInsights.defaultClient.trackMetric({name: "Online players", value: matchMaker.stats.local.ccu});
+        if ((await getAppServicePlanDetails()).tier != "Basic") {
+            this.state.scaledUp = true;
+            this.broadcast('isScaled', true);
+        } else {
+            for(var i = 0; i<5; i++) {
+                this.game.gameMode.addAiPlayer();
+            }
+        }
     }
 
     async onLeave(client: Client, consented: boolean) {
-        appInsights.defaultClient.trackMetric({name: "Online players", value: matchMaker.stats.local.ccu});
         this.state.players.delete(client.sessionId);
     }
 
     async onDispose () {
-        appInsights.defaultClient.trackMetric({name: "Online players", value: 0});
+        appInsights.defaultClient.trackMetric({name: "OnlinePlayers", value: 0});
     }
 
     removeAiPlayer(){

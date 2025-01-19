@@ -1,4 +1,3 @@
-
 import io from 'socket.io-client';
 import * as THREE from 'three';
 
@@ -118,6 +117,8 @@ class GameService {
                 ps.playbackRate = 0.9 + i * 0.1;
             });
         });
+
+        this.onIsScaledCallback = () => {};
     }
         
 
@@ -234,6 +235,12 @@ class GameService {
             }
         });
 
+        this.room.onMessage('isScaled', (isScaled) => {
+            if (this.mounted) {
+                this.onIsScaledCallback(isScaled);
+            }
+        });
+
         document.addEventListener("keydown", e => {
             if (e.keyCode === 68 || e.keyCode == 39) {
                 if (!this.ePressed) {
@@ -304,33 +311,6 @@ class GameService {
         });
     }
 
-    checkUrl(attempts) {
-        if (process.env.REACT_APP_FUNCTION_CHECK_SCALE_URL == "local")
-        {
-            return;
-        }
-        fetch(process.env.REACT_APP_FUNCTION_CHECK_SCALE_URL)
-            .then(response => response.text())
-            .then(data => {
-                console.log(data)
-                if (!data.includes("Basic")) {
-                    if (attempts != 0){
-                        window.location.reload();
-                    }
-                    else
-                    {
-                        return;
-                    }
-                } else {
-                    setTimeout(() => this.checkUrl(attempts + 1), 1000);
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching the URL:', error);
-                setTimeout(() => this.checkUrl(attempts + 1), 1000);
-            });
-    }
-
     toggleGui(){
         this.showGui = !this.showGui;
         this.onToggleGui(this.showGui);
@@ -378,8 +358,19 @@ class GameService {
     }
 
     async spectate(room){
-        const urlParams = new URLSearchParams(window.location.search);
         
+        await this.reconnect(room);
+            
+        setInterval(async () => {
+            if (!this.room.connection.isOpen) {
+                await this.reconnect(room);
+            }
+        }, 5000)
+    }
+
+    async reconnect(room) {
+        const urlParams = new URLSearchParams(window.location.search);
+
         this.room = await this.client.joinOrCreate("Game", { 
             gameMode: urlParams.get('gameMode'), 
             map: urlParams.get('map'),
@@ -387,8 +378,6 @@ class GameService {
         });
 
         this.addListeners();
-
-        this.checkUrl();
 
         this.room.onStateChange((newState) => {
             this.canvasRef.current.draw(newState, this.name, this.lastWinner, this.showGui);
@@ -415,11 +404,15 @@ class GameService {
 
     changeName(name){
         this.name = name;
-        this.room.send("nameChange", name);
+        if (this.room) {
+            this.room.send("nameChange", name);
+        }
     }
 
     changeAvatar(url, name){
-        this.room.send("changeAvatar", {url:url, name:name});
+        if (this.room) {
+            this.room.send("changeAvatar", {url:url, name:name});
+        }
     }
 
     playerHit(){
@@ -482,6 +475,11 @@ class GameService {
                 s.pause();
             }
         });
+    }
+
+    onIsScaled(callback) {
+        this.onIsScaledCallback = callback;
+        return this;
     }
 }
 

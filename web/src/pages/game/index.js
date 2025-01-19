@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Gamepad from 'react-gamepad';
 import { connect } from "react-redux";
@@ -7,7 +6,7 @@ import { PlayFabClient } from 'playfab-sdk';
 
 import GameCanvas from '../../components/gameCanvas';
 import GameService from '../../services/game.service';
-import { USERNAME_UPDATED } from '../../constants/actionTypes';
+import { USERNAME_UPDATED, IS_SCALED } from '../../constants/actionTypes';
 
 const mapStateToProps = state => {
     return {
@@ -19,6 +18,10 @@ const mapDispatchToProps = dispatch => ({
     updateName: x => dispatch({
         type: USERNAME_UPDATED,
         name: x
+    }),
+    isScaled: x => dispatch({
+        type: IS_SCALED,
+        isScaled: x
     })
 });
 
@@ -36,7 +39,8 @@ class Game extends React.Component {
             playing: false,
             name: null,
             ai: 0,
-            avatar: null
+            avatar: null,
+            isScaled: false
         };
         this.canvasRef = React.createRef();
         this.gameService = new GameService();
@@ -81,6 +85,11 @@ class Game extends React.Component {
         }
     }
 
+    onIsScaled = (isScaled) => {
+        this.setState({ isScaled });
+        this.props.isScaled(isScaled);
+    }
+
     componentDidMount() {
         this.mounted = true;
 
@@ -93,6 +102,7 @@ class Game extends React.Component {
             .setMounted(true)
             .onToggleGui(this.props.toggleGui);
         
+        this.gameService.onIsScaled(this.onIsScaled);
         this.gameService.spectate(this.state.room);
 
         document.addEventListener("keydown", e => {

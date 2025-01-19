@@ -1,4 +1,3 @@
-
 import React from 'react';
 import styles from './styles.module.css';
 import Utils from '../../utils';
@@ -20,7 +19,8 @@ const mapStateToProps = state => {
     return {
         user: state.logIn.user,
         cameraType: state.options.cameraType,
-        isPlaying: state.options.playing
+        isPlaying: state.options.playing,
+        isScaled: state.options.isScaled
     }
 };
 
@@ -227,7 +227,9 @@ class Options extends React.Component {
             {this.props.user?.name}
           </div>
           {this.props.isPlaying ? <div  className={styles.options + " " + styles.quitOption} onClick={() => this.props.playing(false)}>Quit</div> : <></>}
-          {!this.props.isPlaying ? <div className={styles.options + " " + styles.playOption} onClick={() => this.props.playing(true)}>Join</div> : <></>}
+          {!this.props.isPlaying && this.props.isScaled ? 
+            <div className={styles.options + " " + styles.playOption} onClick={() => this.props.playing(true)}>Join</div> 
+          : <></>}
           <div className={styles.options}  onClick={() => this.toggleState("optionsOpen")}>Options {this.state.optionsOpen ? ' ᐃ' : ' ᐁ'}</div>
           <div className={styles.score}>Rank: {this.state?.score || "?"}</div>
         </div>
@@ -265,11 +267,17 @@ class Options extends React.Component {
         </div>
         <Collapsible easing="ease-in-out" open={this.state.optionsOpen} >
           <div className={styles.optionsDetails}>
-            <div className={styles.playButton} onClick={this.playAnonymously}>Play anonymously</div>
-            <div className={styles.or}>or</div>
-            <div className={styles.googleSignIn}>
-              <div style={{width: "100%"}} id="g-signin2"></div>
-            </div>
+            {this.props.isScaled ? (
+              <>
+                <div className={styles.playButton} onClick={this.playAnonymously}>Play anonymously</div>
+                <div className={styles.or}>or</div>
+                <div className={styles.googleSignIn}>
+                  <div style={{width: "100%"}} id="g-signin2"></div>
+                </div>
+              </>
+            ) : (
+              <div className={styles.scaling}>Server is scaling up...</div>
+            )}
           </div>
         </Collapsible>
       </div> } 

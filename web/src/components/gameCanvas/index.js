@@ -8,7 +8,7 @@ import { RunningForward, RunningBackward, Standing, BigCollision, Collision, Spl
 import { FOLLOWING } from '../../constants/cameraTypes';
 import { PLAYERS } from '../../constants/actionTypes';
 
-const FONT = "'Roboto Mono'";
+const FONT = "'Roboto'";
 const HEIGHT = 540;
 const WIDTH = 960;
 
@@ -40,6 +40,9 @@ const mapStateToProps = state => {
 class GameCanvas extends React.Component {
     constructor(props) {
         super(props);
+        this.state = {
+            isScaled: false
+        };
 
         this.drawCollision = this.drawCollision.bind(this);
         this.drawBoost = this.drawBoost.bind(this);
@@ -176,6 +179,50 @@ class GameCanvas extends React.Component {
         setTimeout(() => {
             this.drawing = false;
         }, 1);
+
+        // Add loading screen if not scaled - using screen coordinates
+        if (!this.state.isScaled) {
+            this.ctx.save();
+            
+            // Reset transform to draw in screen coordinates
+            this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+            
+            // Draw semi-transparent overlay with reduced opacity
+            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            this.ctx.fillRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+            
+            // Draw loading text
+            this.ctx.fillStyle = 'white';
+            this.ctx.font = '30px Roboto';
+            this.ctx.textAlign = 'center';
+            this.ctx.fillText('Loading', this.ctx.canvas.width / 2, this.ctx.canvas.height / 2 - 40);
+            
+            // Draw loading spinner
+            const time = Date.now() / 1000;
+            const centerX = this.ctx.canvas.width / 2;
+            const centerY = this.ctx.canvas.height / 2 + 20;
+            const radius = 20;
+            
+            for (let i = 0; i < 8; i++) {
+                const angle = time * 4 + i * Math.PI / 4;
+                const x = centerX + Math.cos(angle) * radius;
+                const y = centerY + Math.sin(angle) * radius;
+                
+                this.ctx.beginPath();
+                this.ctx.arc(x, y, 4, 0, Math.PI * 2);
+                this.ctx.fillStyle = `rgba(255, 255, 255, ${1 - i * 0.1})`;
+                this.ctx.fill();
+            }
+            
+            // Draw message
+            this.ctx.font = '16px Roboto';
+            this.ctx.fillStyle = 'white';
+            this.ctx.fillText('Please wait while the server scales up...', centerX, centerY + 60);
+            
+            // Restore the original transform
+            this.ctx.restore();
+            this.ctx.setTransform(this.scale, 0, 0, this.scale, this.ctx.canvas.width / 2, this.ctx.canvas.height / 2);
+        }
     }
 
     drawGameDetails(state){
@@ -1051,6 +1098,10 @@ class GameCanvas extends React.Component {
         this.ctx.canvas.width = window.innerWidth;
         this.ctx.canvas.height = window.innerHeight;
         this.ctx.setTransform(this.scale, 0, 0, this.scale, this.ctx.canvas.width / 2, this.ctx.canvas.height / 2);
+    }
+
+    isScaled(isScaled) {
+        this.setState({ isScaled });
     }
 
     render() {
