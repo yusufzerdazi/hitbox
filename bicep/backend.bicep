@@ -108,7 +108,7 @@ resource functionApp 'Microsoft.Web/sites@2022-09-01' = {
   properties: {
     serverFarmId: hostingPlan.id
     siteConfig: {
-      linuxFxVersion: 'DOTNET|8.0'
+      linuxFxVersion: 'DOTNET-ISOLATED|8.0'
       cors: {
         allowedOrigins:[
           'http://localhost:5173'
@@ -145,10 +145,6 @@ resource functionApp 'Microsoft.Web/sites@2022-09-01' = {
         {
           name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
           value: applicationInsights.properties.InstrumentationKey
-        }
-        {
-          name: 'FUNCTIONS_INPROC_NET8_ENABLED'
-          value: '1'
         }
       ]
       ftpsState: 'FtpsOnly'

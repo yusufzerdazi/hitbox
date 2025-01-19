@@ -38,16 +38,26 @@ namespace Hitbox
             _downSku.Sku.Family = "B";
             _downSku.Sku.Capacity = 1;
         }
+        
+        [Function("ScaleUp")]
+        public async Task<IActionResult> ScaleUp([HttpTrigger(AuthorizationLevel.Function, "get", "post")] HttpRequest req)
+        {
+            await Scale("up");
+            return new OkResult();
+        }
+        
+        [Function("ScaleDown")]
+        public async Task<IActionResult> ScaleDown([HttpTrigger(AuthorizationLevel.Function, "get", "post")] HttpRequest req)
+        {
+            await Scale("down");
+            return new OkResult();
+        }
 
-        [Function("ScaleServer")]
-        public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, "get", "post")] HttpRequest req, [FromQuery] string scale)
+        public async Task Scale(string scale)
         {
             if (scale != "up" && scale != "down")
             {
-                return new BadRequestObjectResult(new
-                {
-                    message = "Invalid scale"
-                });
+                throw new InvalidOperationException();
             }
 
             var subscriptionId = "4b89f88e-13f2-4990-bf5f-3ab2e4d5301f";
@@ -75,8 +85,6 @@ namespace Hitbox
                 name: appServicePlanName,
                 data: scale == "up" ? _upSku : _downSku
             );
-
-            return new OkResult();
         }
 
         [Function("GetServerScale")]
