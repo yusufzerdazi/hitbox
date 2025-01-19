@@ -171,3 +171,12 @@ resource functionRoleAssignmentSite 'Microsoft.Authorization/roleAssignments@202
     principalId: functionApp.identity.principalId
   }
 }
+
+resource functionRoleAssignmentResourceGroup 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
+  name: guid('b24988ac-6180-42a0-ab88-20f7382dd24c', 'function', resourceGroup().id, 'Reader') // Role ID for 'Reader' is predefined by Azure
+  scope: resourceGroup()
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'acdd72a7-3385-48ef-bd42-f606fba81ae7') // Reader Role ID
+    principalId: functionApp.identity.principalId
+  }
+}
