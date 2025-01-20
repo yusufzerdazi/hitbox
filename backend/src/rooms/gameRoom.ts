@@ -140,11 +140,20 @@ export class GameRoom extends Room<HitboxRoomState> {
 
         if ((await getAppServicePlanDetails()).tier != "Basic") {
             this.state.scaledUp = true;
-            this.broadcast('isScaled', true);
+            this.broadcast('isScaled', false);
         } else {
             for(var i = 0; i<5; i++) {
                 this.game.gameMode.addAiPlayer();
             }
+        }
+    }
+
+    async onJoin(client: Client, options: any) {
+        // Send scaled status to the joining client
+        if (this.state.scaledUp) {
+            client.send('isScaled', true);
+        } else {
+            client.send('isScaled', false);
         }
     }
 

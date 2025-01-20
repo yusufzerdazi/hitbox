@@ -179,50 +179,10 @@ class GameCanvas extends React.Component {
         setTimeout(() => {
             this.drawing = false;
         }, 1);
-
-        // Add loading screen if not scaled - using screen coordinates
         if (!this.state.isScaled) {
-            this.ctx.save();
-            
-            // Reset transform to draw in screen coordinates
-            this.ctx.setTransform(1, 0, 0, 1, 0, 0);
-            
-            // Draw semi-transparent overlay with reduced opacity
-            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-            this.ctx.fillRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
-            
-            // Draw loading text
-            this.ctx.fillStyle = 'white';
-            this.ctx.font = '30px Roboto';
-            this.ctx.textAlign = 'center';
-            this.ctx.fillText('Loading', this.ctx.canvas.width / 2, this.ctx.canvas.height / 2 - 40);
-            
-            // Draw loading spinner
-            const time = Date.now() / 1000;
-            const centerX = this.ctx.canvas.width / 2;
-            const centerY = this.ctx.canvas.height / 2 + 20;
-            const radius = 20;
-            
-            for (let i = 0; i < 8; i++) {
-                const angle = time * 4 + i * Math.PI / 4;
-                const x = centerX + Math.cos(angle) * radius;
-                const y = centerY + Math.sin(angle) * radius;
-                
-                this.ctx.beginPath();
-                this.ctx.arc(x, y, 4, 0, Math.PI * 2);
-                this.ctx.fillStyle = `rgba(255, 255, 255, ${1 - i * 0.1})`;
-                this.ctx.fill();
-            }
-            
-            // Draw message
-            this.ctx.font = '16px Roboto';
-            this.ctx.fillStyle = 'white';
-            this.ctx.fillText('Please wait while the server scales up...', centerX, centerY + 60);
-            
-            // Restore the original transform
-            this.ctx.restore();
-            this.ctx.setTransform(this.scale, 0, 0, this.scale, this.ctx.canvas.width / 2, this.ctx.canvas.height / 2);
+            this.drawLoadingScreen();
         }
+
     }
 
     drawGameDetails(state){
@@ -996,6 +956,10 @@ class GameCanvas extends React.Component {
     }
 
     drawGameMode(level, lastWinner){
+        if (!this.state.isScaled) {
+            return;
+        }
+        
         var titleFontSize = 25/this.scale;
         var subtitleFontSize = 20/this.scale;
         var centerTitle = this.countdown;
@@ -1100,8 +1064,45 @@ class GameCanvas extends React.Component {
         this.ctx.setTransform(this.scale, 0, 0, this.scale, this.ctx.canvas.width / 2, this.ctx.canvas.height / 2);
     }
 
-    isScaled(isScaled) {
-        this.setState({ isScaled });
+    drawLoadingScreen() {
+        this.ctx.save();
+        
+        // Reset transform to draw in screen coordinates
+        this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+        
+        // Draw semi-transparent overlay
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        this.ctx.fillRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+        
+        // Draw loading text
+        this.ctx.fillStyle = 'white';
+        this.ctx.font = '30px Roboto';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText('Loading', this.ctx.canvas.width / 2, this.ctx.canvas.height / 2 - 40);
+        
+        // Draw loading spinner
+        const time = Date.now() / 1000;
+        const centerX = this.ctx.canvas.width / 2;
+        const centerY = this.ctx.canvas.height / 2 + 20;
+        const radius = 20;
+        
+        for (let i = 0; i < 8; i++) {
+            const angle = time * 4 + i * Math.PI / 4;
+            const x = centerX + Math.cos(angle) * radius;
+            const y = centerY + Math.sin(angle) * radius;
+            
+            this.ctx.beginPath();
+            this.ctx.arc(x, y, 4, 0, Math.PI * 2);
+            this.ctx.fillStyle = `rgba(255, 255, 255, ${1 - i * 0.1})`;
+            this.ctx.fill();
+        }
+        
+        // Draw message
+        this.ctx.font = '16px Roboto';
+        this.ctx.fillStyle = 'white';
+        this.ctx.fillText('Please wait while the server scales up...', centerX, centerY + 60);
+        
+        this.ctx.restore();
     }
 
     render() {

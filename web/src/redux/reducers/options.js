@@ -1,7 +1,8 @@
-import { CAMERA, PLAYING, ADDAI, REMOVEAI } from '../../constants/actionTypes';
+import { CAMERA, PLAYING, ADDAI, REMOVEAI, IS_SCALED } from '../../constants/actionTypes';
 import { FOLLOWING } from '../../constants/cameraTypes';
   
 export default (state = {cameraType: FOLLOWING, playing: false, ai: 0}, action) => {
+    console.log("Reducer received action:", action); // Add debug
     switch (action.type) {
         case CAMERA:
             return {
@@ -23,6 +24,11 @@ export default (state = {cameraType: FOLLOWING, playing: false, ai: 0}, action) 
                 ...state,
                 ai: state.ai - 1
             }
+        case IS_SCALED:
+            return {
+                ...state,
+                isScaled: action.isScaled
+            };
         default:
             return state;
     }

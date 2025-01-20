@@ -119,6 +119,11 @@ class GameService {
         });
 
         this.onIsScaledCallback = () => {};
+
+        // Track active listeners for cleanup
+        this.keydownListener = null;
+        this.keyupListener = null;
+        this.roomListeners = new Map();
     }
         
 
@@ -133,7 +138,11 @@ class GameService {
     }
 
     addListeners(){
-        this.room.onMessage('collision', (collision) => {
+        // Clean up any existing listeners first
+        this.cleanupListeners();
+
+        // Add room message listeners
+        this.addRoomListener('collision', (collision) => {
             if (this.soundEnabled && this.mounted) {
                 var collisionEvent = {
                     ...collision,
@@ -162,7 +171,7 @@ class GameService {
             }
         });
 
-        this.room.onMessage('hitWall', (hit) => {
+        this.addRoomListener('hitWall', (hit) => {
             if (this.soundEnabled && this.mounted) {
                 this.playSound(this.wallSound);
                 var hitEvent = {
@@ -173,7 +182,7 @@ class GameService {
             }
         });
 
-        this.room.onMessage('boost', (boost) => {
+        this.addRoomListener('boost', (boost) => {
             var boostEvent = {
                 ...boost,
                 type: "boost"
@@ -184,37 +193,37 @@ class GameService {
             }
         });
 
-        this.room.onMessage('winner', (winner) => {
+        this.addRoomListener('winner', (winner) => {
             if (this.mounted){
                 this.lastWinner = winner;
             }
         });
 
-        this.room.onMessage('starting', (timer) => {
+        this.addRoomListener('starting', (timer) => {
             if (this.mounted){
                 this.canvasRef.current.setCountdown(timer ? timer : "");
             }
-        })
+        });
 
-        this.room.onMessage('gameMode', (gameMode) => {
+        this.addRoomListener('gameMode', (gameMode) => {
             if(this.mounted){
                 this.canvasRef.current.setGameMode(gameMode);
             }
         });
         
-        this.room.onMessage('gameCountdown', (gameCountdown) => {
+        this.addRoomListener('gameCountdown', (gameCountdown) => {
             if(this.mounted){
                 this.canvasRef.current.updateGameCountdown(gameCountdown);
             }
         });
 
-        this.room.onMessage('scale', (scale) => {
+        this.addRoomListener('scale', (scale) => {
             if(this.mounted && scale){
                 this.canvasRef.current.setScale(scale);
             }
         });
 
-        this.room.onMessage('event', (event) => {
+        this.addRoomListener('event', (event) => {
             if(this.mounted){
                 this.canvasRef.current.event(event);
                 if(event.type === "death" && event.causeOfDeath === "water"){
@@ -223,26 +232,32 @@ class GameService {
             }
         });
 
-        this.room.onMessage('newGame', (players) => {
+        this.addRoomListener('newGame', (players) => {
             if(this.mounted){
                 this.canvasRef.current.newGame(players);
             }
         });
 
-        this.room.onMessage('changeAvatar', (avatar) => {
+        this.addRoomListener('changeAvatar', (avatar) => {
             if(this.mounted){
                 this.canvasRef.current.changeAvatar(avatar);
             }
         });
 
-        this.room.onMessage('isScaled', (isScaled) => {
+        this.addRoomListener('isScaled', (isScaled) => {
             if (this.mounted) {
                 this.onIsScaledCallback(isScaled);
+                this.isScaled = isScaled;
+                
+                if (this.canvasRef && this.canvasRef.current) {
+                    this.canvasRef.current.setState({ isScaled });
+                }
             }
         });
 
-        document.addEventListener("keydown", e => {
-            if (e.keyCode === 68 || e.keyCode == 39) {
+        // Add keyboard event listeners
+        this.keydownListener = (e) => {
+            if (e.keyCode === 68 || e.keyCode === 39) {
                 if (!this.ePressed) {
                     const currentMillis = Utils.millis();
                     if (currentMillis - this.eMillis < 500) {
@@ -254,7 +269,7 @@ class GameService {
                 this.moveRight(true);
             }
 
-            if (e.keyCode === 65 || e.keyCode == 37) {
+            if (e.keyCode === 65 || e.keyCode === 37) {
                 if (!this.aPressed) {
                     const currentMillis = Utils.millis();
                     if (currentMillis - this.aMillis < 500) {
@@ -266,14 +281,14 @@ class GameService {
                 this.moveLeft(true);
             }
 
-            if (e.keyCode === 32 || e.keyCode === 87 || e.keyCode == 38) {
+            if (e.keyCode === 32 || e.keyCode === 87 || e.keyCode === 38) {
                 if (e.keyCode === 32) {
                     e.preventDefault();
                 }
                 this.jump(true);
             }
 
-            if (e.keyCode === 83 || e.keyCode == 40) {
+            if (e.keyCode === 83 || e.keyCode === 40) {
                 this.crouch(true);
             }
 
@@ -288,27 +303,30 @@ class GameService {
             if (e.keyCode === 189) {
                 this.removeAi();
             }
-        });
+        };
 
-        document.addEventListener("keyup", e => {
-            if (e.keyCode === 68 || e.keyCode == 39) {
+        this.keyupListener = (e) => {
+            if (e.keyCode === 68 || e.keyCode === 39) {
                 this.ePressed = false;
                 this.moveRight(false);
             }
 
-            if (e.keyCode === 65 || e.keyCode == 37) {
+            if (e.keyCode === 65 || e.keyCode === 37) {
                 this.aPressed = false;
                 this.moveLeft(false);
             }
 
-            if (e.keyCode === 32 || e.keyCode === 87 || e.keyCode == 38) {
-                this.jump(false)
+            if (e.keyCode === 32 || e.keyCode === 87 || e.keyCode === 38) {
+                this.jump(false);
             }
             
-            if (e.keyCode === 83 || e.keyCode == 40) {
-                this.crouch(false)
+            if (e.keyCode === 83 || e.keyCode === 40) {
+                this.crouch(false);
             }
-        });
+        };
+
+        document.addEventListener("keydown", this.keydownListener);
+        document.addEventListener("keyup", this.keyupListener);
     }
 
     toggleGui(){
@@ -369,6 +387,12 @@ class GameService {
     }
 
     async reconnect(room) {
+        // Clean up existing connection if any
+        if (this.room) {
+            this.cleanupListeners();
+            await this.room.leave();
+        }
+
         const urlParams = new URLSearchParams(window.location.search);
 
         this.room = await this.client.joinOrCreate("Game", { 
@@ -380,13 +404,18 @@ class GameService {
         this.addListeners();
 
         this.room.onStateChange((newState) => {
-            this.canvasRef.current.draw(newState, this.name, this.lastWinner, this.showGui);
-            this.updateRunning(newState.runningPlayers);
+            if (this.mounted && this.canvasRef.current) {
+                this.canvasRef.current.draw(newState, this.name, this.lastWinner, this.showGui);
+                this.updateRunning(newState.runningPlayers);
+            }
         });
     }
 
     quit() {
-        this.room.send('quit');
+        if (this.room) {
+            this.cleanupListeners();
+            this.room.leave();
+        }
     }
 
     toggleAi() {
@@ -480,6 +509,27 @@ class GameService {
     onIsScaled(callback) {
         this.onIsScaledCallback = callback;
         return this;
+    }
+
+    // New method to cleanup existing listeners
+    cleanupListeners() {
+        // Remove document event listeners
+        if (this.keydownListener) {
+            document.removeEventListener("keydown", this.keydownListener);
+        }
+        if (this.keyupListener) {
+            document.removeEventListener("keyup", this.keyupListener);
+        }
+    }
+
+    // New method to add a room message listener
+    addRoomListener(message, handler) {
+        this.roomListeners.set(message, handler);
+        this.room.onMessage(message, handler);
+    }
+
+    isServerScaled() {
+        return this.isScaled;
     }
 }
 

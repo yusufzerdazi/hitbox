@@ -267,17 +267,14 @@ class Options extends React.Component {
         </div>
         <Collapsible easing="ease-in-out" open={this.state.optionsOpen} >
           <div className={styles.optionsDetails}>
-            {this.props.isScaled ? (
-              <>
+              <div styles={{display: this.props.isScaled ? 'block' : 'none'}}>
                 <div className={styles.playButton} onClick={this.playAnonymously}>Play anonymously</div>
                 <div className={styles.or}>or</div>
                 <div className={styles.googleSignIn}>
                   <div style={{width: "100%"}} id="g-signin2"></div>
                 </div>
-              </>
-            ) : (
-              <div className={styles.scaling}>Server is scaling up...</div>
-            )}
+              </div>
+              <div styles={{display: this.props.isScaled ? 'none' : 'block'}} className={styles.scaling}>Server is scaling up...</div>
           </div>
         </Collapsible>
       </div> } 

@@ -86,12 +86,23 @@ class Game extends React.Component {
     }
 
     onIsScaled = (isScaled) => {
-        this.setState({ isScaled });
-        this.props.isScaled(isScaled);
+        if (this.mounted) {
+            console.log("Game component received isScaled:", isScaled);
+            this.setState({ isScaled });
+            this.props.isScaled(isScaled);
+            
+            // Also update the canvas directly
+            if (this.canvasRef && this.canvasRef.current) {
+                this.canvasRef.current.setState({ isScaled });
+            }
+        }
     }
 
     componentDidMount() {
         this.mounted = true;
+
+        // Initialize isScaled state
+        this.setState({ isScaled: false });
 
         store.subscribe(() => {
             this.getUsername();
