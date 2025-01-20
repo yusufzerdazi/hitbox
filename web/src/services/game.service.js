@@ -390,7 +390,6 @@ class GameService {
         // Clean up existing connection if any
         if (this.room) {
             this.cleanupListeners();
-            await this.room.leave();
         }
 
         const urlParams = new URLSearchParams(window.location.search);
@@ -414,6 +413,10 @@ class GameService {
     quit() {
         if (this.room) {
             this.cleanupListeners();
+            if (this.canvasRef && this.canvasRef.current) {
+                // Reset canvas state before leaving
+                this.canvasRef.current.resetCamera();
+            }
             this.room.leave();
         }
     }
@@ -520,6 +523,19 @@ class GameService {
         if (this.keyupListener) {
             document.removeEventListener("keyup", this.keyupListener);
         }
+
+        // Reset camera-related state
+        this.aPressed = false;
+        this.ePressed = false;
+        this.aMillis = 0;
+        this.eMillis = 0;
+
+        // Stop all running sounds
+        this.runningSound.forEach(sound => {
+            if (sound.isPlaying) {
+                sound.stop();
+            }
+        });
     }
 
     // New method to add a room message listener
