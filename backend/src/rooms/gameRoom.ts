@@ -152,8 +152,6 @@ export class GameRoom extends Room<HitboxRoomState> {
         // Send scaled status to the joining client
         if (this.state.scaledUp) {
             client.send('isScaled', true);
-        } else {
-            client.send('isScaled', false);
         }
     }
 
