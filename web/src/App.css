@@ -9,4 +9,9 @@ body {
   position: absolute;
   top: 0;
   right: 0;
+  z-index: 3; /* Above loading overlay */
+}
+
+canvas {
+  z-index: 1; /* Below everything */
 }

@@ -5,6 +5,7 @@ import { store } from '../../redux/store';
 import { PlayFabClient } from 'playfab-sdk';
 
 import GameCanvas from '../../components/gameCanvas';
+import LoadingOverlay from '../../components/loadingOverlay';
 import GameService from '../../services/game.service';
 import { USERNAME_UPDATED, IS_SCALED } from '../../constants/actionTypes';
 
@@ -208,6 +209,7 @@ class Game extends React.Component {
         return (
             <>
                 <GameCanvas ref={this.canvasRef} />
+                <LoadingOverlay isVisible={!this.state.isScaled} />
                 <Gamepad
                     onA={this.jump}
                     onRT={this.boostRight}

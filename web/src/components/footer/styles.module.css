@@ -13,4 +13,5 @@
     bottom: 0;
     margin: 15px;
     text-align: left;
+    z-index: 3; /* Above loading overlay */
 }
