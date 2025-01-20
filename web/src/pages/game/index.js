@@ -87,7 +87,6 @@ class Game extends React.Component {
 
     onIsScaled = (isScaled) => {
         if (this.mounted) {
-            console.log("Game component received isScaled:", isScaled);
             this.setState({ isScaled });
             this.props.isScaled(isScaled);
             

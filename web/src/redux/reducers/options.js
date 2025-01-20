@@ -2,7 +2,6 @@ import { CAMERA, PLAYING, ADDAI, REMOVEAI, IS_SCALED } from '../../constants/act
 import { FOLLOWING } from '../../constants/cameraTypes';
   
 export default (state = {cameraType: FOLLOWING, playing: false, ai: 0}, action) => {
-    console.log("Reducer received action:", action); // Add debug
     switch (action.type) {
         case CAMERA:
             return {
