@@ -85,6 +85,8 @@ namespace Hitbox
                 name: appServicePlanName,
                 data: scale == "up" ? _upSku : _downSku
             );
+
+            await appService.RestartAsync();
         }
 
         [Function("GetServerScale")]
