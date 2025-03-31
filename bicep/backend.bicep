@@ -306,7 +306,7 @@ resource HitboxServerStateAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
           metricName: 'ServerScaledUp'
           operator: 'Equals'
           timeAggregation: 'Maximum'
-          skipMetricValidation: false
+          skipMetricValidation: true
           criterionType: 'StaticThresholdCriterion'
         }
         {
@@ -316,7 +316,7 @@ resource HitboxServerStateAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
           metricName: 'OnlinePlayers'
           operator: 'LessThanOrEqual'
           timeAggregation: 'Average'
-          skipMetricValidation: false
+          skipMetricValidation: true
           criterionType: 'StaticThresholdCriterion'
         }
       ]
@@ -357,7 +357,7 @@ resource HitboxScaleUpAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
           metricName: 'OnlinePlayers'
           operator: 'GreaterThanOrEqual'
           timeAggregation: 'Maximum'
-          skipMetricValidation: false
+          skipMetricValidation: true
           criterionType: 'StaticThresholdCriterion'
         }
       ]
