@@ -248,14 +248,14 @@ resource HitboxScaleDownAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
   location: 'global'
   tags: {}
   properties: {
-    description: ''
+    description: 'Scale down the server when no players are online for 5 minutes'
     severity: 3
     enabled: true
     scopes: [
       applicationInsights.id
     ]
-    evaluationFrequency: 'PT5M'
-    windowSize: 'PT15M'
+    evaluationFrequency: 'PT1M'
+    windowSize: 'PT5M'
     criteria: {
       allOf: [
         {
@@ -264,7 +264,7 @@ resource HitboxScaleDownAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
           metricNamespace: 'Azure.ApplicationInsights'
           metricName: 'OnlinePlayers'
           operator: 'LessThanOrEqual'
-          timeAggregation: 'Total'
+          timeAggregation: 'Average'
           skipMetricValidation: false
           criterionType: 'StaticThresholdCriterion'
         }
@@ -283,6 +283,56 @@ resource HitboxScaleDownAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
   }
 }
 
+// Additional scale down alert based on server state metric
+resource HitboxServerStateAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
+  name: 'HitboxServerStateAlert'
+  location: 'global'
+  tags: {}
+  properties: {
+    description: 'Scale down when the server has been scaled up but no players are online'
+    severity: 3
+    enabled: true
+    scopes: [
+      applicationInsights.id
+    ]
+    evaluationFrequency: 'PT1M'
+    windowSize: 'PT5M'
+    criteria: {
+      allOf: [
+        {
+          threshold: json('1.0')
+          name: 'Metric1'
+          metricNamespace: 'Azure.ApplicationInsights'
+          metricName: 'ServerScaledUp'
+          operator: 'Equals'
+          timeAggregation: 'Maximum'
+          skipMetricValidation: false
+          criterionType: 'StaticThresholdCriterion'
+        },
+        {
+          threshold: json('0.0')
+          name: 'Metric2'
+          metricNamespace: 'Azure.ApplicationInsights'
+          metricName: 'OnlinePlayers'
+          operator: 'LessThanOrEqual'
+          timeAggregation: 'Average'
+          skipMetricValidation: false
+          criterionType: 'StaticThresholdCriterion'
+        }
+      ]
+      'odata.type': 'Microsoft.Azure.Monitor.MultipleResourceMultipleMetricCriteria'
+    }
+    autoMitigate: true
+    targetResourceType: 'microsoft.insights/components'
+    targetResourceRegion: 'northeurope'
+    actions: [
+      {
+        actionGroupId: HitboxScaleDown.id
+        webHookProperties: {}
+      }
+    ]
+  }
+}
 
 @description('Generated from /subscriptions/4b89f88e-13f2-4990-bf5f-3ab2e4d5301f/resourceGroups/hitbox/providers/microsoft.insights/metricalerts/HitboxScaleUp')
 resource HitboxScaleUpAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
@@ -290,7 +340,7 @@ resource HitboxScaleUpAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
   location: 'global'
   tags: {}
   properties: {
-    description: ''
+    description: 'Scale up the server when at least one player is online'
     severity: 3
     enabled: true
     scopes: [

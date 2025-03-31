@@ -11,6 +11,19 @@ import { AppServicePlan, AppServicePlanPatchResource, SkuDescription, WebSiteMan
 import { PlayFabServer } from 'playfab-sdk';
 let appInsights = require("applicationinsights");
 
+// Initialize AppInsights with proper configuration
+if (!appInsights.defaultClient) {
+    appInsights.setup()
+        .setAutoDependencyCorrelation(true)
+        .setAutoCollectRequests(true)
+        .setAutoCollectPerformance(true)
+        .setAutoCollectExceptions(true)
+        .setAutoCollectDependencies(true)
+        .setAutoCollectConsole(true)
+        .setUseDiskRetryCaching(true)
+        .start();
+}
+
 const subscriptionId = '4b89f88e-13f2-4990-bf5f-3ab2e4d5301f';
 const resourceGroupName = 'hitbox';
 const appServiceName = 'hitbox';
@@ -48,7 +61,20 @@ export class GameRoom extends Room<HitboxRoomState> {
         // Set an interval and store a reference to it
         // so that we may clear it later
         this.delayedInterval = this.clock.setInterval(() => {
-            appInsights.defaultClient.trackMetric({name: "OnlinePlayers", value: matchMaker.stats.local.ccu});
+            // Track current connected players count
+            const playerCount = matchMaker.stats.local.ccu || 0;
+            appInsights.defaultClient.trackMetric({name: "OnlinePlayers", value: playerCount});
+            
+            // Track detailed information for debugging
+            appInsights.defaultClient.trackTrace({
+                message: `Player count tracking: ${playerCount} players online`,
+                severity: appInsights.Contracts.SeverityLevel.Information,
+                properties: {
+                    roomId: this.roomId,
+                    playerCount: playerCount,
+                    timestamp: new Date().toISOString()
+                }
+            });
         }, 10000);
         
         this.maxClients = 100;
@@ -141,10 +167,30 @@ export class GameRoom extends Room<HitboxRoomState> {
         if ((await getAppServicePlanDetails()).tier != "Basic") {
             this.state.scaledUp = true;
             this.broadcast('isScaled', false);
+            // Track server scale status
+            appInsights.defaultClient.trackMetric({name: "ServerScaledUp", value: 1});
+            appInsights.defaultClient.trackEvent({
+                name: "ServerScaled", 
+                properties: { 
+                    status: "up",
+                    tier: (await getAppServicePlanDetails()).tier,
+                    timestamp: new Date().toISOString()
+                }
+            });
         } else {
             for(var i = 0; i<5; i++) {
                 this.game.gameMode.addAiPlayer();
             }
+            // Track server scale status
+            appInsights.defaultClient.trackMetric({name: "ServerScaledUp", value: 0});
+            appInsights.defaultClient.trackEvent({
+                name: "ServerScaled", 
+                properties: { 
+                    status: "down",
+                    tier: "Basic",
+                    timestamp: new Date().toISOString()
+                }
+            });
         }
     }
 
@@ -153,14 +199,49 @@ export class GameRoom extends Room<HitboxRoomState> {
         if (this.state.scaledUp) {
             client.send('isScaled', true);
         }
+        
+        // Log player join event
+        const playerCount = matchMaker.stats.local.ccu || 0;
+        appInsights.defaultClient.trackMetric({name: "OnlinePlayers", value: playerCount});
+        appInsights.defaultClient.trackEvent({
+            name: "PlayerJoined", 
+            properties: { 
+                clientId: client.id,
+                playerCount: playerCount,
+                timestamp: new Date().toISOString()
+            }
+        });
     }
 
     async onLeave(client: Client, consented: boolean) {
         this.state.players.delete(client.sessionId);
+        // Update player count immediately when a player leaves
+        const playerCount = matchMaker.stats.local.ccu || 0;
+        appInsights.defaultClient.trackMetric({name: "OnlinePlayers", value: playerCount});
+        appInsights.defaultClient.trackEvent({
+            name: "PlayerLeft", 
+            properties: { 
+                clientId: client.id,
+                consented: consented,
+                playerCount: playerCount,
+                timestamp: new Date().toISOString()
+            }
+        });
     }
 
     async onDispose () {
+        // Clear the interval to prevent memory leaks
+        this.clock.clearInterval(this.delayedInterval);
+        // Explicitly set player count to 0 when room is disposed
         appInsights.defaultClient.trackMetric({name: "OnlinePlayers", value: 0});
+        appInsights.defaultClient.trackEvent({
+            name: "RoomDisposed", 
+            properties: { 
+                roomId: this.roomId,
+                timestamp: new Date().toISOString()
+            }
+        });
+        console.log("Room disposed, player count set to 0");
     }
 
     removeAiPlayer(){
