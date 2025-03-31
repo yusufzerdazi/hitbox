@@ -230,8 +230,6 @@ export class GameRoom extends Room<HitboxRoomState> {
     }
 
     async onDispose () {
-        // Clear the interval to prevent memory leaks
-        this.clock.clearInterval(this.delayedInterval);
         // Explicitly set player count to 0 when room is disposed
         appInsights.defaultClient.trackMetric({name: "OnlinePlayers", value: 0});
         appInsights.defaultClient.trackEvent({

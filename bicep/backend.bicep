@@ -308,7 +308,7 @@ resource HitboxServerStateAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
           timeAggregation: 'Maximum'
           skipMetricValidation: false
           criterionType: 'StaticThresholdCriterion'
-        },
+        }
         {
           threshold: json('0.0')
           name: 'Metric2'
