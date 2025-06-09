@@ -4,6 +4,7 @@ import Utils from '../../utils';
 import Modal from 'react-overlays/Modal';
 import Leaderboard from '../../pages/leaderboard';
 import Instructions from '../../pages/instructions';
+import { isMobile } from 'react-device-detect';
 
 import { connect } from "react-redux";
 import Collapsible from 'react-collapsible';
@@ -226,10 +227,13 @@ class Options extends React.Component {
           <div className={styles.profileName}>
             {this.props.user?.name}
           </div>
-          {this.props.isPlaying ? <div  className={styles.options + " " + styles.quitOption} onClick={() => this.props.playing(false)}>Quit</div> : <></>}
-          {!this.props.isPlaying && this.props.isScaled ? 
+          {!isMobile && this.props.isPlaying ? <div  className={styles.options + " " + styles.quitOption} onClick={() => this.props.playing(false)}>Quit</div> : <></>}
+          {!isMobile && !this.props.isPlaying && this.props.isScaled ? 
             <div className={styles.options + " " + styles.playOption} onClick={() => this.props.playing(true)}>Join</div> 
           : <></>}
+          {isMobile && (
+            <div className={styles.spectatorBadge}>Spectating</div>
+          )}
           <div className={styles.options}  onClick={() => this.toggleState("optionsOpen")}>Options {this.state.optionsOpen ? ' ᐃ' : ' ᐁ'}</div>
           <div className={styles.score}>Rank: {this.state?.score || "?"}</div>
         </div>
@@ -263,16 +267,34 @@ class Options extends React.Component {
       </div> : 
       <div className={styles.footerContainer}>
         <div>
-          <div className={styles.play} onClick={() => {this.setState(prevState => ({  optionsOpen: !prevState.optionsOpen }))}}>Play</div>
+          {isMobile ? (
+            <div className={styles.play} onClick={() => {this.setState(prevState => ({  optionsOpen: !prevState.optionsOpen }))}}>Spectate</div>
+          ) : (
+            <div className={styles.play} onClick={() => {this.setState(prevState => ({  optionsOpen: !prevState.optionsOpen }))}}>Play</div>
+          )}
         </div>
         <Collapsible easing="ease-in-out" open={this.state.optionsOpen} >
           <div className={styles.optionsDetails}>
               <div styles={{display: this.props.isScaled ? 'block' : 'none'}}>
-                <div className={styles.playButton} onClick={this.playAnonymously}>Play anonymously</div>
-                <div className={styles.or}>or</div>
-                <div className={styles.googleSignIn}>
-                  <div style={{width: "100%"}} id="g-signin2"></div>
-                </div>
+                {isMobile ? (
+                  <>
+                    <div className={styles.mobileNotice}>
+                      <p>Mobile devices can only spectate</p>
+                      <p>Join on desktop to play!</p>
+                    </div>
+                    <div className={styles.googleSignIn}>
+                      <div style={{width: "100%"}} id="g-signin2"></div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className={styles.playButton} onClick={this.playAnonymously}>Play anonymously</div>
+                    <div className={styles.or}>or</div>
+                    <div className={styles.googleSignIn}>
+                      <div style={{width: "100%"}} id="g-signin2"></div>
+                    </div>
+                  </>
+                )}
               </div>
               <div styles={{display: this.props.isScaled ? 'none' : 'block'}} className={styles.scaling}>Server is scaling up...</div>
           </div>

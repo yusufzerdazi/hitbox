@@ -1,0 +1,305 @@
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.overlay > div {
+    pointer-events: auto;
+}
+
+/* Positioning containers */
+.topLeft {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+}
+
+.topCenter {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+}
+
+.bottomLeft {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+}
+
+.bottomRight {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+}
+
+/* Game mode header */
+.gameModeHeader {
+    background: rgba(0, 0, 0, 0.7);
+    padding: 15px 30px;
+    border-radius: 10px;
+    backdrop-filter: blur(10px);
+    animation: slideDown 0.5s ease-out;
+}
+
+.gameTitle {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 300;
+    color: white;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.gameSubtitle {
+    margin: 5px 0 0 0;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* Scores */
+.scoreContainer {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 12px 20px;
+    border-radius: 8px;
+    backdrop-filter: blur(10px);
+    animation: slideRight 0.5s ease-out;
+}
+
+.teamScore {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.teamLabel {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.7);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.score {
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.scoreDivider {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 20px;
+}
+
+/* Distance display */
+.distanceContainer {
+    background: rgba(0, 0, 0, 0.7);
+    padding: 12px 20px;
+    border-radius: 8px;
+    backdrop-filter: blur(10px);
+    animation: slideRight 0.5s ease-out;
+}
+
+.currentDistance {
+    font-size: 24px;
+    font-weight: bold;
+    color: white;
+}
+
+.maxDistance {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.7);
+    margin-top: 5px;
+}
+
+/* Countdown */
+.countdownContainer {
+    animation: pulse 1s ease-in-out infinite;
+}
+
+.countdown {
+    font-size: 72px;
+    font-weight: bold;
+    color: white;
+    text-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+}
+
+/* Game countdown */
+.gameCountdownContainer {
+    background: rgba(255, 100, 0, 0.8);
+    padding: 10px 20px;
+    border-radius: 8px;
+    backdrop-filter: blur(10px);
+    animation: slideRight 0.5s ease-out;
+}
+
+.gameCountdown {
+    font-size: 20px;
+    font-weight: bold;
+    color: white;
+}
+
+/* Player stats */
+.playerStats {
+    background: rgba(0, 0, 0, 0.7);
+    padding: 15px 20px;
+    border-radius: 8px;
+    backdrop-filter: blur(10px);
+    min-width: 250px;
+    animation: slideUp 0.5s ease-out;
+}
+
+.statBar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.statBar:last-child {
+    margin-bottom: 0;
+}
+
+.statLabel {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.7);
+    min-width: 50px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.barContainer {
+    flex: 1;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.healthBar {
+    height: 100%;
+    background: linear-gradient(90deg, #ff4444, #ff6666);
+    transition: width 0.3s ease;
+}
+
+.staminaBar {
+    height: 100%;
+    background: linear-gradient(90deg, #4444ff, #6666ff);
+    transition: width 0.3s ease;
+}
+
+.statValue {
+    font-size: 12px;
+    color: white;
+    min-width: 35px;
+    text-align: right;
+}
+
+/* Events */
+.eventsContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-width: 300px;
+}
+
+.event {
+    background: rgba(0, 0, 0, 0.7);
+    padding: 8px 15px;
+    border-radius: 6px;
+    backdrop-filter: blur(10px);
+    color: white;
+    font-size: 14px;
+    animation: slideLeft 0.4s ease-out both;
+    border-left: 3px solid rgba(255, 255, 255, 0.3);
+}
+
+.event.kill {
+    border-left-color: #ff4444;
+}
+
+.event.joined {
+    border-left-color: #44ff44;
+}
+
+.event.left {
+    border-left-color: #ffaa44;
+}
+
+/* Animations */
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -20px);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+}
+
+@keyframes slideRight {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideLeft {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .topLeft, .topCenter, .bottomLeft, .bottomRight {
+        transform: scale(0.85);
+        transform-origin: top left;
+    }
+    
+    .topCenter {
+        transform: translateX(-50%) scale(0.85);
+        transform-origin: top center;
+    }
+    
+    .bottomRight {
+        transform-origin: bottom right;
+    }
+}

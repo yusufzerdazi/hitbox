@@ -3,9 +3,12 @@ import Gamepad from 'react-gamepad';
 import { connect } from "react-redux";
 import { store } from '../../redux/store';
 import { PlayFabClient } from 'playfab-sdk';
+import { isMobile } from 'react-device-detect';
 
 import GameCanvas from '../../components/gameCanvas';
 import LoadingOverlay from '../../components/loadingOverlay';
+import GameOverlay from '../../components/GameOverlay';
+import MobileSpectatorView from '../../components/MobileSpectatorView';
 import GameService from '../../services/game.service';
 import { USERNAME_UPDATED, IS_SCALED } from '../../constants/actionTypes';
 
@@ -41,7 +44,17 @@ class Game extends React.Component {
             name: null,
             ai: 0,
             avatar: null,
-            isScaled: false
+            isScaled: false,
+            gameState: null,
+            players: [],
+            countdown: '',
+            gameCountdown: '',
+            events: [],
+            scores: { team1: 0, team2: 0 },
+            gameMode: { title: null, subtitle: null },
+            currentPlayer: null,
+            deathWallDistance: 0,
+            maxDistance: 0
         };
         this.canvasRef = React.createRef();
         this.gameService = new GameService();
@@ -59,7 +72,7 @@ class Game extends React.Component {
             this.gameService.changeName(state.logIn.user.name);
             this.setState({name: state.logIn.user.name});
         }
-        if(state.logIn?.user?.name && !this.state.playing && state.options?.playing){
+        if(state.logIn?.user?.name && !this.state.playing && state.options?.playing && !isMobile){
             PlayFabClient.GetPlayerStatistics({
                 StatisticNames: ["rank"]
             }, (error, s) => {
@@ -98,6 +111,53 @@ class Game extends React.Component {
         }
     }
 
+    onGameStateUpdate = (state) => {
+        if (this.mounted && state) {
+            const players = state.players ? Array.from(state.players.values()) : [];
+            const currentPlayer = players.find(p => p.name === this.state.name);
+            
+            this.setState({
+                gameState: state,
+                players: players,
+                currentPlayer: currentPlayer,
+                deathWallDistance: state.level?.currentDistance || 0,
+                maxDistance: state.maxDistance || 0
+            });
+        }
+    }
+
+    onGameEvent = (event) => {
+        if (this.mounted) {
+            this.setState(prevState => ({
+                events: [...prevState.events, event].slice(-10) // Keep last 10 events
+            }));
+        }
+    }
+
+    onScoresUpdate = (scores) => {
+        if (this.mounted) {
+            this.setState({ scores });
+        }
+    }
+
+    onGameModeUpdate = (gameMode) => {
+        if (this.mounted) {
+            this.setState({ gameMode });
+        }
+    }
+
+    onCountdownUpdate = (countdown) => {
+        if (this.mounted) {
+            this.setState({ countdown });
+        }
+    }
+
+    onGameCountdownUpdate = (gameCountdown) => {
+        if (this.mounted) {
+            this.setState({ gameCountdown });
+        }
+    }
+
     componentDidMount() {
         this.mounted = true;
 
@@ -114,6 +174,13 @@ class Game extends React.Component {
             .onToggleGui(this.props.toggleGui);
         
         this.gameService.onIsScaled(this.onIsScaled);
+        this.gameService.onGameStateUpdate(this.onGameStateUpdate);
+        this.gameService.onGameEvent(this.onGameEvent);
+        this.gameService.onScoresUpdate(this.onScoresUpdate);
+        this.gameService.onGameModeUpdate(this.onGameModeUpdate);
+        this.gameService.onCountdownUpdate(this.onCountdownUpdate);
+        this.gameService.onGameCountdownUpdate(this.onGameCountdownUpdate);
+        
         this.gameService.spectate(this.state.room);
 
         document.addEventListener("keydown", e => {
@@ -206,10 +273,32 @@ class Game extends React.Component {
     }
 
     render() {
+        if (isMobile) {
+            return (
+                <MobileSpectatorView
+                    gameState={this.state.gameState}
+                    players={this.state.players}
+                    scores={this.state.scores}
+                    gameMode={this.state.gameMode}
+                />
+            );
+        }
+
         return (
             <>
                 <GameCanvas ref={this.canvasRef} />
                 <LoadingOverlay isVisible={!this.state.isScaled} />
+                <GameOverlay
+                    gameMode={this.state.gameMode}
+                    scores={this.state.scores}
+                    countdown={this.state.countdown}
+                    gameCountdown={this.state.gameCountdown}
+                    events={this.state.events}
+                    player={this.state.currentPlayer}
+                    deathWallDistance={this.state.deathWallDistance}
+                    maxDistance={this.state.maxDistance}
+                    showGui={true}
+                />
                 <Gamepad
                     onA={this.jump}
                     onRT={this.boostRight}

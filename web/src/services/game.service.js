@@ -202,18 +202,27 @@ class GameService {
         this.addRoomListener('starting', (timer) => {
             if (this.mounted){
                 this.canvasRef.current.setCountdown(timer ? timer : "");
+                if (this.onCountdownUpdateCallback) {
+                    this.onCountdownUpdateCallback(timer ? timer : "");
+                }
             }
         });
 
         this.addRoomListener('gameMode', (gameMode) => {
             if(this.mounted){
                 this.canvasRef.current.setGameMode(gameMode);
+                if (this.onGameModeUpdateCallback) {
+                    this.onGameModeUpdateCallback(gameMode);
+                }
             }
         });
         
         this.addRoomListener('gameCountdown', (gameCountdown) => {
             if(this.mounted){
                 this.canvasRef.current.updateGameCountdown(gameCountdown);
+                if (this.onGameCountdownUpdateCallback) {
+                    this.onGameCountdownUpdateCallback(gameCountdown);
+                }
             }
         });
 
@@ -228,6 +237,9 @@ class GameService {
                 this.canvasRef.current.event(event);
                 if(event.type === "death" && event.causeOfDeath === "water"){
                     this.playSound(this.splashSound);
+                }
+                if (this.onGameEventCallback) {
+                    this.onGameEventCallback(event);
                 }
             }
         });
@@ -406,6 +418,16 @@ class GameService {
             if (this.mounted && this.canvasRef.current) {
                 this.canvasRef.current.draw(newState, this.name, this.lastWinner, this.showGui);
                 this.updateRunning(newState.runningPlayers);
+                
+                // Trigger game state update callback
+                if (this.onGameStateUpdateCallback) {
+                    this.onGameStateUpdateCallback(newState);
+                }
+                
+                // Extract and update scores
+                if (this.onScoresUpdateCallback && this.canvasRef.current.scores) {
+                    this.onScoresUpdateCallback(this.canvasRef.current.scores);
+                }
             }
         });
     }
@@ -511,6 +533,36 @@ class GameService {
 
     onIsScaled(callback) {
         this.onIsScaledCallback = callback;
+        return this;
+    }
+
+    onGameStateUpdate(callback) {
+        this.onGameStateUpdateCallback = callback;
+        return this;
+    }
+
+    onGameEvent(callback) {
+        this.onGameEventCallback = callback;
+        return this;
+    }
+
+    onScoresUpdate(callback) {
+        this.onScoresUpdateCallback = callback;
+        return this;
+    }
+
+    onGameModeUpdate(callback) {
+        this.onGameModeUpdateCallback = callback;
+        return this;
+    }
+
+    onCountdownUpdate(callback) {
+        this.onCountdownUpdateCallback = callback;
+        return this;
+    }
+
+    onGameCountdownUpdate(callback) {
+        this.onGameCountdownUpdateCallback = callback;
         return this;
     }
 

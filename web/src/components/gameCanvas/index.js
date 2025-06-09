@@ -156,49 +156,18 @@ class GameCanvas extends React.Component {
         
         players.filter(p => p.type !== "ball").forEach(player => this.drawPlayer(player, name, showGui));
         players.filter(p => p.type === "ball").forEach(player => this.drawBall(player));
-        if(showGui){
-            players.filter(p => p.name === name).forEach(player => {
-                this.drawPlayerScore(player);
-                this.drawPlayerStats(player);
-            });
-        }
-
+        
         this.drawDeathWall(level);
         
         this.animations = this.animations.filter(c => Utils.millis() - c.animationLength < c.timestamp);
         this.animations.forEach(c => c.drawAnimation(c, c.name ? players.filter(p => p.name === c.name)[0] : undefined));
-        if(showGui){
-            this.drawGameDetails(state);
-            this.drawStartingTimer();
-            this.drawGameMode(level, lastWinner);
-            this.drawEvents();
-        }
+        
         if(players.filter(p => p.name === name).length === 0 && this.joining){
             this.drawNotification();
         }
         setTimeout(() => {
             this.drawing = false;
         }, 1);
-    }
-
-    drawGameDetails(state){
-        switch(this.gameMode.title){
-            case("Football"):
-                this.drawFootballScores();
-                break;
-            case("Death Wall"):
-                this.drawDeathWallDistance(state.level, state.maxDistance);
-                break;
-            case("Tag"):
-                this.drawGameCountdown();
-                break;
-            default:
-                break;
-        }
-    }
-
-    newGame(players){
-        this.props.updatePlayers(players);
     }
 
     drawNotification(){
@@ -242,40 +211,10 @@ class GameCanvas extends React.Component {
         ], 0, 0, "#002138", false, true);
     }
 
-    drawDeathWallDistance(level, maxDistance){
-        if(maxDistance){
-            this.ctx.save()
-            this.ctx.fillStyle = 'black';
-            this.ctx.globalCompositeOperation = "difference";
-            this.ctx.font = "bold " + (20/this.scale)+"px " + FONT;
-            this.ctx.shadowColor = "white";
-            this.ctx.shadowOffsetX = 1;
-            this.ctx.shadowOffsetY = 1;
-            this.ctx.shadowBlur = 1;
-            this.ctx.textAlign = "left";
-            this.ctx.fillText(Math.round(level.currentDistance / 50) + "m  (Max: " + Math.round(maxDistance / 50) + "m)", -(this.ctx.canvas.width / 2 - 10) / this.scale, -(this.ctx.canvas.height / 2 - 105) / this.scale);
-            this.ctx.restore()
-        }
-    }
-
     drawDeathWall(level){
         if(level.deathWallX){
             this.drawLevelPlatform({x: level.deathWallX, y:-(this.ctx.canvas.height / 2)/this.scale + this.camera.y,
                 width: -(((this.ctx.canvas.width) / 2)/this.scale) + this.camera.x - level.deathWallX, height: this.ctx.canvas.height / this.scale}, "#f0af00")
-        }
-    }
-
-    drawFootballScores() {
-        if(this.gameMode.title === "Football" && this.scores){
-            this.ctx.font = "bold " + (20/this.scale)+"px " + FONT;
-            this.ctx.save()
-            this.ctx.textAlign = "left";
-            var text = [];
-            text.push({text: this.scores.team1, fillStyle: "red"});
-            text.push({text: "-", fillStyle: "black"});
-            text.push({text: this.scores.team2, fillStyle: "slateblue"});
-            Utils.fillMixedText(this.ctx, text, - (this.ctx.canvas.width - 68) / (2 * this.scale), - (this.ctx.canvas.height / 2 - 105) / this.scale);
-            this.ctx.restore()
         }
     }
 
@@ -563,162 +502,12 @@ class GameCanvas extends React.Component {
         this.ctx.restore();
     }
 
-    drawPlayerStats(player){
-        this.ctx.save()
-        this.ctx.beginPath();
-        this.ctx.fillStyle = 'black';
-        this.ctx.globalAlpha = 0.7;
-        this.ctx.rect((this.ctx.canvas.width / 2 - 225) / this.scale,
-            (this.ctx.canvas.height / 2 - 55) / this.scale,
-            210 / this.scale,
-            40 / this.scale);
-        this.ctx.fill();
-        this.ctx.beginPath();
-        this.ctx.fillStyle = 'lightblue';
-        this.ctx.rect((this.ctx.canvas.width / 2 - 220) / this.scale,
-            (this.ctx.canvas.height / 2 - 50) / this.scale,
-            (200 - 2 * player.boostCooldown) / this.scale,
-            30 / this.scale);
-        this.ctx.fill();
-        this.ctx.beginPath();
-        this.ctx.fillStyle = "white"
-        this.ctx.font = "bold " + 15*(1/this.scale) + "px " + FONT;
-        this.ctx.fillText(
-            "Stamina",
-            (this.ctx.canvas.width / 2 - 210) / this.scale,
-            (this.ctx.canvas.height / 2 - 29) / this.scale
-        );
-        this.ctx.fill();
-
-        this.ctx.beginPath();
-        this.ctx.fillStyle = 'black';
-        this.ctx.rect((this.ctx.canvas.width / 2 - 450) / this.scale,
-            (this.ctx.canvas.height / 2 - 55) / this.scale,
-            210 / this.scale,
-            40 / this.scale);
-        this.ctx.fill();
-        this.ctx.beginPath();
-        this.ctx.fillStyle = 'red';
-        this.ctx.rect((this.ctx.canvas.width / 2 - 445) / this.scale,
-            (this.ctx.canvas.height / 2 - 50) / this.scale,
-            (2 * player.health) / this.scale,
-            30 / this.scale);
-        this.ctx.fill();
-        this.ctx.beginPath();
-        this.ctx.fillStyle = "white"
-        this.ctx.font = "bold " + 15*(1/this.scale) + "px " + FONT;
-        this.ctx.fillText(
-            "Health",
-            (this.ctx.canvas.width / 2 - 435) / this.scale,
-            (this.ctx.canvas.height / 2 - 29) / this.scale
-        );
-        this.ctx.fill();
-        this.ctx.restore();
-    }
-
     applyRotation(player, playerX, playerY, width){
         if(!player.ducked && player.alive){
             this.ctx.translate(playerX + width / 2 - this.camera.x, playerY - this.camera.y);              //translate to center of shape
             this.ctx.rotate(player.xVelocity * 0.01);  //rotate 25 degrees.
             this.ctx.translate(-(playerX + width / 2 - this.camera.x), -(playerY - this.camera.y));            //translate center back to 0,0
         }
-    }
-
-    drawEvents(){
-        this.events = this.events.filter(d => !HIDDENEVENTS.includes(d.type) && Utils.millis() < d.timestamp + 5000);
-
-        this.ctx.save();
-        this.ctx.font = "bold " + 15*(1/this.scale) + "px " + FONT;
-        this.ctx.textAlign = "right";
-
-        this.ctx.shadowColor = "black";
-        this.ctx.shadowOffsetX = 0.7;
-        this.ctx.shadowOffsetY = 0.7;
-        this.ctx.shadowBlur = 1;
-
-        this.events.sort((ev1, ev2) => {
-            if(ev1.timestamp > ev2.timestamp){
-                return -1;
-            }
-            return 1;
-        })
-        
-        this.events.forEach((d, i) => {
-            if(i >= 10){
-                return;
-            }
-            var text = [];
-            if(d.type === "death"){
-                if(!d.killer){
-                    text.push({text: d.method, fillStyle: d.colour || "red"});
-                }
-                text.push({text: d.killed.name, fillStyle: d.killed.colour});
-                if(d.killer){
-                    text.push({text: d.method, fillStyle: d.colour || "red"});
-                    text.push({text: d.killer.name, fillStyle: d.killer.colour});
-                }
-            }
-            if(d.type === "halo"){
-                text.push({text: d.from.name, fillStyle: d.from.colour});
-                text.push({text: " took the halo from " , fillStyle: "yellow"});
-                text.push({text: d.to.name, fillStyle: d.to.colour});
-            }
-            if(d.type === "box"){
-                text.push({text: " collected a box", fillStyle: "yellow"});
-                text.push({text: d.player.name, fillStyle: d.player.colour});
-            }
-            if(d.type === "goal"){
-                text.push({text: d.colour + " team conceded a goal.", fillStyle: d.colour});
-            }
-            Utils.fillMixedText(this.ctx, text, (this.ctx.canvas.width / 2 - 15) / this.scale, (this.ctx.canvas.height / 2 - 60 - 20 * (1+i)) / this.scale);
-        })
-        this.ctx.restore();
-    }
-
-    drawScores(players, lastWinner){
-        this.ctx.save();
-        this.ctx.fillStyle = 'white';
-        this.ctx.font = "bold " + 15*(1/this.scale) + "px " + FONT;
-        this.ctx.textAlign = "left";
-
-        this.ctx.shadowColor = "black";
-        this.ctx.shadowOffsetX = 0.7;
-        this.ctx.shadowOffsetY = 0.7;
-        this.ctx.shadowBlur = 1;
-
-        var scores = [];
-
-        players.filter(p => !p.orb).forEach(p => {
-            scores.push({
-                name: p.name,
-                colour: p.colour,
-                score: p.score,
-                alive: p.alive,
-                lives: p.lives
-            });
-        });
-        scores.sort((score1, score2) => {
-            if(score1.score > score2.score){
-                return -1;
-            }
-            else if(score1.score === score2.score && score1.name < score2.name){
-                return -1;
-            }
-            return 1;
-        })
-        scores.forEach((s, i) => {
-            this.ctx.fillStyle = s.colour;
-            var aliveText = (!s.alive ? "[DEAD] " : "");
-            var lastWinnerText = (lastWinner?.name === s.name ? " [WINNER]" : "");
-            var livesText = (this.gameMode.title === "Free for All" || this.gameMode.title === "Collect the Boxes") ? " (" + s.lives + ")" : "";
-
-            this.ctx.fillText(
-                aliveText + s.name + ": " + s.score + livesText + lastWinnerText,
-                (-this.ctx.canvas.width / 2 + 10) / this.scale,
-                (-this.ctx.canvas.height / 2 + 20 * (1+i)) / this.scale
-            );
-        })
-        this.ctx.restore();
     }
 
     drawPlayerLegs(player, breathingOffset){
@@ -1057,6 +846,17 @@ class GameCanvas extends React.Component {
     fullScreen() {
         this.ctx.canvas.width = window.innerWidth;
         this.ctx.canvas.height = window.innerHeight;
+        this.ctx.setTransform(this.scale, 0, 0, this.scale, this.ctx.canvas.width / 2, this.ctx.canvas.height / 2);
+    }
+
+    resetCamera() {
+        this.camera = {
+            x: (WIDTH / 2),
+            y: (HEIGHT / 2),
+            xEased: 0,
+            yEased: 0
+        };
+        this.scale = 1;
         this.ctx.setTransform(this.scale, 0, 0, this.scale, this.ctx.canvas.width / 2, this.ctx.canvas.height / 2);
     }
 

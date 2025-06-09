@@ -1,17 +1,39 @@
 body {
   text-align: center;
-  margin: 20px;
-  font-family: Roboto;
+  margin: 0;
+  padding: 0;
+  font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
   font-weight: bold;
+  overflow: hidden;
+  background-color: #000;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 .options {
   position: absolute;
   top: 0;
   right: 0;
-  z-index: 3; /* Above loading overlay */
+  z-index: 5; /* Above game overlay */
 }
 
 canvas {
   z-index: 1; /* Below everything */
+  cursor: crosshair;
+}
+
+/* Smooth transitions */
+* {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* Disable transitions for real-time elements */
+canvas, 
+.healthBar, 
+.staminaBar {
+  transition: none !important;
 }

@@ -186,3 +186,34 @@
     padding: 20px;
     font-style: italic;
 }
+
+.spectatorBadge {
+    margin: 5px;
+    height: 32px;
+    padding: 8px 10px 32px;
+    color: white;
+    background-color: #ff8c00;
+    float: right;
+    font-size: 14px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.mobileNotice {
+    text-align: center;
+    padding: 20px;
+    color: white;
+    background-color: rgba(255, 140, 0, 0.2);
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.mobileNotice p {
+    margin: 5px 0;
+    font-size: 14px;
+}
+
+.mobileNotice p:first-child {
+    font-weight: bold;
+    font-size: 16px;
+}
