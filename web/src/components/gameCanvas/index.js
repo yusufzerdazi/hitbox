@@ -186,6 +186,10 @@ class GameCanvas extends React.Component {
         this.ctx.restore()
     }
 
+    newGame(players){
+        this.props.updatePlayers(players);
+    }
+
     drawWater(){
         var grd = this.ctx.createLinearGradient(0, HEIGHT - this.camera.y, 0, 7 * HEIGHT - this.camera.y);
         grd.addColorStop(0, "#064273");
@@ -558,146 +562,101 @@ class GameCanvas extends React.Component {
     }
 
     drawCollision(collision){
-        this.ctx.save();
-        this.ctx.beginPath();
-
-        var time = (Utils.millis() - collision.timestamp) / ANIMATIONLENGTH;
-        var transparency = 1 - Math.pow(time,4);
-        var sizeProportion = 1 + 0.5 * time;
-        var maxSize = 2 * collision.speed * (collision.speed > 30 ? 1.3 : 1);
-        var collisionImage = collision.speed < 30 ? 
-            Collision[Math.min(Math.floor(time * Collision.length), Collision.length - 1)] : 
-            BigCollision[Math.min(Math.floor(time * BigCollision.length), BigCollision.length - 1)];
-        
-        this.ctx.globalAlpha = transparency;
-        this.ctx.drawImage(collisionImage, collision.location.x - (sizeProportion * maxSize / 2) - this.camera.x, 
-            collision.location.y - (sizeProportion * maxSize / 2) - this.camera.y, sizeProportion * maxSize, sizeProportion * maxSize);
-        this.ctx.fill();
-        this.ctx.restore();
+        return {
+            ...collision,
+            timestamp: Utils.millis(),
+            animationLength: ANIMATIONLENGTH,
+            drawAnimation: (event) => {
+                var fade = (Utils.millis() - event.timestamp) / ANIMATIONLENGTH;
+                var x = event.location ? event.location.x : event.x;
+                var y = event.location ? event.location.y : event.y;
+                Collision(this.ctx, x - this.camera.x, y - this.camera.y, 1 - fade, this.scale, collision.type === 'player' ? event.colour : 'green');
+                if(collision.type === 'player' && collision.speed >= 30){
+                    BigCollision(this.ctx, x - this.camera.x, y - this.camera.y, 1 - fade, this.scale, event.colour);
+                }
+            }
+        };
     }
 
     drawDeath(death){
-        this.ctx.save();
-        var time = (Utils.millis() - death.timestamp) / SPLASHANIMATIONLENGTH;
-        var splashImage = Splash[Math.min(Math.floor(time * Splash.length), Splash.length - 1)];
-        
-        this.ctx.drawImage(splashImage, death.location.x - 231 - this.camera.x, HEIGHT - 145 - this.camera.y, 
-            512, 198);
-
-        this.ctx.restore();
+        return {
+            ...death,
+            timestamp: Utils.millis(),
+            animationLength: SPLASHANIMATIONLENGTH,
+            drawAnimation: (event) => {
+                if(event.causeOfDeath === "water"){
+                    var fade = (Utils.millis() - event.timestamp) / SPLASHANIMATIONLENGTH;
+                    var x = event.location ? event.location.x : event.x;
+                    var y = event.location ? event.location.y : event.y;
+                    Splash(this.ctx, x - this.camera.x, y - this.camera.y, 1 - fade, this.scale, event.colour);
+                }
+            }
+        };
     }
 
     drawBoost(boost, player){
-        if(!player){
-            return;
-        }
-        this.ctx.save();
-        var time = (Utils.millis() - boost.timestamp) / WHOOSHANIMATIONLENGTH;
-        var transparency = 0.7 * (1 - Math.pow(time,4));
-        this.ctx.globalAlpha = transparency;
-        var whooshAnimation = boost.direction === 'right' ? WhooshRight : boost.direction === 'left' ? WhooshLeft : WhooshDown;
-        var image = whooshAnimation[Math.min(Math.floor(time * whooshAnimation.length), whooshAnimation.length - 1)];
-        var imageWidth = 302;
-        var imageHeight = 100;
-        var xOffset = 0;
-        var yOffset = - 25;
-        switch(boost.direction){
-            case 'right':
-                if(player.xVelocity <= 10){
-                    this.ctx.restore();
-                    return;
+        return {
+            ...boost,
+            timestamp: Utils.millis(),
+            animationLength: WHOOSHANIMATIONLENGTH,
+            drawAnimation: (event, p) => {
+                var fade = (Utils.millis() - event.timestamp) / WHOOSHANIMATIONLENGTH;
+                if(p && event.direction === "down"){
+                    WhooshDown(this.ctx, p.x - this.camera.x + this.playerSize / 2, p.y - this.camera.y - 20, fade, this.scale);
                 }
-                xOffset = - imageWidth - 15;
-                break;
-            case 'left':
-                if(player.xVelocity >= 10){
-                    this.ctx.restore();
-                    return;
+                else if(p && event.direction === "right"){
+                    WhooshRight(this.ctx, p.x - this.camera.x + this.playerSize / 2, p.y - this.camera.y - 20, fade, this.scale);
                 }
-                xOffset = player.width + 15;
-                break;
-            case 'down':
-                if(player.yVelocity <= 10){
-                    this.ctx.restore();
-                    return;
+                else if(p && event.direction === "left"){
+                    WhooshLeft(this.ctx, p.x - this.camera.x + this.playerSize / 2, p.y - this.camera.y - 20, fade, this.scale);
                 }
-                xOffset = - 28;
-                yOffset = - imageWidth - 25;
-                imageWidth = [imageHeight, imageHeight = imageWidth][0];
-                break;
-            default:
-                this.ctx.restore();
-                return;
-        }
-
-        this.ctx.drawImage(image, player.x + xOffset - this.camera.x, player.y - player.height + yOffset - this.camera.y, 
-            imageWidth, imageHeight);
-
-        this.ctx.restore();
+            }
+        };
     }
 
     drawLanding(landing){
-        this.ctx.save();
-        var time = (Utils.millis() - landing.timestamp) / ANIMATIONLENGTH;
-        var image = Landing[Math.min(Math.floor(time * Landing.length), Landing.length - 1)];
-        if(landing.hitType === 'floor' && landing.speed > 10){
-            this.ctx.drawImage(image, landing.location.x - 90 + landing.size.width / 2 - this.camera.x, landing.location.y - 74 - this.camera.y, 
-                194, 82);
-        }
-
-        this.ctx.restore();
+        return {
+            ...landing,
+            timestamp: Utils.millis(),
+            animationLength: ANIMATIONLENGTH,
+            drawAnimation: (event) => {
+                var fade = (Utils.millis() - event.timestamp) / ANIMATIONLENGTH;
+                var x = event.location ? event.location.x : event.x;
+                var y = event.location ? event.location.y : event.y;
+                Landing(this.ctx, x - this.camera.x, y - this.camera.y, 1 - fade, this.scale, event.colour);
+            }
+        };
     }
 
     drawPlayer(player, name, showGui) {
-        // If player is invincible make them flash.
-        if (player.alive && player.invincibility !== 0 && (Math.round(Utils.millis() / 10)) % 2 === 0) return;
-
-        // If player is dead, make them transparent.
-        if (!player.alive) this.ctx.globalAlpha = 0.3;
-
-
-        var currentPlayerHeight = player.ducked ? this.playerSize / 5 : this.playerSize;
-        var currentPlayerWidth = player.ducked ? this.playerSize * 1.5 : this.playerSize;
-        var xOffset = player.ducked ? - 0.25 * this.playerSize : 0;
-        var breathingOffset = (player.xVelocity === 0 && player.yVelocity === 0) && player.type !== "flag" ? 3 * Math.sin((0.01 * Utils.millis())) : 0;
-        var yOffset = player.ducked ? 0 : -30 + breathingOffset;
-
+        var breathingOffset = Math.sin(0.002 * Utils.millis()) * 2;
+        var width = player.ducked ? this.playerSize * 1.3 : this.playerSize;
+        var height = player.ducked ? this.playerSize * 0.6 : this.playerSize;
+        var xOffset = 0;
+        var yOffset = 0;
         if(player.orb){
             this.drawPulsingOrb(player, xOffset, yOffset);
         }
-        if(player.it){
-            this.drawPlayerIsIt(player, currentPlayerWidth, currentPlayerHeight, xOffset, yOffset);
-        }
-        if(!player.ducked && player.alive && !player.orb && player.type !== "flag"){
+        else {
+            if(showGui){
+                this.drawPlayerName(player, height, xOffset, yOffset);
+                if(player.lives <= 1 && this.gameMode.title === "Free for All"){
+                    this.drawPlayerStamina(player, width, height, xOffset, yOffset, name);
+                }
+            }
+            this.drawPlayerCube(player, width, height, xOffset, yOffset - breathingOffset * !player.ducked);
             this.drawPlayerLegs(player, breathingOffset);
+            if(player.it && this.gameMode.title === "Tag"){
+                this.drawPlayerIsIt(player, width, height, xOffset, yOffset);
+            }
+            else if(player.flag){
+                this.drawFlag(player);
+            }
         }
-        if(player.type == "flag"){
-            this.drawFlag(player);
-        }
-        this.drawPlayerCube(player, currentPlayerWidth, currentPlayerHeight, xOffset, yOffset);
-        if(showGui){
-            this.drawPlayerName(player, currentPlayerHeight, xOffset, yOffset);
-        }
-
-        // If player is dead, don't draw the rest.
-        if (!player.alive) {
-            this.ctx.globalAlpha = 1;
-            return;
-        }
-        if(!player.ducked && player.boostCooldown !== 0 && showGui){
-            this.drawPlayerStamina(player, currentPlayerWidth, currentPlayerHeight, xOffset, yOffset, name);
-        }
-        this.ctx.globalAlpha = 1;
     }
 
     drawBall(player) {
-        this.ctx.save();
-        this.ctx.translate(player.x + player.width/2 - this.camera.x, player.y - player.height/2 - this.camera.y);              //translate to center of shape
-        this.ctx.rotate(player.angle);  //rotate 25 degrees.
-        this.ctx.translate(-(player.x  + player.width/2 - this.camera.x), -(player.y - player.height/2 - this.camera.y));            //translate center back to 0,0
-
-        this.ctx.drawImage(BALL, player.x - this.camera.x, player.y - 200 - this.camera.y, 200, 200);
-        this.ctx.restore();
+        this.ctx.drawImage(BALL, player.x - this.camera.x, player.y - this.camera.y, player.radius * 2, player.radius * 2);
     }
 
     drawStartingTimer() {
@@ -800,53 +759,56 @@ class GameCanvas extends React.Component {
     }
 
     event(event){
-        event.timestamp = Utils.millis();
-        this.events.push(event);
-
+        if(event.timestamp){
+            event.timestamp = Utils.millis();
+        }
         switch(event.type){
-            case("collision"):
-                event.animationLength = ANIMATIONLENGTH;
-                event.drawAnimation = this.drawCollision;
-                this.animations.push(event);
+            case "collision":
+                this.animations.push(this.drawCollision(event));
                 break;
-            case("death"):
-                if(event.causeOfDeath === "water"){
-                    event.animationLength = SPLASHANIMATIONLENGTH;
-                    event.drawAnimation = this.drawDeath;
-                    this.animations.push(event);
-                }
+            case "boost":
+                this.animations.push(this.drawBoost(event));
                 break;
-            case("boost"):
-                event.animationLength = WHOOSHANIMATIONLENGTH;
-                event.drawAnimation = this.drawBoost;
-                this.animations.push(event);
+            case "hit":
+                this.animations.push(this.drawCollision(event));
                 break;
-            case("hit"):
-                event.animationLength = ANIMATIONLENGTH;
-                event.drawAnimation = this.drawLanding;
-                this.animations.push(event);
+            case "death":
+                this.animations.push(this.drawDeath(event));
                 break;
-            case("goal"):
+            case "landing":
+                this.animations.push(this.drawLanding(event));
+                break;
+            case "goal":
                 this.scores = event.scores;
+                this.events.push(event);
                 break;
             default:
+                this.events.push(event);
                 break;
         }
     }
 
     changeAvatar(avatar){
-        var image = new Image();
-        image.src = Utils.updateQueryStringParameter(avatar.url, 'etag', Utils.uuidv4());
-        this.players[avatar.name] = {
-            ...this.players[avatar.name],
-            image: image
-        };
+        if(avatar.url && avatar.name){
+            if(!this.players[avatar.name]){
+                this.players[avatar.name] = {}
+            }
+            const playerImage = new Image();
+            playerImage.src = avatar.url;
+            this.players[avatar.name].image = playerImage;
+        }
     }
 
     fullScreen() {
-        this.ctx.canvas.width = window.innerWidth;
-        this.ctx.canvas.height = window.innerHeight;
-        this.ctx.setTransform(this.scale, 0, 0, this.scale, this.ctx.canvas.width / 2, this.ctx.canvas.height / 2);
+        if (this.canvasRef && this.canvasRef.current && this.ctx) {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            this.ctx.canvas.width = width;
+            this.ctx.canvas.height = height;
+            this.scale = Math.min(width / WIDTH, height / HEIGHT);
+            this.ctx.setTransform(this.scale, 0, 0, this.scale, width / 2, height / 2);
+            this.setState({ isScaled: this.scale > 0.8 });
+        }
     }
 
     resetCamera() {
