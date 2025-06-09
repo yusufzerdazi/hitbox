@@ -6,8 +6,6 @@ import { matchMaker } from "colyseus";
 import Game from '../game';
 import https from 'https';
 
-import { DefaultAzureCredential } from '@azure/identity';
-import { AppServicePlan, AppServicePlanPatchResource, SkuDescription, WebSiteManagementClient } from '@azure/arm-appservice';
 import { PlayFabServer } from 'playfab-sdk';
 let appInsights = require("applicationinsights");
 
@@ -24,30 +22,8 @@ if (!appInsights.defaultClient) {
         .start();
 }
 
-const subscriptionId = '4b89f88e-13f2-4990-bf5f-3ab2e4d5301f';
-const resourceGroupName = 'hitbox';
-const appServiceName = 'hitbox';
-
-const credential = new DefaultAzureCredential();
-const client = new WebSiteManagementClient(credential, subscriptionId);
-
 PlayFabServer.settings.titleId = '5B7C3';
 PlayFabServer.settings.developerSecretKey = process.env.PLAYFAB_KEY;
-
-async function getAppServicePlanDetails() {
-    // Get the App Service details to find its App Service Plan
-    const appService = await client.webApps.get(resourceGroupName, appServiceName);
-
-    // The App Service Plan ID is in the serverFarmId property of the App Service
-    const appServicePlanId = appService.serverFarmId;
-    const appServicePlanResourceGroupName = appServicePlanId.split('/')[4];
-    const appServicePlanName = appServicePlanId.split('/')[8];
-    
-    // Get the App Service Plan details
-    const appServicePlan = await client.appServicePlans.get(appServicePlanResourceGroupName, appServicePlanName);
-
-    return appServicePlan.sku;
-}
 
 export class GameRoom extends Room<HitboxRoomState> {
     game: Game;
@@ -63,18 +39,6 @@ export class GameRoom extends Room<HitboxRoomState> {
         this.delayedInterval = this.clock.setInterval(() => {
             // Track current connected players count
             const playerCount = matchMaker.stats.local.ccu || 0;
-            appInsights.defaultClient.trackMetric({name: "OnlinePlayers", value: playerCount});
-            
-            // Track detailed information for debugging
-            appInsights.defaultClient.trackTrace({
-                message: `Player count tracking: ${playerCount} players online`,
-                severity: appInsights.Contracts.SeverityLevel.Information,
-                properties: {
-                    roomId: this.roomId,
-                    playerCount: playerCount,
-                    timestamp: new Date().toISOString()
-                }
-            });
         }, 10000);
         
         this.maxClients = 100;
@@ -124,11 +88,6 @@ export class GameRoom extends Room<HitboxRoomState> {
         });
 
         this.onMessage('play', async (client, request) => {
-            if ((await getAppServicePlanDetails()).tier == "Basic")
-            {
-                return;
-            }
-
             if(Array.from(this.state.players.values()).filter(p => !p.ai).length == 0){
                 this.game.gameMode.addAiPlayer();
             } else {
@@ -164,81 +123,23 @@ export class GameRoom extends Room<HitboxRoomState> {
             await this.game.gameLoop(this);
         });
 
-        if ((await getAppServicePlanDetails()).tier != "Basic") {
-            this.state.scaledUp = true;
-            this.broadcast('isScaled', false);
-            // Track server scale status
-            appInsights.defaultClient.trackMetric({name: "ServerScaledUp", value: 1});
-            appInsights.defaultClient.trackEvent({
-                name: "ServerScaled", 
-                properties: { 
-                    status: "up",
-                    tier: (await getAppServicePlanDetails()).tier,
-                    timestamp: new Date().toISOString()
-                }
-            });
-        } else {
-            for(var i = 0; i<5; i++) {
-                this.game.gameMode.addAiPlayer();
-            }
-            // Track server scale status
-            appInsights.defaultClient.trackMetric({name: "ServerScaledUp", value: 0});
-            appInsights.defaultClient.trackEvent({
-                name: "ServerScaled", 
-                properties: { 
-                    status: "down",
-                    tier: "Basic",
-                    timestamp: new Date().toISOString()
-                }
-            });
-        }
+        // Server is always scaled up (removed Azure dependency)
+        this.state.scaledUp = true;
+        this.broadcast('isScaled', false);
     }
 
     async onJoin(client: Client, options: any) {
-        // Send scaled status to the joining client
-        if (this.state.scaledUp) {
-            client.send('isScaled', true);
-        }
-        
-        // Log player join event
-        const playerCount = matchMaker.stats.local.ccu || 0;
-        appInsights.defaultClient.trackMetric({name: "OnlinePlayers", value: playerCount});
-        appInsights.defaultClient.trackEvent({
-            name: "PlayerJoined", 
-            properties: { 
-                clientId: client.id,
-                playerCount: playerCount,
-                timestamp: new Date().toISOString()
-            }
-        });
+        client.send('isScaled', true);
     }
 
     async onLeave(client: Client, consented: boolean) {
         this.state.players.delete(client.sessionId);
         // Update player count immediately when a player leaves
         const playerCount = matchMaker.stats.local.ccu || 0;
-        appInsights.defaultClient.trackMetric({name: "OnlinePlayers", value: playerCount});
-        appInsights.defaultClient.trackEvent({
-            name: "PlayerLeft", 
-            properties: { 
-                clientId: client.id,
-                consented: consented,
-                playerCount: playerCount,
-                timestamp: new Date().toISOString()
-            }
-        });
     }
 
     async onDispose () {
         // Explicitly set player count to 0 when room is disposed
-        appInsights.defaultClient.trackMetric({name: "OnlinePlayers", value: 0});
-        appInsights.defaultClient.trackEvent({
-            name: "RoomDisposed", 
-            properties: { 
-                roomId: this.roomId,
-                timestamp: new Date().toISOString()
-            }
-        });
         console.log("Room disposed, player count set to 0");
     }
 

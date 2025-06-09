@@ -7,7 +7,7 @@ import { isMobile } from 'react-device-detect';
 
 import GameCanvas from '../../components/gameCanvas';
 import LoadingOverlay from '../../components/loadingOverlay';
-import GameOverlay from '../../components/GameOverlay';
+import GameOverlay from '../../components/gameOverlay';
 import MobileSpectatorView from '../../components/MobileSpectatorView';
 import GameService from '../../services/game.service';
 import { USERNAME_UPDATED, IS_SCALED } from '../../constants/actionTypes';
