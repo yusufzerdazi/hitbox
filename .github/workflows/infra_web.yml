@@ -33,6 +33,5 @@ jobs:
     - name: Azure CLI script
       uses: azure/CLI@v1
       with:
-        azcliversion: 2.52.0
         inlineScript: |
           az storage blob service-properties update --account-name hitbox --static-website --404-document error.html --index-document index.html
