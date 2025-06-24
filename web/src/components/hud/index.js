@@ -350,8 +350,8 @@ class GameHUD extends React.Component {
 
     renderGameTitle = () => {
         const { gameMode, countdown, lastWinner } = this.state;
-        const showCentered = countdown > 0;
         const showWinner = countdown > 60 && lastWinner;
+        const showCentered = showWinner; // Only center when showing winner
 
         // Don't render if no game mode data
         if (!gameMode.title && !showWinner) return null;
@@ -551,7 +551,7 @@ class GameHUD extends React.Component {
                         className={styles.settingsButton}
                         onClick={this.toggleSettings}
                     >
-                        ⚙️
+                        <i className="fas fa-cog"></i>
                     </button>
                 </div>
             </div>
@@ -834,7 +834,6 @@ class GameHUD extends React.Component {
                         {/* Bottom Left - Player Avatar & Stats (only when playing) */}
                         {currentPlayer && isPlaying && (
                             <div className={styles.bottomLeft}>
-                                {this.renderPlayerAvatar(currentPlayer)}
                                 <div className={styles.playerBars}>
                                     {this.renderHealthBar(currentPlayer)}
                                     {this.renderStaminaBar(currentPlayer)}

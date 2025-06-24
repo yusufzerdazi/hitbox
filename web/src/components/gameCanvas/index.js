@@ -8,7 +8,7 @@ import { RunningForward, RunningBackward, Standing, BigCollision, Collision, Spl
 import { FOLLOWING } from '../../constants/cameraTypes';
 import { PLAYERS } from '../../constants/actionTypes';
 
-const FONT = "'Roboto'";
+const FONT = "'UnitBlock'";
 const HEIGHT = 540;
 const WIDTH = 960;
 
