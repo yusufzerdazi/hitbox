@@ -293,6 +293,9 @@ class GameCanvas extends React.Component {
         if(level.durability && level.durability !== 100){
             this.ctx.globalAlpha = level.durability / 100;
         }
+        if(level.durability <= 0){
+            return;
+        }
         this.ctx.beginPath();
         Utils.roundRect(this.ctx, level.x - this.camera.x, level.y - this.camera.y, level.width, level.height, (useExistingFillStyle || ['border', 'trunk', 'house'].includes(level.type)) ? 0 : PLATFORMRADIUS, true, false);
         this.ctx.fill();
