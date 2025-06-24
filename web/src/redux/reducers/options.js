@@ -23,11 +23,6 @@ export default (state = {cameraType: FOLLOWING, playing: false, ai: 0}, action) 
                 ...state,
                 ai: state.ai - 1
             }
-        case IS_SCALED:
-            return {
-                ...state,
-                isScaled: action.isScaled
-            };
         default:
             return state;
     }

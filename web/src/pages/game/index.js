@@ -20,10 +20,6 @@ const mapDispatchToProps = dispatch => ({
         type: USERNAME_UPDATED,
         name: x
     }),
-    isScaled: x => dispatch({
-        type: IS_SCALED,
-        isScaled: x
-    })
 });
 
 class Game extends React.Component {
@@ -41,7 +37,6 @@ class Game extends React.Component {
             name: null,
             ai: 0,
             avatar: null,
-            isScaled: false
         };
         this.canvasRef = React.createRef();
         this.gameService = new GameService();
@@ -86,23 +81,8 @@ class Game extends React.Component {
         }
     }
 
-    onIsScaled = (isScaled) => {
-        if (this.mounted) {
-            this.setState({ isScaled });
-            this.props.isScaled(isScaled);
-            
-            // Also update the canvas directly
-            if (this.canvasRef && this.canvasRef.current) {
-                this.canvasRef.current.setState({ isScaled });
-            }
-        }
-    }
-
     componentDidMount() {
         this.mounted = true;
-
-        // Initialize isScaled state
-        this.setState({ isScaled: false });
 
         store.subscribe(() => {
             this.getUsername();
@@ -113,7 +93,6 @@ class Game extends React.Component {
             .setMounted(true)
             .onToggleGui(this.props.toggleGui);
         
-        this.gameService.onIsScaled(this.onIsScaled);
         this.gameService.spectate(this.state.room);
 
         document.addEventListener("keydown", e => {
@@ -209,7 +188,6 @@ class Game extends React.Component {
         return (
             <>
                 <GameCanvas ref={this.canvasRef} />
-                <LoadingOverlay isVisible={!this.state.isScaled} />
                 <Gamepad
                     onA={this.jump}
                     onRT={this.boostRight}

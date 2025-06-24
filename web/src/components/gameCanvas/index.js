@@ -40,10 +40,6 @@ const mapStateToProps = state => {
 class GameCanvas extends React.Component {
     constructor(props) {
         super(props);
-        this.state = {
-            isScaled: false
-        };
-
         this.drawCollision = this.drawCollision.bind(this);
         this.drawBoost = this.drawBoost.bind(this);
         this.drawDeath = this.drawDeath.bind(this);
@@ -952,10 +948,6 @@ class GameCanvas extends React.Component {
     }
 
     drawGameMode(level, lastWinner){
-        if (!this.state.isScaled) {
-            return;
-        }
-        
         var titleFontSize = 25/this.scale;
         var subtitleFontSize = 20/this.scale;
         var centerTitle = this.countdown;

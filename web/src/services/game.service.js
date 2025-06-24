@@ -117,9 +117,6 @@ class GameService {
                 ps.playbackRate = 0.9 + i * 0.1;
             });
         });
-
-        this.onIsScaledCallback = () => {};
-
         // Track active listeners for cleanup
         this.keydownListener = null;
         this.keyupListener = null;
@@ -243,18 +240,6 @@ class GameService {
                 this.canvasRef.current.changeAvatar(avatar);
             }
         });
-
-        this.addRoomListener('isScaled', (isScaled) => {
-            if (this.mounted) {
-                this.onIsScaledCallback(isScaled);
-                this.isScaled = isScaled;
-                
-                if (this.canvasRef && this.canvasRef.current) {
-                    this.canvasRef.current.setState({ isScaled });
-                }
-            }
-        });
-
         // Add keyboard event listeners
         this.keydownListener = (e) => {
             if (e.keyCode === 68 || e.keyCode === 39) {
@@ -509,11 +494,6 @@ class GameService {
         });
     }
 
-    onIsScaled(callback) {
-        this.onIsScaledCallback = callback;
-        return this;
-    }
-
     // New method to cleanup existing listeners
     cleanupListeners() {
         // Remove document event listeners
@@ -542,10 +522,6 @@ class GameService {
     addRoomListener(message, handler) {
         this.roomListeners.set(message, handler);
         this.room.onMessage(message, handler);
-    }
-
-    isServerScaled() {
-        return this.isScaled;
     }
 }
 
