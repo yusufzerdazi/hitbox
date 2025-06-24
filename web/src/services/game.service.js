@@ -430,7 +430,7 @@ class GameService {
     quit() {
         if (this.room) {
             this.cleanupListeners();
-            if (this.canvasRef && this.canvasRef.current) {
+            if (this.canvasRef && this.canvasRef.current && typeof this.canvasRef.current.resetCamera === 'function') {
                 // Reset canvas state before leaving
                 this.canvasRef.current.resetCamera();
             }

@@ -898,9 +898,9 @@ class GameCanvas extends React.Component {
             return;
         }
         // Stamina visual effect on player still drawn on canvas
-        // if(!player.ducked && player.boostCooldown !== 0 && showGui){
-        //     this.drawPlayerStamina(player, currentPlayerWidth, currentPlayerHeight, xOffset, yOffset, name);
-        // }
+        if(!player.ducked && player.boostCooldown !== 0 && showGui){
+            this.drawPlayerStamina(player, currentPlayerWidth, currentPlayerHeight, xOffset, yOffset, name);
+        }
         this.ctx.globalAlpha = 1;
     }
 
