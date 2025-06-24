@@ -5,6 +5,7 @@ import { store } from '../../redux/store';
 import { PlayFabClient } from 'playfab-sdk';
 
 import GameCanvas from '../../components/gameCanvas';
+import GameHUD from '../../components/hud';
 import LoadingOverlay from '../../components/loadingOverlay';
 import GameService from '../../services/game.service';
 import { USERNAME_UPDATED, IS_SCALED } from '../../constants/actionTypes';
@@ -39,6 +40,7 @@ class Game extends React.Component {
             avatar: null,
         };
         this.canvasRef = React.createRef();
+        this.hudRef = React.createRef();
         this.gameService = new GameService();
     }
 
@@ -90,6 +92,7 @@ class Game extends React.Component {
         
         this.gameService
             .setCanvas(this.canvasRef)
+            .setHUD(this.hudRef)
             .setMounted(true)
             .onToggleGui(this.props.toggleGui);
         
@@ -188,6 +191,7 @@ class Game extends React.Component {
         return (
             <>
                 <GameCanvas ref={this.canvasRef} />
+                <GameHUD ref={this.hudRef} />
                 <Gamepad
                     onA={this.jump}
                     onRT={this.boostRight}

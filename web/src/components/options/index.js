@@ -218,7 +218,7 @@ class Options extends React.Component {
       <>
       { this.props.user?.loggedIn ?
       <div className={styles.footerContainer}>
-        <div className={styles.profile}>
+        <div className={styles.profile} style={{display: this.props.isPlaying ? 'none' : 'block'}}>
           <div className={styles.profileImageContainer}>
             <img alt="Avatar" className={styles.profileImage} src={this.props.user.image} />
           </div>

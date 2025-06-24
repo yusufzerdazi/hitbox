@@ -1,6 +1,6 @@
 .footerImage {
     height: 40px;
-    padding-right: 15px;
+    margin-right: 12px;
 }
 
 .footerImage:hover{
@@ -8,10 +8,18 @@
 }
 
 .footerContainer {
-    position: absolute;
-    left: 0;
-    bottom: 0;
-    margin: 15px;
-    text-align: left;
-    z-index: 3; /* Above loading overlay */
+    position: fixed;
+    bottom: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    z-index: 1100;
+    pointer-events: auto;
+}
+
+.footerContainer a {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
 }

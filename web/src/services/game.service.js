@@ -134,6 +134,11 @@ class GameService {
         return this;
     }
 
+    setHUD(hud){
+        this.hudRef = hud;
+        return this;
+    }
+
     addListeners(){
         // Clean up any existing listeners first
         this.cleanupListeners();
@@ -193,24 +198,36 @@ class GameService {
         this.addRoomListener('winner', (winner) => {
             if (this.mounted){
                 this.lastWinner = winner;
+                if (this.hudRef.current) {
+                    this.hudRef.current.updateLastWinner(winner);
+                }
             }
         });
 
         this.addRoomListener('starting', (timer) => {
             if (this.mounted){
                 this.canvasRef.current.setCountdown(timer ? timer : "");
+                if (this.hudRef.current) {
+                    this.hudRef.current.updateCountdown(timer ? timer : "");
+                }
             }
         });
 
         this.addRoomListener('gameMode', (gameMode) => {
             if(this.mounted){
                 this.canvasRef.current.setGameMode(gameMode);
+                if (this.hudRef.current) {
+                    this.hudRef.current.updateGameMode(gameMode);
+                }
             }
         });
         
         this.addRoomListener('gameCountdown', (gameCountdown) => {
             if(this.mounted){
                 this.canvasRef.current.updateGameCountdown(gameCountdown);
+                if (this.hudRef.current) {
+                    this.hudRef.current.updateGameCountdown(gameCountdown);
+                }
             }
         });
 
@@ -223,6 +240,13 @@ class GameService {
         this.addRoomListener('event', (event) => {
             if(this.mounted){
                 this.canvasRef.current.event(event);
+                if (this.hudRef.current) {
+                    this.hudRef.current.updateEvents([event]);
+                    // Handle special event types for HUD
+                    if (event.type === "goal" && event.scores) {
+                        this.hudRef.current.updateScores(event.scores);
+                    }
+                }
                 if(event.type === "death" && event.causeOfDeath === "water"){
                     this.playSound(this.splashSound);
                 }
@@ -391,6 +415,14 @@ class GameService {
             if (this.mounted && this.canvasRef.current) {
                 this.canvasRef.current.draw(newState, this.name, this.lastWinner, this.showGui);
                 this.updateRunning(newState.runningPlayers);
+                
+                // Update HUD with current player data
+                if (this.hudRef.current && this.name) {
+                    const currentPlayer = Array.from(newState.players.values()).find(p => p.name === this.name);
+                    if (currentPlayer) {
+                        this.hudRef.current.updatePlayerStats(currentPlayer);
+                    }
+                }
             }
         });
     }

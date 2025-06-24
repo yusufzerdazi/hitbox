@@ -42,10 +42,7 @@ class App extends React.Component {
               <Instructions />
             </Route>
           </Switch>
-          <div className="options" style={{display: this.state.showGui ? 'block' : 'none'}}>
-            <Scores/>
-            <Options/>
-          </div>
+          {/* Old options UI removed - now handled by HUD */}
           { this.state.showGui ? 
           <Footer/> : <></> }
         </Router>

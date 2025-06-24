@@ -152,23 +152,25 @@ class GameCanvas extends React.Component {
         
         players.filter(p => p.type !== "ball").forEach(player => this.drawPlayer(player, name, showGui));
         players.filter(p => p.type === "ball").forEach(player => this.drawBall(player));
-        if(showGui){
-            players.filter(p => p.name === name).forEach(player => {
-                this.drawPlayerScore(player);
-                this.drawPlayerStats(player);
-            });
-        }
+        // UI elements now handled by HUD component
+        // if(showGui){
+        //     players.filter(p => p.name === name).forEach(player => {
+        //         this.drawPlayerScore(player);
+        //         this.drawPlayerStats(player);
+        //     });
+        // }
 
         this.drawDeathWall(level);
         
         this.animations = this.animations.filter(c => Utils.millis() - c.animationLength < c.timestamp);
         this.animations.forEach(c => c.drawAnimation(c, c.name ? players.filter(p => p.name === c.name)[0] : undefined));
-        if(showGui){
-            this.drawGameDetails(state);
-            this.drawStartingTimer();
-            this.drawGameMode(level, lastWinner);
-            this.drawEvents();
-        }
+        // UI elements now handled by HUD component
+        // if(showGui){
+        //     this.drawGameDetails(state);
+        //     this.drawStartingTimer();
+        //     this.drawGameMode(level, lastWinner);
+        //     this.drawEvents();
+        // }
         if(players.filter(p => p.name === name).length === 0 && this.joining){
             this.drawNotification();
         }
@@ -882,6 +884,7 @@ class GameCanvas extends React.Component {
             this.drawFlag(player);
         }
         this.drawPlayerCube(player, currentPlayerWidth, currentPlayerHeight, xOffset, yOffset);
+        // Player names still drawn on canvas for now - consider moving to HUD later
         if(showGui){
             this.drawPlayerName(player, currentPlayerHeight, xOffset, yOffset);
         }
@@ -891,9 +894,10 @@ class GameCanvas extends React.Component {
             this.ctx.globalAlpha = 1;
             return;
         }
-        if(!player.ducked && player.boostCooldown !== 0 && showGui){
-            this.drawPlayerStamina(player, currentPlayerWidth, currentPlayerHeight, xOffset, yOffset, name);
-        }
+        // Stamina visual effect on player still drawn on canvas
+        // if(!player.ducked && player.boostCooldown !== 0 && showGui){
+        //     this.drawPlayerStamina(player, currentPlayerWidth, currentPlayerHeight, xOffset, yOffset, name);
+        // }
         this.ctx.globalAlpha = 1;
     }
 
