@@ -22,7 +22,11 @@ const OW = [ow1, ow2, ow4, ow5];
 
 class GameService {
     constructor(){
-        this.client = new Client(process.env.REACT_APP_SERVER);
+        this.client = new Client({
+            hostname: process.env.REACT_APP_SERVER,
+            port: 2567,
+            secure: false
+        });
         this.listener = new THREE.AudioListener();
         this.players = [];
         this.mounted = false;
