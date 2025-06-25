@@ -102,6 +102,133 @@ class GameCanvas extends React.Component {
             $this.scale = Math.min(Math.max(0.2, $this.scale - event.deltaY * 0.0005), 1.5);
             $this.ctx.setTransform($this.scale, 0, 0, $this.scale, $this.ctx.canvas.width / 2, $this.ctx.canvas.height / 2);
         }, false);
+
+        // Touch event handling for mobile
+        if (Utils.isTouchDevice()) {
+            $this.initTouchControls();
+        }
+    }
+
+    initTouchControls() {
+        const canvas = this.canvasRef.current;
+        let lastTouchDistance = 0;
+        let lastTouchCenter = { x: 0, y: 0 };
+        let lastSingleTouch = { x: 0, y: 0 };
+        let isZooming = false;
+        let isPanning = false;
+        let lastTapTime = 0;
+        let tapCount = 0;
+
+        const $this = this;
+
+        canvas.addEventListener('touchstart', function(event) {
+            event.preventDefault();
+            
+            if (event.touches.length === 1) {
+                // Check for double tap
+                const currentTime = Date.now();
+                const timeDiff = currentTime - lastTapTime;
+                
+                if (timeDiff < 300 && tapCount === 1) {
+                    // Double tap detected - reset zoom
+                    tapCount = 0;
+                    $this.scale = 1.0;
+                    $this.camera = {
+                        x: (WIDTH / 2),
+                        y: (HEIGHT / 2),
+                        xEased: 0,
+                        yEased: 0
+                    };
+                    $this.ctx.setTransform($this.scale, 0, 0, $this.scale, $this.ctx.canvas.width / 2, $this.ctx.canvas.height / 2);
+                    return;
+                } else {
+                    tapCount = 1;
+                    lastTapTime = currentTime;
+                }
+                
+                // Single touch - start panning
+                isPanning = true;
+                isZooming = false;
+                lastSingleTouch = {
+                    x: event.touches[0].clientX,
+                    y: event.touches[0].clientY
+                };
+            } else if (event.touches.length === 2) {
+                // Two touches - start pinch zoom
+                isZooming = true;
+                isPanning = false;
+                tapCount = 0; // Reset tap count when zooming
+                lastTouchDistance = Utils.getDistance(event.touches[0], event.touches[1]);
+                lastTouchCenter = Utils.getCenter(event.touches[0], event.touches[1]);
+            }
+        }, { passive: false });
+
+        canvas.addEventListener('touchmove', function(event) {
+            event.preventDefault();
+            
+            if (event.touches.length === 1 && isPanning && !isZooming) {
+                // Single touch panning
+                const currentTouch = {
+                    x: event.touches[0].clientX,
+                    y: event.touches[0].clientY
+                };
+                
+                const deltaX = currentTouch.x - lastSingleTouch.x;
+                const deltaY = currentTouch.y - lastSingleTouch.y;
+                
+                $this.camera = {
+                    x: $this.camera.x - (deltaX / $this.scale),
+                    y: $this.camera.y - (deltaY / $this.scale),
+                    xEased: $this.camera.xEased,
+                    yEased: $this.camera.yEased
+                };
+                
+                lastSingleTouch = currentTouch;
+            } else if (event.touches.length === 2 && isZooming) {
+                // Pinch zoom
+                const currentDistance = Utils.getDistance(event.touches[0], event.touches[1]);
+                const currentCenter = Utils.getCenter(event.touches[0], event.touches[1]);
+                
+                if (lastTouchDistance > 0) {
+                    const scaleChange = currentDistance / lastTouchDistance;
+                    const newScale = Math.min(Math.max(0.2, $this.scale * scaleChange), 3.0);
+                    
+                    if (newScale !== $this.scale) {
+                        $this.scale = newScale;
+                        $this.ctx.setTransform($this.scale, 0, 0, $this.scale, $this.ctx.canvas.width / 2, $this.ctx.canvas.height / 2);
+                    }
+                }
+                
+                lastTouchDistance = currentDistance;
+                lastTouchCenter = currentCenter;
+            }
+        }, { passive: false });
+
+        canvas.addEventListener('touchend', function(event) {
+            event.preventDefault();
+            
+            if (event.touches.length === 0) {
+                // All touches released
+                isPanning = false;
+                isZooming = false;
+                lastTouchDistance = 0;
+            } else if (event.touches.length === 1 && isZooming) {
+                // Switched from zoom to pan
+                isZooming = false;
+                isPanning = true;
+                lastSingleTouch = {
+                    x: event.touches[0].clientX,
+                    y: event.touches[0].clientY
+                };
+            }
+        }, { passive: false });
+
+        canvas.addEventListener('touchcancel', function(event) {
+            event.preventDefault();
+            isPanning = false;
+            isZooming = false;
+            lastTouchDistance = 0;
+        }, { passive: false });
     }
 
     analogScale(axisChange){

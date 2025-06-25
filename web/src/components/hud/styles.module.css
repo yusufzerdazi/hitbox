@@ -50,6 +50,7 @@
     display: flex;
     flex-direction: column;
     gap: 10px;
+    max-width: calc(50vw - 40px);
 }
 
 .topRight {
@@ -57,6 +58,7 @@
     top: 20px;
     right: 20px;
     width: 300px;
+    max-width: calc(50vw - 40px);
 }
 
 .bottomLeft {
@@ -99,6 +101,8 @@
     font-weight: bold;
     letter-spacing: 2px;
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+    z-index: 1002; /* Ensure centered title is above everything */
+    max-width: calc(100vw - 40px);
 }
 
 .gameTitleMain {
@@ -135,6 +139,8 @@
     padding: 20px 30px;
     letter-spacing: 2px;
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+    z-index: 1003; /* Ensure countdown is above everything */
+    max-width: calc(100vw - 40px);
 }
 
 /* Player Stats */
@@ -553,47 +559,202 @@
     margin-bottom: 0;
 }
 
-/* Responsive adjustments */
+/* Mobile and Tablet responsive adjustments */
 @media (max-width: 768px) {
     .topRight {
-        width: 250px;
+        width: calc(100vw - 20px);
+        max-width: 280px;
+        right: 10px;
+        top: 80px; /* Move events below game title */
+    }
+    
+    .topLeft {
+        top: 10px;
+        left: 10px;
+        max-width: calc(100vw - 20px);
+        z-index: 1001; /* Ensure game title is above events */
+    }
+    
+    .bottomRight {
+        bottom: 10px;
+        right: 10px;
+    }
+    
+    .bottomLeft {
+        bottom: 10px;
+        left: 10px;
     }
     
     .healthBarContainer,
     .staminaBarContainer {
-        width: 150px;
+        width: 120px;
     }
     
     .avatarIcon {
-        width: 50px;
-        height: 50px;
-        font-size: 20px;
-    }
-    
-    .gameTitleMain {
-        font-size: 20px;
-    }
-    
-    .gameTitleSub {
+        width: 40px;
+        height: 40px;
         font-size: 16px;
     }
     
+    .gameTitleMain {
+        font-size: 18px;
+    }
+    
+    .gameTitleSub {
+        font-size: 14px;
+    }
+    
     .countdownTimer {
-        font-size: 48px;
-        padding: 15px 25px;
+        font-size: 36px;
+        padding: 12px 20px;
     }
 
     .loginContainer {
-        padding: 30px 20px;
-        margin: 20px;
+        padding: 20px 15px;
+        margin: 15px;
+        max-width: calc(100vw - 30px);
     }
 
     .loginTitle {
-        font-size: 24px;
+        font-size: 20px;
     }
 
     .userInfo {
-        min-width: 160px;
+        min-width: auto;
+        padding: 8px;
+    }
+
+    .settingsButton {
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+    }
+
+    .eventsFeed {
+        max-height: 200px;
+        font-size: 14px;
+    }
+
+    .eventItem {
+        font-size: 14px;
+        padding: 6px 8px;
+    }
+
+    .gameTitle,
+    .footballScores,
+    .gameTimer {
+        font-size: 14px;
+        padding: 6px 8px;
+    }
+}
+
+/* Mobile Portrait (phones) */
+@media (max-width: 480px) {
+    .topRight {
+        width: calc(100vw - 10px);
+        max-width: none;
+        right: 5px;
+        top: 70px; /* Further adjust for smaller screens */
+    }
+    
+    .topLeft {
+        top: 5px;
+        left: 5px;
+        max-width: calc(100vw - 10px);
+        z-index: 1001;
+    }
+    
+    .bottomRight {
+        bottom: 5px;
+        right: 5px;
+    }
+    
+    .eventsFeed {
+        max-height: 150px;
+    }
+    
+    .countdownTimer {
+        font-size: 28px;
+        padding: 10px 15px;
+    }
+    
+    .gameTitleMain {
+        font-size: 16px;
+    }
+    
+    .gameTitleSub {
+        font-size: 12px;
+    }
+
+    .settingsMenu {
+        right: -5px;
+        bottom: 105%;
+        min-width: 120px;
+        font-size: 14px;
+    }
+
+    .settingOption {
+        font-size: 14px;
+        padding: 6px 8px;
+    }
+
+    .modalContainer {
+        margin: 10px;
+        max-width: calc(100vw - 20px);
+        max-height: calc(100vh - 20px);
+    }
+
+    .modalHeader h2 {
+        font-size: 18px;
+    }
+
+    .modalContent {
+        padding: 15px;
+    }
+
+    .leaderboardHeader,
+    .leaderboardRow {
+        grid-template-columns: 40px 1fr 50px 50px 50px 50px 60px;
+        gap: 3px;
+        padding: 8px 3px;
+        font-size: 12px;
+    }
+
+    .controlsGrid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .controlKey {
+        min-width: 60px;
+        font-size: 12px;
+    }
+
+    .controlAction {
+        font-size: 12px;
+    }
+}
+
+/* Touch device optimizations */
+@media (hover: none) {
+    .settingOption:hover,
+    .joinButton:hover,
+    .quitButton:hover,
+    .settingsButton:hover,
+    .playAnonymousButton:hover,
+    .modalClose:hover,
+    .leaderboardRow:hover,
+    .controlItem:hover {
+        transform: none;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Increase touch targets for mobile */
+    .settingOption,
+    .settingsButton,
+    .modalClose {
+        min-height: 44px;
+        min-width: 44px;
     }
 }
 

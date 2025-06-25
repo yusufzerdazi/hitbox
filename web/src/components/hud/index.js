@@ -103,8 +103,13 @@ class GameHUD extends React.Component {
     }
 
     componentDidMount() {
-        // Setup Google Sign-In if user is not logged in
-        if (!this.props.user?.loggedIn) {
+        const isMobile = Utils.isMobile();
+        
+        // Skip login setup for mobile users - they go straight to spectator mode
+        if (isMobile && !this.props.user?.loggedIn) {
+            this.handlePlayAnonymously();
+        } else if (!this.props.user?.loggedIn) {
+            // Setup Google Sign-In for desktop users only
             setTimeout(() => {
                 if (window.gapi?.signin2) {
                     window.gapi.signin2.render('hud-g-signin2', {
@@ -385,8 +390,14 @@ class GameHUD extends React.Component {
     }
 
     renderEvents = () => {
-        const { events } = this.state;
+        const { events, countdown } = this.state;
         const visibleEvents = events.slice(0, 10);
+        const isMobile = Utils.isMobile();
+        
+        // Hide events on mobile during countdown to prevent clashing
+        if (isMobile && countdown) {
+            return null;
+        }
 
         return (
             <div className={styles.eventsFeed}>
@@ -515,37 +526,43 @@ class GameHUD extends React.Component {
     renderUserInfo = () => {
         const { user, isPlaying } = this.props;
         const { rank } = this.state;
+        const isMobile = Utils.isMobile();
 
         if (!user?.loggedIn) return null;
 
         return (
             <div className={styles.userInfo}>
-                <div className={styles.userProfile}>
-                    <img 
-                        src={user.image} 
-                        alt="Avatar" 
-                        className={styles.userAvatar}
-                    />
-                    <div className={styles.userDetails}>
-                        <div className={styles.userName}>{user.name}</div>
-                        <div className={styles.userRank}>Rank: {rank || '?'}</div>
+                {!isMobile && (
+                    <div className={styles.userProfile}>
+                        <img 
+                            src={user.image} 
+                            alt="Avatar" 
+                            className={styles.userAvatar}
+                        />
+                        <div className={styles.userDetails}>
+                            <div className={styles.userName}>{user.name}</div>
+                            <div className={styles.userRank}>Rank: {rank || '?'}</div>
+                        </div>
                     </div>
-                </div>
+                )}
                 <div className={styles.userActions}>
-                    {isPlaying ? (
-                        <button 
-                            className={styles.quitButton}
-                            onClick={this.handleQuitGame}
-                        >
-                            Quit Game
-                        </button>
-                    ) : (
-                        <button 
-                            className={styles.joinButton}
-                            onClick={this.handleJoinGame}
-                        >
-                            Join Game
-                        </button>
+                    {/* Hide join/quit buttons on mobile since game isn't playable */}
+                    {!isMobile && (
+                        isPlaying ? (
+                            <button 
+                                className={styles.quitButton}
+                                onClick={this.handleQuitGame}
+                            >
+                                Quit Game
+                            </button>
+                        ) : (
+                            <button 
+                                className={styles.joinButton}
+                                onClick={this.handleJoinGame}
+                            >
+                                Join Game
+                            </button>
+                        )
                     )}
                     <button 
                         className={styles.settingsButton}
@@ -560,16 +577,11 @@ class GameHUD extends React.Component {
 
     renderSettingsMenu = () => {
         if (!this.state.showSettingsMenu) return null;
+        const isMobile = Utils.isMobile();
 
         return (
             <div className={styles.settingsMenu}>
-                <div className={styles.settingsTitle}>Settings</div>
-                <button 
-                    className={styles.settingOption}
-                    onClick={this.toggleCamera}
-                >
-                    Camera: {this.props.cameraType}
-                </button>
+                <div className={styles.settingsTitle}>{isMobile ? 'Spectator' : 'Settings'}</div>
                 <button 
                     className={styles.settingOption}
                     onClick={this.showLeaderboard}
@@ -580,20 +592,30 @@ class GameHUD extends React.Component {
                     className={styles.settingOption}
                     onClick={this.showControls}
                 >
-                    Controls
+                    {isMobile ? 'Touch Controls' : 'Controls'}
                 </button>
-                <button 
-                    className={styles.settingOption}
-                    onClick={this.showAvatarSelection}
-                >
-                    Change Avatar
-                </button>
-                <button 
-                    className={styles.settingOption}
-                    onClick={this.showNameChange}
-                >
-                    Change Name
-                </button>
+                {!isMobile && (
+                    <>
+                        <button 
+                            className={styles.settingOption}
+                            onClick={this.toggleCamera}
+                        >
+                            Camera: {this.props.cameraType}
+                        </button>
+                        <button 
+                            className={styles.settingOption}
+                            onClick={this.showAvatarSelection}
+                        >
+                            Change Avatar
+                        </button>
+                        <button 
+                            className={styles.settingOption}
+                            onClick={this.showNameChange}
+                        >
+                            Change Name
+                        </button>
+                    </>
+                )}
             </div>
         );
     }
@@ -648,82 +670,117 @@ class GameHUD extends React.Component {
 
     renderControlsModal = () => {
         if (!this.state.showControls) return null;
+        const isMobile = Utils.isMobile();
         
         return (
             <div className={styles.modalOverlay} onClick={this.hideAllModals}>
                 <div className={styles.modalContainer} onClick={e => e.stopPropagation()}>
                     <div className={styles.modalHeader}>
-                        <h2>Game Controls</h2>
+                        <h2>{isMobile ? 'Touch Controls' : 'Game Controls'}</h2>
                         <button className={styles.modalClose} onClick={this.hideAllModals}>×</button>
                     </div>
                     <div className={styles.modalContent}>
                         <div className={styles.controlsContainer}>
-                            <div className={styles.gameDescription}>
-                                <h3>How to Play</h3>
-                                <p>
-                                    The aim is to eliminate other players by colliding with them at high speed. 
-                                    Faster collisions deal more damage. Use boost strategically but watch your stamina. 
-                                    Crouching makes you invulnerable to horizontal attacks but you can't move.
-                                </p>
-                            </div>
-                            
-                            <div className={styles.controlsGrid}>
-                                <div className={styles.controlsSection}>
-                                    <h3>Keyboard Controls</h3>
-                                    <div className={styles.controlsList}>
-                                        <div className={styles.controlItem}>
-                                            <span className={styles.controlKey}>Space / W</span>
-                                            <span className={styles.controlAction}>Jump</span>
-                                        </div>
-                                        <div className={styles.controlItem}>
-                                            <span className={styles.controlKey}>A / Double tap</span>
-                                            <span className={styles.controlAction}>Move Left / Boost Left</span>
-                                        </div>
-                                        <div className={styles.controlItem}>
-                                            <span className={styles.controlKey}>D / Double tap</span>
-                                            <span className={styles.controlAction}>Move Right / Boost Right</span>
-                                        </div>
-                                        <div className={styles.controlItem}>
-                                            <span className={styles.controlKey}>S</span>
-                                            <span className={styles.controlAction}>Crouch / Pound</span>
-                                        </div>
-                                        <div className={styles.controlItem}>
-                                            <span className={styles.controlKey}>Scroll Wheel</span>
-                                            <span className={styles.controlAction}>Zoom Camera</span>
+                            {isMobile ? (
+                                <>
+                                    <div className={styles.gameDescription}>
+                                        <h3>Spectator Mode</h3>
+                                        <p>
+                                            Watch the action! Use touch controls to navigate around the game area and zoom in on the action.
+                                            The game is not playable on mobile, but you can spectate and enjoy watching other players battle.
+                                        </p>
+                                    </div>
+                                    
+                                    <div className={styles.controlsGrid}>
+                                        <div className={styles.controlsSection}>
+                                            <h3>Touch Controls</h3>
+                                            <div className={styles.controlsList}>
+                                                <div className={styles.controlItem}>
+                                                    <span className={styles.controlKey}>Single Touch</span>
+                                                    <span className={styles.controlAction}>Pan Camera</span>
+                                                </div>
+                                                <div className={styles.controlItem}>
+                                                    <span className={styles.controlKey}>Pinch Zoom</span>
+                                                    <span className={styles.controlAction}>Zoom In/Out</span>
+                                                </div>
+                                                <div className={styles.controlItem}>
+                                                    <span className={styles.controlKey}>Double Tap</span>
+                                                    <span className={styles.controlAction}>Reset Zoom</span>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                                
-                                <div className={styles.controlsSection}>
-                                    <h3>Controller</h3>
-                                    <div className={styles.controlsList}>
-                                        <div className={styles.controlItem}>
-                                            <span className={styles.controlKey}>Left Analog</span>
-                                            <span className={styles.controlAction}>Move</span>
+                                </>
+                            ) : (
+                                <>
+                                    <div className={styles.gameDescription}>
+                                        <h3>How to Play</h3>
+                                        <p>
+                                            The aim is to eliminate other players by colliding with them at high speed. 
+                                            Faster collisions deal more damage. Use boost strategically but watch your stamina. 
+                                            Crouching makes you invulnerable to horizontal attacks but you can't move.
+                                        </p>
+                                    </div>
+                                    
+                                    <div className={styles.controlsGrid}>
+                                        <div className={styles.controlsSection}>
+                                            <h3>Keyboard Controls</h3>
+                                            <div className={styles.controlsList}>
+                                                <div className={styles.controlItem}>
+                                                    <span className={styles.controlKey}>Space / W</span>
+                                                    <span className={styles.controlAction}>Jump</span>
+                                                </div>
+                                                <div className={styles.controlItem}>
+                                                    <span className={styles.controlKey}>A / Double tap</span>
+                                                    <span className={styles.controlAction}>Move Left / Boost Left</span>
+                                                </div>
+                                                <div className={styles.controlItem}>
+                                                    <span className={styles.controlKey}>D / Double tap</span>
+                                                    <span className={styles.controlAction}>Move Right / Boost Right</span>
+                                                </div>
+                                                <div className={styles.controlItem}>
+                                                    <span className={styles.controlKey}>S</span>
+                                                    <span className={styles.controlAction}>Crouch / Pound</span>
+                                                </div>
+                                                <div className={styles.controlItem}>
+                                                    <span className={styles.controlKey}>Scroll Wheel</span>
+                                                    <span className={styles.controlAction}>Zoom Camera</span>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div className={styles.controlItem}>
-                                            <span className={styles.controlKey}>A</span>
-                                            <span className={styles.controlAction}>Jump</span>
-                                        </div>
-                                        <div className={styles.controlItem}>
-                                            <span className={styles.controlKey}>X</span>
-                                            <span className={styles.controlAction}>Crouch / Pound</span>
-                                        </div>
-                                        <div className={styles.controlItem}>
-                                            <span className={styles.controlKey}>RB / RT</span>
-                                            <span className={styles.controlAction}>Boost Right</span>
-                                        </div>
-                                        <div className={styles.controlItem}>
-                                            <span className={styles.controlKey}>LB / LT</span>
-                                            <span className={styles.controlAction}>Boost Left</span>
-                                        </div>
-                                        <div className={styles.controlItem}>
-                                            <span className={styles.controlKey}>Right Analog</span>
-                                            <span className={styles.controlAction}>Zoom Camera</span>
+                                        
+                                        <div className={styles.controlsSection}>
+                                            <h3>Controller</h3>
+                                            <div className={styles.controlsList}>
+                                                <div className={styles.controlItem}>
+                                                    <span className={styles.controlKey}>Left Analog</span>
+                                                    <span className={styles.controlAction}>Move</span>
+                                                </div>
+                                                <div className={styles.controlItem}>
+                                                    <span className={styles.controlKey}>A</span>
+                                                    <span className={styles.controlAction}>Jump</span>
+                                                </div>
+                                                <div className={styles.controlItem}>
+                                                    <span className={styles.controlKey}>X</span>
+                                                    <span className={styles.controlAction}>Crouch / Pound</span>
+                                                </div>
+                                                <div className={styles.controlItem}>
+                                                    <span className={styles.controlKey}>RB / RT</span>
+                                                    <span className={styles.controlAction}>Boost Right</span>
+                                                </div>
+                                                <div className={styles.controlItem}>
+                                                    <span className={styles.controlKey}>LB / LT</span>
+                                                    <span className={styles.controlAction}>Boost Left</span>
+                                                </div>
+                                                <div className={styles.controlItem}>
+                                                    <span className={styles.controlKey}>Right Analog</span>
+                                                    <span className={styles.controlAction}>Zoom Camera</span>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            </div>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -814,11 +871,11 @@ class GameHUD extends React.Component {
 
         return (
             <div className={styles.hudContainer}>
-                {/* Login Screen for non-logged-in users */}
-                {!user?.loggedIn && this.renderLoginScreen()}
+                {/* Login Screen for desktop non-logged-in users only */}
+                {!user?.loggedIn && !Utils.isMobile() && this.renderLoginScreen()}
 
-                {/* Main Game HUD - only show when logged in */}
-                {user?.loggedIn && (
+                {/* Main Game HUD - show when logged in OR on mobile */}
+                {(user?.loggedIn || Utils.isMobile()) && (
                     <>
                         {/* Top Left - Game Info */}
                         <div className={styles.topLeft}>
@@ -831,8 +888,8 @@ class GameHUD extends React.Component {
                             {this.renderEvents()}
                         </div>
 
-                        {/* Bottom Left - Player Avatar & Stats (only when playing) */}
-                        {currentPlayer && isPlaying && (
+                        {/* Bottom Left - Player Avatar & Stats (only when playing and not mobile) */}
+                        {currentPlayer && isPlaying && !Utils.isMobile() && (
                             <div className={styles.bottomLeft}>
                                 <div className={styles.playerBars}>
                                     {this.renderHealthBar(currentPlayer)}
