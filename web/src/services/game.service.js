@@ -25,8 +25,7 @@ class GameService {
         this.client = new Client({
             hostname: process.env.REACT_APP_SERVER,
             port: 2567,
-            secure: false,
-            tls: false
+            secure: true
         });
         this.listener = new THREE.AudioListener();
         this.players = [];
