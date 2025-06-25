@@ -25,7 +25,8 @@ class GameService {
         this.client = new Client({
             hostname: process.env.REACT_APP_SERVER,
             port: 2567,
-            secure: false
+            secure: false,
+            tls: false
         });
         this.listener = new THREE.AudioListener();
         this.players = [];
@@ -411,6 +412,7 @@ class GameService {
             gameMode: urlParams.get('gameMode'), 
             map: urlParams.get('map'),
             room: urlParams.get('room')
+
         });
 
         this.addListeners();
