@@ -6,6 +6,7 @@ import styles from './styles.module.css';
 import { LOG_IN, PLAYING, USERNAME_UPDATED, IMAGE_UPDATED, CAMERA } from '../../constants/actionTypes';
 import { FOLLOWING, DRAG } from '../../constants/cameraTypes';
 import Avatars from '../avatars';
+import MobileControls from '../mobileControls/MobileControls';
 
 const mapStateToProps = state => ({
     players: state.stats.players,
@@ -41,10 +42,15 @@ class GameHUD extends React.Component {
             newUsername: '',
             rank: null,
             leaderboardData: [],
-            loadingLeaderboard: false
+            loadingLeaderboard: false,
+            isLandscape: Utils.isLandscape()
         };
         
         this.bindMethods();
+    }
+
+    setGameService = (gameService) => {
+        this.gameService = gameService;
     }
 
     updatePlayerStats = (stats) => {
@@ -105,11 +111,8 @@ class GameHUD extends React.Component {
     componentDidMount() {
         const isMobile = Utils.isMobile();
         
-        // Skip login setup for mobile users - they go straight to spectator mode
-        if (isMobile && !this.props.user?.loggedIn) {
-            this.handlePlayAnonymously();
-        } else if (!this.props.user?.loggedIn) {
-            // Setup Google Sign-In for desktop users only
+        // Setup Google Sign-In for all users (mobile and desktop)
+        if (!this.props.user?.loggedIn) {
             setTimeout(() => {
                 if (window.gapi?.signin2) {
                     window.gapi.signin2.render('hud-g-signin2', {
@@ -127,6 +130,15 @@ class GameHUD extends React.Component {
             this.updatePlayerRank();
         }
 
+        // Setup orientation change listener for mobile
+        if (isMobile) {
+            this.handleOrientationChange = () => {
+                this.setState({ isLandscape: Utils.isLandscape() });
+            };
+            window.addEventListener('orientationchange', this.handleOrientationChange);
+            window.addEventListener('resize', this.handleOrientationChange);
+        }
+
         // Setup event expiration cleanup
         this.eventCleanupInterval = setInterval(() => {
             this.cleanupExpiredEvents();
@@ -136,6 +148,12 @@ class GameHUD extends React.Component {
     componentWillUnmount() {
         if (this.eventCleanupInterval) {
             clearInterval(this.eventCleanupInterval);
+        }
+        
+        // Clean up orientation listeners
+        if (this.handleOrientationChange) {
+            window.removeEventListener('orientationchange', this.handleOrientationChange);
+            window.removeEventListener('resize', this.handleOrientationChange);
         }
     }
 
@@ -202,7 +220,12 @@ class GameHUD extends React.Component {
                     PlayFabId: response.data.PlayFabId
                 }, (userError, userResponse) => {
                     if (userResponse) {
-                        this.props.logIn(userResponse.data.PlayerProfile);
+                        const profile = userResponse.data.PlayerProfile;
+                        // Ensure anonymous users have a display name
+                        if (!profile.DisplayName) {
+                            profile.DisplayName = `Player${Math.floor(Math.random() * 9999)}`;
+                        }
+                        this.props.logIn(profile);
                         this.updatePlayerRank();
                     }
                 });
@@ -211,6 +234,8 @@ class GameHUD extends React.Component {
     }
 
     handleJoinGame = () => {
+        console.log('Join game clicked'); // Debug log
+        console.log('Current user:', this.props.user); // Debug user state
         this.props.setPlaying(true);
     }
 
@@ -355,7 +380,7 @@ class GameHUD extends React.Component {
 
     renderGameTitle = () => {
         const { gameMode, countdown, lastWinner } = this.state;
-        const showWinner = countdown > 60 && lastWinner;
+        const showWinner = countdown > 80 && lastWinner; // Increased threshold for winner display
         const showCentered = showWinner; // Only center when showing winner
 
         // Don't render if no game mode data
@@ -364,7 +389,10 @@ class GameHUD extends React.Component {
         return (
             <div className={showCentered ? styles.gameTitleCentered : styles.gameTitle}>
                 {showWinner ? (
-                    <div className={styles.winnerText}>{lastWinner.name} won!</div>
+                    <>
+                        <div className={styles.winnerText}>{lastWinner.name} won!</div>
+                        {this.renderGameCountdown()}
+                    </>
                 ) : (
                     <>
                         <div className={styles.gameTitleMain}>{gameMode.title || 'Game'}</div>
@@ -375,9 +403,27 @@ class GameHUD extends React.Component {
         );
     }
 
+    renderGameCountdown = () => {
+        const { gameMode, gameCountdown } = this.state;
+        
+        if (gameMode.title === "Tag" && gameCountdown) {
+            return (
+                <div className={styles.gameCountdownText}>
+                    Time: {(gameCountdown / 60).toFixed(2)}
+                </div>
+            );
+        }
+        
+        return null;
+    }
+
     renderCountdown = () => {
-        const { countdown } = this.state;
+        const { countdown, lastWinner } = this.state;
         if (!countdown) return null;
+
+        // Don't show countdown if winner is being displayed (adds delay)
+        const showWinner = countdown > 80 && lastWinner;
+        if (showWinner) return null;
 
         const timerText = Math.round(countdown / 20);
         const displayText = timerText === 0 ? "Go!" : timerText;
@@ -391,11 +437,12 @@ class GameHUD extends React.Component {
 
     renderEvents = () => {
         const { events, countdown } = this.state;
+        const { isPlaying } = this.props;
         const visibleEvents = events.slice(0, 10);
         const isMobile = Utils.isMobile();
         
-        // Hide events on mobile during countdown to prevent clashing
-        if (isMobile && countdown) {
+        // Hide events on mobile during countdown or when playing to prevent clashing with controls
+        if (isMobile && (countdown || isPlaying)) {
             return null;
         }
 
@@ -503,6 +550,20 @@ class GameHUD extends React.Component {
         return null;
     }
 
+    renderRotationPrompt = () => {
+        return (
+            <div className={styles.rotationOverlay}>
+                <div className={styles.rotationContainer}>
+                    <div className={styles.rotationIcon}>📱 ↻</div>
+                    <div className={styles.rotationTitle}>Please Rotate Your Device</div>
+                    <div className={styles.rotationMessage}>
+                        For the best gaming experience, please rotate your device to landscape mode.
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     renderLoginScreen = () => {
         return (
             <div className={styles.loginOverlay}>
@@ -546,23 +607,20 @@ class GameHUD extends React.Component {
                     </div>
                 )}
                 <div className={styles.userActions}>
-                    {/* Hide join/quit buttons on mobile since game isn't playable */}
-                    {!isMobile && (
-                        isPlaying ? (
-                            <button 
-                                className={styles.quitButton}
-                                onClick={this.handleQuitGame}
-                            >
-                                Quit Game
-                            </button>
-                        ) : (
-                            <button 
-                                className={styles.joinButton}
-                                onClick={this.handleJoinGame}
-                            >
-                                Join Game
-                            </button>
-                        )
+                    {isPlaying ? (
+                        <button 
+                            className={styles.quitButton}
+                            onClick={this.handleQuitGame}
+                        >
+                            {isMobile ? 'Quit' : 'Quit Game'}
+                        </button>
+                    ) : (
+                        <button 
+                            className={styles.joinButton}
+                            onClick={this.handleJoinGame}
+                        >
+                            {isMobile ? 'Play' : 'Join Game'}
+                        </button>
                     )}
                     <button 
                         className={styles.settingsButton}
@@ -581,7 +639,7 @@ class GameHUD extends React.Component {
 
         return (
             <div className={styles.settingsMenu}>
-                <div className={styles.settingsTitle}>{isMobile ? 'Spectator' : 'Settings'}</div>
+                <div className={styles.settingsTitle}>Settings</div>
                 <button 
                     className={styles.settingOption}
                     onClick={this.showLeaderboard}
@@ -616,6 +674,32 @@ class GameHUD extends React.Component {
                         </button>
                     </>
                 )}
+                
+                {/* Info Panel */}
+                <div className={styles.settingsDivider}></div>
+                <div className={styles.infoPanel}>
+                    <div className={styles.infoPanelTitle}>Info</div>
+                    <div className={styles.infoButtons}>
+                        <a 
+                            href="https://yusuf.zerdazi.com" 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className={styles.infoButton}
+                        >
+                            <img src="/yz.svg" alt="Website" className={styles.infoButtonIcon} />
+                            Website
+                        </a>
+                        <a 
+                            href="https://www.buymeacoffee.com/yusufzerdazi" 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className={styles.infoButton}
+                        >
+                            <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Coffee" className={styles.infoButtonIcon} />
+                            Buy Me A Coffee
+                        </a>
+                    </div>
+                </div>
             </div>
         );
     }
@@ -684,16 +768,42 @@ class GameHUD extends React.Component {
                             {isMobile ? (
                                 <>
                                     <div className={styles.gameDescription}>
-                                        <h3>Spectator Mode</h3>
+                                        <h3>Mobile Controls</h3>
                                         <p>
-                                            Watch the action! Use touch controls to navigate around the game area and zoom in on the action.
-                                            The game is not playable on mobile, but you can spectate and enjoy watching other players battle.
+                                            Use touch controls to play! The analog stick controls movement, the jump button makes you jump, 
+                                            and the swipe button can be swiped in different directions for boost and crouch actions.
                                         </p>
                                     </div>
                                     
                                     <div className={styles.controlsGrid}>
                                         <div className={styles.controlsSection}>
-                                            <h3>Touch Controls</h3>
+                                            <h3>Game Controls</h3>
+                                            <div className={styles.controlsList}>
+                                                <div className={styles.controlItem}>
+                                                    <span className={styles.controlKey}>Analog Stick</span>
+                                                    <span className={styles.controlAction}>Move Left/Right</span>
+                                                </div>
+                                                <div className={styles.controlItem}>
+                                                    <span className={styles.controlKey}>Jump Button</span>
+                                                    <span className={styles.controlAction}>Jump</span>
+                                                </div>
+                                                <div className={styles.controlItem}>
+                                                    <span className={styles.controlKey}>Swipe ←/→</span>
+                                                    <span className={styles.controlAction}>Boost Left/Right</span>
+                                                </div>
+                                                <div className={styles.controlItem}>
+                                                    <span className={styles.controlKey}>Swipe ↑</span>
+                                                    <span className={styles.controlAction}>Direction Boost</span>
+                                                </div>
+                                                <div className={styles.controlItem}>
+                                                    <span className={styles.controlKey}>Swipe ↓</span>
+                                                    <span className={styles.controlAction}>Crouch</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className={styles.controlsSection}>
+                                            <h3>Camera Controls</h3>
                                             <div className={styles.controlsList}>
                                                 <div className={styles.controlItem}>
                                                     <span className={styles.controlKey}>Single Touch</span>
@@ -871,11 +981,14 @@ class GameHUD extends React.Component {
 
         return (
             <div className={styles.hudContainer}>
-                {/* Login Screen for desktop non-logged-in users only */}
-                {!user?.loggedIn && !Utils.isMobile() && this.renderLoginScreen()}
+                {/* Rotation prompt for mobile portrait mode */}
+                {Utils.isMobile() && !this.state.isLandscape && this.renderRotationPrompt()}
 
-                {/* Main Game HUD - show when logged in OR on mobile */}
-                {(user?.loggedIn || Utils.isMobile()) && (
+                {/* Login Screen for non-logged-in users */}
+                {!user?.loggedIn && (!Utils.isMobile() || this.state.isLandscape) && this.renderLoginScreen()}
+
+                {/* Main Game HUD - show when logged in and in proper orientation */}
+                {user?.loggedIn && (Utils.isLandscape() || !Utils.isMobile()) && (
                     <>
                         {/* Top Left - Game Info */}
                         <div className={styles.topLeft}>
@@ -883,8 +996,14 @@ class GameHUD extends React.Component {
                             {this.renderScores()}
                         </div>
 
-                        {/* Top Right - Events Feed */}
+                        {/* Top Right - User Info & Settings */}
                         <div className={styles.topRight}>
+                            {this.renderUserInfo()}
+                            {this.renderSettingsMenu()}
+                        </div>
+
+                        {/* Top Center Right - Events Feed */}
+                        <div className={styles.topCenterRight}>
                             {this.renderEvents()}
                         </div>
 
@@ -898,15 +1017,21 @@ class GameHUD extends React.Component {
                             </div>
                         )}
 
-                        {/* Bottom Right - User Info & Controls */}
+                        {/* Bottom Right - Additional Controls (if needed) */}
                         <div className={styles.bottomRight}>
-                            {this.renderUserInfo()}
-                            {this.renderSettingsMenu()}
                         </div>
 
                         {/* Center - Countdown */}
                         {this.renderCountdown()}
                     </>
+                )}
+
+                {/* Mobile Controls - only show on mobile when playing */}
+                {Utils.isMobile() && (
+                    <MobileControls 
+                        gameService={this.gameService}
+                        isPlaying={isPlaying}
+                    />
                 )}
 
                 {/* Modals */}

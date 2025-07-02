@@ -7,7 +7,6 @@ import Game from './pages/game';
 import Leaderboard from './pages/leaderboard';
 import Instructions from './pages/instructions';
 import Options from './components/options';
-import Footer from './components/footer';
 import Scores from './components/scores';
 import { store } from './redux/store';
 
@@ -42,9 +41,7 @@ class App extends React.Component {
               <Instructions />
             </Route>
           </Switch>
-          {/* Old options UI removed - now handled by HUD */}
-          { this.state.showGui ? 
-          <Footer/> : <></> }
+          {/* Old options UI and footer removed - now handled by HUD */}
         </Router>
       </Provider>
     );

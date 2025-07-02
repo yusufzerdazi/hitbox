@@ -57,13 +57,21 @@ class Game extends React.Component {
             this.setState({name: state.logIn.user.name});
         }
         if(state.logIn?.user?.name && !this.state.playing && state.options?.playing){
+            console.log('Attempting to join game with user:', state.logIn.user); // Debug
             PlayFabClient.GetPlayerStatistics({
                 StatisticNames: ["rank"]
             }, (error, s) => {
                 var rank = s.data?.Statistics[0]?.Value || 1000;
+                console.log('Calling gameService.play with rank:', rank); // Debug
                 this.gameService.play(state.logIn.user, this.state.room, rank);
                 this.setState({playing: true, name: state.logIn.user.name});
             });
+        } else {
+            console.log('Join conditions not met:', {
+                userName: state.logIn?.user?.name,
+                currentlyPlaying: this.state.playing,
+                shouldPlay: state.options?.playing
+            }); // Debug
         }
         if(state.logIn?.user?.image && state.logIn?.user?.image !== this.avatar){
             this.setState({avatar: state.logIn?.user?.image});
@@ -105,6 +113,13 @@ class Game extends React.Component {
                 }
             }
         });
+    }
+
+    componentDidUpdate() {
+        // Pass game service to HUD for mobile controls once ref is available
+        if (this.hudRef.current && this.gameService) {
+            this.hudRef.current.setGameService(this.gameService);
+        }
     }
 
     buttonUp(buttonName) {

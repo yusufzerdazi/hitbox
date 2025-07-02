@@ -69,6 +69,12 @@ class GameCanvas extends React.Component {
 
     componentDidMount() {
         this.ctx = this.canvasRef.current.getContext("2d");
+        
+        // Set initial scale based on device type
+        if (Utils.isMobile()) {
+            this.scale = 0.3; // Start fully zoomed out on mobile
+        }
+        
         this.ctx.setTransform(this.scale, 0, 0, this.scale, this.ctx.canvas.width / 2, this.ctx.canvas.height / 2);
         this.fullScreen();
 

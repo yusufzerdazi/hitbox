@@ -1,0 +1,213 @@
+/* Mobile Controls Container */
+.mobileControlsContainer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 200px;
+    pointer-events: none;
+    z-index: 1000;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding: 20px;
+}
+
+/* Analog Stick */
+.analogStick {
+    position: relative;
+    background: rgba(255, 255, 255, 0.1);
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    pointer-events: auto;
+    touch-action: none;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.analogStickKnob {
+    position: absolute;
+    background: rgba(135, 206, 235, 0.9);
+    border: 2px solid rgba(25, 25, 112, 0.7);
+    border-radius: 50%;
+    pointer-events: none;
+    transition: background-color 0.1s;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.analogStick:active .analogStickKnob {
+    background: rgba(144, 238, 144, 0.9);
+    border-color: rgba(34, 139, 34, 0.8);
+}
+
+/* Jump Button */
+.jumpButton {
+    background: rgba(255, 218, 185, 0.9);
+    border: 3px solid rgba(210, 105, 30, 0.7);
+    border-radius: 50%;
+    pointer-events: auto;
+    touch-action: none;
+    user-select: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.1s;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.jumpButton:active,
+.jumpButton.pressed {
+    background: rgba(255, 228, 196, 0.9);
+    transform: scale(0.95);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.jumpIcon {
+    font-size: 24px;
+    font-weight: bold;
+    color: rgba(139, 69, 19, 0.9);
+    margin-bottom: 2px;
+}
+
+.jumpText {
+    font-size: 10px;
+    font-weight: bold;
+    color: rgba(139, 69, 19, 0.9);
+    font-family: 'UnitBlock', 'Courier New', monospace;
+    letter-spacing: 1px;
+}
+
+/* Swipe Button */
+.swipeButton {
+    background: rgba(221, 160, 221, 0.9);
+    border: 3px solid rgba(128, 0, 128, 0.7);
+    border-radius: 20px;
+    pointer-events: auto;
+    touch-action: none;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.1s;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    position: relative;
+}
+
+.swipeButton:active,
+.swipeButton.pressed {
+    background: rgba(238, 130, 238, 0.9);
+    transform: scale(0.95);
+}
+
+.swipeButton.dragging {
+    background: rgba(186, 85, 211, 0.9);
+    border-color: rgba(75, 0, 130, 0.8);
+}
+
+.directionIcon {
+    font-size: 32px;
+    font-weight: bold;
+    color: rgba(75, 0, 130, 0.9);
+    animation: pulseDirection 0.3s ease-in-out;
+}
+
+.swipeInstructions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.swipeArrows {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: rgba(75, 0, 130, 0.7);
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.swipeArrows > div {
+    display: flex;
+    gap: 8px;
+    margin: 2px 0;
+}
+
+.swipeArrows span {
+    display: block;
+    width: 16px;
+    text-align: center;
+}
+
+/* Control Groups */
+.leftControls {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    align-items: center;
+}
+
+.rightControls {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    align-items: center;
+}
+
+/* Animations */
+@keyframes pulseDirection {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.2);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+    .mobileControlsContainer {
+        padding: 15px;
+        height: 180px;
+    }
+    
+    .jumpIcon {
+        font-size: 20px;
+    }
+    
+    .jumpText {
+        font-size: 8px;
+    }
+    
+    .directionIcon {
+        font-size: 28px;
+    }
+    
+    .swipeArrows {
+        font-size: 10px;
+    }
+}
+
+@media (max-width: 380px) {
+    .mobileControlsContainer {
+        padding: 10px;
+        height: 160px;
+    }
+    
+    .leftControls,
+    .rightControls {
+        gap: 10px;
+    }
+}

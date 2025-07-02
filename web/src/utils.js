@@ -133,5 +133,13 @@ export default {
         x: (touch1.clientX + touch2.clientX) / 2,
         y: (touch1.clientY + touch2.clientY) / 2
       };
+    },
+
+    isLandscape() {
+      return window.innerWidth > window.innerHeight;
+    },
+
+    isPortrait() {
+      return window.innerWidth <= window.innerHeight;
     }
 }
