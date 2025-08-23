@@ -39,6 +39,5 @@ jobs:
         inlineScript: |
           az storage blob delete-batch --account-name hitbox --source '$web'
           az storage blob upload-batch --destination '$web' --account-name hitbox --source ./web/build --overwrite
-          az cdn endpoint purge -g hitbox -n hitbox --profile-name hitbox --content-paths "/*"
 
   
