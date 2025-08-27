@@ -80,13 +80,8 @@ export class GameRoom extends Room<HitboxRoomState> {
         });
 
         this.onMessage('play', async (client, request) => {
-
-            if(Array.from(this.state.players.values()).filter(p => !p.ai).length == 0){
-                this.game.gameMode.addAiPlayer();
-            } else {
-                this.removeAiPlayer();
-            }
             this.onPlay(client, request);
+            this.manageAiPlayers();
         });
 
         this.onMessage('addAi', () => {
@@ -99,7 +94,6 @@ export class GameRoom extends Room<HitboxRoomState> {
 
         this.onMessage('quit', (client) => {
             this.onQuit(client);
-            this.removeAiPlayer();
         });
 
         this.onMessage('nameChange', (client, name) => {
@@ -116,12 +110,17 @@ export class GameRoom extends Room<HitboxRoomState> {
             await this.game.gameLoop(this);
         });
 
+        // Initialize with AI players if no humans are present
+        this.manageAiPlayers();
+
     }
 
     async onLeave(client: Client, consented: boolean) {
         this.state.players.delete(client.sessionId);
         // Update player count immediately when a player leaves
         const playerCount = matchMaker.stats.local.ccu || 0;
+        // Manage AI players after a human player leaves
+        this.manageAiPlayers();
     }
 
     removeAiPlayer(){
@@ -132,6 +131,37 @@ export class GameRoom extends Room<HitboxRoomState> {
                 deleted = true;
             }
         });
+    }
+
+    manageAiPlayers() {
+        const humanCount = Array.from(this.state.players.values()).filter(p => !p.ai).length;
+        
+        let targetAiCount = 0;
+        
+        if (humanCount === 0) {
+            targetAiCount = 4; // 4 AIs vs each other
+        } else if (humanCount === 1) {
+            targetAiCount = 3; // 3 AIs with 1 human
+        } else {
+            targetAiCount = 0; // No AIs when >=2 humans
+        }
+        
+        // Get current AI count
+        let currentAiCount = Array.from(this.state.players.values()).filter(p => p.ai && !p.type).length;
+        
+        console.log(`Managing AI players: ${humanCount} humans, ${currentAiCount} AIs, target: ${targetAiCount}`);
+        
+        // Remove excess AI players
+        while (currentAiCount > targetAiCount) {
+            this.removeAiPlayer();
+            currentAiCount--;
+        }
+        
+        // Add missing AI players
+        while (currentAiCount < targetAiCount) {
+            this.game.gameMode.addAiPlayer();
+            currentAiCount++;
+        }
     }
 
     onPlay(client: Client, options: any){
@@ -150,5 +180,7 @@ export class GameRoom extends Room<HitboxRoomState> {
 
     onQuit(client: Client){
         this.state.players.delete(client.sessionId);
+        // Manage AI players after a human player quits
+        this.manageAiPlayers();
     }
 }
