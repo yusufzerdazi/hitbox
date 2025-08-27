@@ -107,6 +107,12 @@ class Game {
         }
     }
 
+    public initializeGameMode(roomRef: Room<HitboxRoomState, any>) {
+        if (!this.gameMode) {
+            this.gameMode = this.randomGameMode(roomRef);
+        }
+    }
+
     async gameLoop(roomRef: Room<HitboxRoomState>){
         if(this.ending){
             return;

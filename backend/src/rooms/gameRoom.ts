@@ -48,6 +48,8 @@ export class GameRoom extends Room<HitboxRoomState> {
                 }
             });
         }
+        // Initialize the game mode before managing AI players
+        this.game.initializeGameMode(this);
         
         this.onMessage('right', (client, request) => {
             if(this.state.players.get(client.sessionId))
@@ -134,6 +136,12 @@ export class GameRoom extends Room<HitboxRoomState> {
     }
 
     manageAiPlayers() {
+        // Safety check: ensure game mode is initialized
+        if (!this.game || !this.game.gameMode) {
+            console.log('Game mode not initialized yet, skipping AI management');
+            return;
+        }
+
         const humanCount = Array.from(this.state.players.values()).filter(p => !p.ai).length;
         
         let targetAiCount = 0;
