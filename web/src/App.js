@@ -6,8 +6,8 @@ import React from 'react';
 import Game from './pages/game';
 import Leaderboard from './pages/leaderboard';
 import Instructions from './pages/instructions';
-import Options from './components/options';
-import Scores from './components/scores';
+
+
 import { store } from './redux/store';
 
 import 'bootstrap/dist/css/bootstrap.min.css';

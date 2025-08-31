@@ -3,10 +3,11 @@ import { connect } from 'react-redux';
 import { PlayFabClient } from 'playfab-sdk';
 import Utils from '../../utils';
 import styles from './styles.module.css';
-import { LOG_IN, PLAYING, USERNAME_UPDATED, IMAGE_UPDATED, CAMERA } from '../../constants/actionTypes';
+import { LOG_IN, PLAYING, USERNAME_UPDATED, IMAGE_UPDATED, CAMERA, ADDAI, REMOVEAI } from '../../constants/actionTypes';
 import { FOLLOWING, DRAG } from '../../constants/cameraTypes';
 import Avatars from '../avatars';
 import MobileControls from '../mobileControls/MobileControls';
+import beer from '../../assets/images/beer.png';
 
 const mapStateToProps = state => ({
     players: state.stats.players,
@@ -20,7 +21,9 @@ const mapDispatchToProps = dispatch => ({
     updateName: x => dispatch({ type: USERNAME_UPDATED, name: x }),
     updateImage: x => dispatch({ type: IMAGE_UPDATED, image: x }),
     setPlaying: x => dispatch({ type: PLAYING, playing: x }),
-    setCamera: x => dispatch({ type: CAMERA, cameraType: x })
+    setCamera: x => dispatch({ type: CAMERA, cameraType: x }),
+    addAI: x => dispatch({ type: ADDAI }),
+    removeAI: x => dispatch({ type: REMOVEAI })
 });
 
 class GameHUD extends React.Component {
@@ -106,6 +109,7 @@ class GameHUD extends React.Component {
         this.showAvatarSelection = this.showAvatarSelection.bind(this);
         this.showNameChange = this.showNameChange.bind(this);
         this.hideAllModals = this.hideAllModals.bind(this);
+        this.createPrivateRoom = this.createPrivateRoom.bind(this);
     }
 
     componentDidMount() {
@@ -672,6 +676,29 @@ class GameHUD extends React.Component {
                         >
                             Change Name
                         </button>
+                        <button 
+                            className={styles.settingOption}
+                            onClick={this.createPrivateRoom}
+                        >
+                            Create Private Room
+                        </button>
+                        {this.props.user?.name === "yusuf" || this.props.user?.name === "intrinsion" ? (
+                            <button 
+                                className={styles.settingOption}
+                                onClick={() => this.props.addAI()}
+                            >
+                                Add AI
+                            </button>
+                        ) : null}
+                        {this.props.user?.name === "yusuf" || this.props.user?.name === "intrinsion" ? (
+                            <button 
+                                className={styles.settingOption}
+                                onClick={() => this.props.removeAI()}
+                            >
+                                Remove AI
+                            </button>
+                        ) : null}
+                        
                     </>
                 )}
                 
@@ -695,7 +722,7 @@ class GameHUD extends React.Component {
                             rel="noopener noreferrer"
                             className={styles.infoButton}
                         >
-                            <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Coffee" className={styles.infoButtonIcon} />
+                            <img src={beer} alt="Buy Coffee" className={styles.infoButtonIcon} />
                             Buy Me A Coffee
                         </a>
                     </div>
@@ -972,6 +999,10 @@ class GameHUD extends React.Component {
                 this.hideAllModals();
             }
         });
+    }
+
+    createPrivateRoom = () => {
+        window.open(`https://hitbox.online?room=${Utils.uuidv4()}`);
     }
 
     render() {
