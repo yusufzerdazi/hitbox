@@ -1,5 +1,5 @@
 export default Object.freeze({
-    ACCELERATION: 3a,
+    ACCELERATION: 3,
     BALLACCELERATION: 0.1,
     VERTICALACCELERATION: 0.4,
     TERMINAL: 30,
