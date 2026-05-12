@@ -427,13 +427,51 @@ class GameCanvas extends React.Component {
             this.ctx.globalAlpha = level.durability / 100;
         }
         if(level.durability <= 0){
+            this.ctx.restore();
+            return;
+        }
+        if(level.type === "slope"){
+            // Triangle whose hypotenuse is the walkable surface. Direction
+            // determines which corner is the peak.
+            const left = level.x - this.camera.x;
+            const right = level.x + level.width - this.camera.x;
+            const top = level.y - this.camera.y;
+            const bottom = level.y + level.height - this.camera.y;
+            this.ctx.beginPath();
+            this.ctx.moveTo(left, bottom);
+            this.ctx.lineTo(right, bottom);
+            if(level.direction === "up-left"){
+                this.ctx.lineTo(left, top);
+            } else {
+                this.ctx.lineTo(right, top);
+            }
+            this.ctx.closePath();
+            this.ctx.fill();
+            // Green strip along the walkable hypotenuse.
+            this.ctx.fillStyle = colour || "green";
+            this.ctx.beginPath();
+            const stripThickness = 30;
+            if(level.direction === "up-left"){
+                this.ctx.moveTo(right, bottom);
+                this.ctx.lineTo(left, top);
+                this.ctx.lineTo(left, top + stripThickness);
+                this.ctx.lineTo(right, bottom + stripThickness);
+            } else {
+                this.ctx.moveTo(left, bottom);
+                this.ctx.lineTo(right, top);
+                this.ctx.lineTo(right, top + stripThickness);
+                this.ctx.lineTo(left, bottom + stripThickness);
+            }
+            this.ctx.closePath();
+            this.ctx.fill();
+            this.ctx.restore();
             return;
         }
         this.ctx.beginPath();
-        Utils.roundRect(this.ctx, level.x - this.camera.x, level.y - this.camera.y, level.width, level.height, (useExistingFillStyle || ['border', 'trunk', 'house'].includes(level.type)) ? 0 : PLATFORMRADIUS, true, false);
+        Utils.roundRect(this.ctx, level.x - this.camera.x, level.y - this.camera.y, level.width, level.height, (useExistingFillStyle || ['border', 'trunk', 'house', 'hillfill'].includes(level.type)) ? 0 : PLATFORMRADIUS, true, false);
         this.ctx.fill();
 
-        if(!colour && !['trunk', 'leaves', 'goal', 'border', 'backgroundleaves', 'house', 'roof'].includes(level.type) && !useExistingFillStyle){
+        if(!colour && !['trunk', 'leaves', 'goal', 'border', 'backgroundleaves', 'house', 'roof', 'hillfill'].includes(level.type) && !useExistingFillStyle){
             this.ctx.beginPath();
             this.ctx.fillStyle = colour || "green";
             Utils.roundRect(this.ctx, level.x - 5 - this.camera.x, level.y - this.camera.y, level.width + 10, 30, 8, true, false);

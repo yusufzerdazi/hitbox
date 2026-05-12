@@ -1,5 +1,5 @@
 import Levels from '../level/levels';
-import Square from '../level/square';
+import Shape from '../level/shape';
 import { Room } from 'colyseus';
 import { HitboxRoomState } from '../rooms/schema/HitboxRoomState';
 import BattleRoyale from './battleRoyale';
@@ -18,7 +18,7 @@ class Spleef extends BattleRoyale {
         this.title = "Spleef";
     }
 
-    onLanding(platform: Square, player: Player) {
+    onLanding(platform: Shape, player: Player) {
         if(player.yVelocity > 1.5 * Constants.TERMINAL){
             platform.durability = 0;
         } else {

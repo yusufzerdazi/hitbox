@@ -3,7 +3,11 @@
     "allow": [
       "Bash(node:*)",
       "Bash(npx eslint:*)",
-      "Bash(rg:*)"
+      "Bash(rg:*)",
+      "Bash(npm install *)",
+      "Bash(npx tsc *)",
+      "Bash(npm run *)",
+      "Bash(npx ts-node *)"
     ],
     "deny": []
   }

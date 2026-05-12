@@ -12,7 +12,7 @@ class CollectTheBoxes extends GameMode {
     constructor(roomRef: Room<HitboxRoomState>){
         super(roomRef);
         this.damageEnabled = true;
-        this.possibleLevels = [Levels.Space, Levels.Complex, Levels.Towers, Levels.Island, Levels.Maze];
+        this.possibleLevels = [Levels.Space, Levels.Complex, Levels.Towers, Levels.Island, Levels.Maze, Levels.Hills, Levels.Halfpipe, Levels.Pyramid];
         this.roomRef.state.level = this.getLevel();
         this.title = "Collect the Boxes";
         this.subtitle = "First to 5!";

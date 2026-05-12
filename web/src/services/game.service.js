@@ -22,10 +22,13 @@ const OW = [ow1, ow2, ow4, ow5];
 
 class GameService {
     constructor(){
+        const rawServer = (process.env.REACT_APP_SERVER || '').trim();
+        const [hostPart, portPart] = rawServer.split(':');
+        const isLocal = !hostPart || hostPart === 'localhost' || hostPart === '127.0.0.1';
         this.client = new Client({
-            hostname: process.env.REACT_APP_SERVER,
-            secure: true,
-            port: 8443
+            hostname: hostPart || 'localhost',
+            secure: !isLocal,
+            port: portPart ? parseInt(portPart, 10) : (isLocal ? 2567 : 8443)
         });
         this.listener = new THREE.AudioListener();
         this.players = [];

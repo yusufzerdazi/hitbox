@@ -30,6 +30,7 @@
     "@colyseus/playground": "^0.15.11",
     "@colyseus/tools": "^0.15.35",
     "@types/debug": "^4.1.8",
+    "@types/matter-js": "^0.20.2",
     "applicationinsights": "^3.2.2",
     "bisonjs": "^2.0.2",
     "colyseus": "^0.15.15",
@@ -37,6 +38,7 @@
     "elo-rating": "^1.0.1",
     "eslint": "^7.32.0",
     "express": "^4.18.2",
+    "matter-js": "^0.20.0",
     "playfab-sdk": "^2.166.241122",
     "simplex-noise": "^2.4.0",
     "socket.io": "^2.5.0"

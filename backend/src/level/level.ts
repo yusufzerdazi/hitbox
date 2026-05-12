@@ -18,7 +18,14 @@ class Level extends Schema {
     constructor(name: string, platforms: ArraySchema<Shape>, spawnArea: Square, inAirBoostCooldown: number, scale: number, gravity: number = 1){
         super();
         this.name = name;
-        this.platforms = new ArraySchema<Shape>(...([] as Shape[]).concat.apply([], platforms.map(p => p instanceof Square ? [p] : (p instanceof CompositeShape ? Array.from(p.components.values()) : []))));
+        this.platforms = new ArraySchema<Shape>(
+            ...([] as Shape[]).concat.apply(
+                [],
+                platforms.map((p) =>
+                    p instanceof CompositeShape ? Array.from(p.components.values()) : [p]
+                )
+            )
+        );
         this.inAirBoostCooldown = inAirBoostCooldown;
         this.scale = scale;
         this.spawnArea = spawnArea;

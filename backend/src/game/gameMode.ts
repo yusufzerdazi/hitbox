@@ -9,6 +9,7 @@ import { Room } from "colyseus";
 import { HitboxRoomState } from "../rooms/schema/HitboxRoomState";
 import EndStatus from '../ranking/endStatus';
 import Square from '../level/square';
+import Shape from '../level/shape';
 
 const state = {
     STARTED: "started",
@@ -27,7 +28,7 @@ class GameMode {
 
     constructor(roomRef: Room<HitboxRoomState>) {
         this.state = state.STARTING;
-        this.possibleLevels = [Levels.Space, Levels.Complex, Levels.Towers, Levels.Island, Levels.Maze];
+        this.possibleLevels = [Levels.Space, Levels.Complex, Levels.Towers, Levels.Island, Levels.Maze, Levels.Hills, Levels.Halfpipe, Levels.Pyramid];
         this.roomRef = roomRef;
     }
 
@@ -99,7 +100,7 @@ class GameMode {
         
     }
 
-    onLanding(platform: Square, player: Player) {
+    onLanding(platform: Shape, player: Player) {
 
     }
 }

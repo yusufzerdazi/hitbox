@@ -1,10 +1,57 @@
 
 import Square from './square';
+import Slope from './slope';
+import Shape from './shape';
 import Constants from '../constants';
 import Level from './level';
 import { ArraySchema } from '@colyseus/schema';
 import Tree from './tree';
 import House from './house';
+
+// Build a rolling hill from a cosine profile: gentle at the foot, steep at the
+// flank, gentle at the peak. Each segment becomes a Slope; a Square is added
+// underneath any non-bottom segment so the hill reads as a solid mass rather
+// than floating triangles.
+function makeHill(
+    startX: number,
+    width: number,
+    peakHeight: number,
+    floorTop: number,
+    segments: number = 8
+): Shape[] {
+    // Fills are emitted before slopes so they render *behind* the slope's
+    // green strip — otherwise the fill would cover the strip's natural
+    // overhang past the slope's bbox.
+    const fills: Shape[] = [];
+    const slopes: Shape[] = [];
+    const points: { x: number; y: number }[] = [];
+    for (let i = 0; i <= segments; i++) {
+        const t = i / segments;
+        const x = startX + t * width;
+        const y = floorTop - peakHeight * (1 - Math.cos(2 * Math.PI * t)) / 2;
+        points.push({ x, y });
+    }
+    for (let i = 0; i < segments; i++) {
+        const a = points[i];
+        const b = points[i + 1];
+        const w = b.x - a.x;
+        if (Math.abs(a.y - b.y) < 0.5) continue;
+        if (a.y > b.y) {
+            // Going up-right: y decreases with x.
+            slopes.push(new Slope(a.x, b.y, w, a.y - b.y, "up-right"));
+            if (a.y < floorTop) {
+                fills.push(new Square(a.x, a.y, w, floorTop - a.y, "hillfill"));
+            }
+        } else {
+            // Going down-right: y increases with x.
+            slopes.push(new Slope(a.x, a.y, w, b.y - a.y, "up-left"));
+            if (b.y < floorTop) {
+                fills.push(new Square(a.x, b.y, w, floorTop - b.y, "hillfill"));
+            }
+        }
+    }
+    return [...fills, ...slopes];
+}
 
 export default {
     Basic: () => new Level("Basic", new ArraySchema<Square>(
@@ -91,11 +138,54 @@ export default {
     Mountain: () => new Level("Mountain", new ArraySchema<Square>(
         new Square(-4000, - Constants.HEIGHT, 500, 2 * Constants.HEIGHT, "goal", Constants.TEAM1),
         new Square(Constants.WIDTH + 3500, - Constants.HEIGHT, 500, 2 * Constants.HEIGHT, "goal", Constants.TEAM2),
-        new Square(-4000, Constants.HEIGHT / 2, Constants.WIDTH + 8000, Constants.HEIGHT / 2), 
-        new Square(-3000, - Constants.HEIGHT / 2, Constants.WIDTH + 6000, 3 * Constants.HEIGHT / 2), 
-        new Square(-2000, - 3 * Constants.HEIGHT / 2, Constants.WIDTH + 4000, 2 * Constants.HEIGHT), 
-        new Square(-1000, - 5 * Constants.HEIGHT / 2, Constants.WIDTH + 2000, 2 * Constants.HEIGHT), 
-        new Square(0, - 7 * Constants.HEIGHT / 2, Constants.WIDTH, 2 * Constants.HEIGHT), 
+        new Square(-4000, Constants.HEIGHT / 2, Constants.WIDTH + 8000, Constants.HEIGHT / 2),
+        new Square(-3000, - Constants.HEIGHT / 2, Constants.WIDTH + 6000, 3 * Constants.HEIGHT / 2),
+        new Square(-2000, - 3 * Constants.HEIGHT / 2, Constants.WIDTH + 4000, 2 * Constants.HEIGHT),
+        new Square(-1000, - 5 * Constants.HEIGHT / 2, Constants.WIDTH + 2000, 2 * Constants.HEIGHT),
+        new Square(0, - 7 * Constants.HEIGHT / 2, Constants.WIDTH, 2 * Constants.HEIGHT),
         new Tree(500, - 7 * Constants.HEIGHT / 2, 400, 500),
-    ), new Square(-3500, -7 * Constants.HEIGHT / 2, Constants.WIDTH + 7000, 4 * Constants.HEIGHT), 0.5, null)
+    ), new Square(-3500, -7 * Constants.HEIGHT / 2, Constants.WIDTH + 7000, 4 * Constants.HEIGHT), 0.5, null),
+    Hills: () => new Level("Hills", new ArraySchema<Shape>(
+        // Open ground floor — no border walls or roof, players fall off the sides.
+        new Square(-500, Constants.HEIGHT / 2, 5500, Constants.HEIGHT / 2),
+        // Five rolling hills with smooth cosine profiles and varied gradients.
+        ...makeHill(50, 400, 70, Constants.HEIGHT / 2, 6),       // small mound
+        ...makeHill(550, 850, 200, Constants.HEIGHT / 2, 8),     // big rolling hill
+        ...makeHill(1500, 400, 90, Constants.HEIGHT / 2, 6),     // small hill
+        ...makeHill(2050, 1200, 300, Constants.HEIGHT / 2, 10),  // tallest peak
+        ...makeHill(3400, 700, 150, Constants.HEIGHT / 2, 8),    // medium hill
+    ), new Square(-500, -1000, 5500, 1000 + Constants.HEIGHT), 0.5, null),
+    Halfpipe: () => new Level("Halfpipe", new ArraySchema<Shape>(
+        // Borders enclose the bowl
+        new Square(-2500, -1500, 500, 1500 + Constants.HEIGHT, "border"),
+        new Square(Constants.WIDTH + 2000, -1500, 500, 1500 + Constants.HEIGHT, "border"),
+        new Square(-2500, -1500, 4500 + Constants.WIDTH, 500, "border"),
+        // Flat floor in the middle
+        new Square(-200, Constants.HEIGHT / 2, Constants.WIDTH + 400, Constants.HEIGHT / 2),
+        // Visual fills below each ramp's bbox so the bowl reads as a solid
+        // mass instead of a slope floating over sky. Listed before the slopes
+        // so they render behind the green strip.
+        new Square(-2000, Constants.HEIGHT / 2, 1800, Constants.HEIGHT / 2, "hillfill"),
+        new Square(Constants.WIDTH + 200, Constants.HEIGHT / 2, 1800, Constants.HEIGHT / 2, "hillfill"),
+        // Left ramp curving up to the wall
+        new Slope(-2000, -Constants.HEIGHT / 2, 1800, Constants.HEIGHT, "up-left"),
+        // Right ramp curving up to the wall
+        new Slope(Constants.WIDTH + 200, -Constants.HEIGHT / 2, 1800, Constants.HEIGHT, "up-right"),
+    ), new Square(-2000, -1000, 4000 + Constants.WIDTH, 1000 + Constants.HEIGHT), null, null),
+    Pyramid: () => new Level("Pyramid", new ArraySchema<Shape>(
+        new Square(-1500, -1500, 500, 1500 + Constants.HEIGHT, "border"),
+        new Square(Constants.WIDTH + 1000, -1500, 500, 1500 + Constants.HEIGHT, "border"),
+        new Square(-1500, -1500, 3000 + Constants.WIDTH, 500, "border"),
+        // Ground
+        new Square(-1000, Constants.HEIGHT / 2, 2000 + Constants.WIDTH, Constants.HEIGHT / 2),
+        // Visual fill for the hollow interior between the two ramps so the
+        // pyramid reads as a solid mass. Drawn before the slopes/top platform.
+        new Square(Constants.WIDTH / 2 - 100, -200, 200, 470, "hillfill"),
+        // Left ramp of pyramid
+        new Slope(Constants.WIDTH / 2 - 600, -200, 500, 470, "up-right"),
+        // Flat top platform (high ground)
+        new Square(Constants.WIDTH / 2 - 100, -200, 200, 30),
+        // Right ramp of pyramid
+        new Slope(Constants.WIDTH / 2 + 100, -200, 500, 470, "up-left"),
+    ), new Square(-1000, -1000, 2000 + Constants.WIDTH, 1000 + Constants.HEIGHT), null, null)
 }
