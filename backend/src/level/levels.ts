@@ -17,7 +17,14 @@ function makeHill(
     width: number,
     peakHeight: number,
     floorTop: number,
-    segments: number = 8
+    segments: number = 8,
+    // "hillfill" is non-colliding (used by the open Hills map where players
+    // can walk under the rolling profile). Passing "solidfill" makes the
+    // interior a solid mass so players can't tunnel through a slope and end
+    // up trapped between the slope and the ground — needed for maps where
+    // the hill sits over a flat football/CTF arena and stuck-inside bugs
+    // were observed.
+    fillType: "hillfill" | "solidfill" = "hillfill"
 ): Shape[] {
     // Fills are emitted before slopes so they render *behind* the slope's
     // green strip — otherwise the fill would cover the strip's natural
@@ -40,13 +47,13 @@ function makeHill(
             // Going up-right: y decreases with x.
             slopes.push(new Slope(a.x, b.y, w, a.y - b.y, "up-right"));
             if (a.y < floorTop) {
-                fills.push(new Square(a.x, a.y, w, floorTop - a.y, "hillfill"));
+                fills.push(new Square(a.x, a.y, w, floorTop - a.y, fillType));
             }
         } else {
             // Going down-right: y increases with x.
             slopes.push(new Slope(a.x, a.y, w, b.y - a.y, "up-left"));
             if (b.y < floorTop) {
-                fills.push(new Square(a.x, b.y, w, floorTop - b.y, "hillfill"));
+                fills.push(new Square(a.x, b.y, w, floorTop - b.y, fillType));
             }
         }
     }
@@ -135,16 +142,111 @@ export default {
         new Square(Constants.WIDTH + 2500, - Constants.HEIGHT, 500, 2 * Constants.HEIGHT, "goal", Constants.TEAM2),
         new Square(-3000, Constants.HEIGHT / 2, Constants.WIDTH + 6000, Constants.HEIGHT / 2)
     ), new Square(-2500, -3 * Constants.HEIGHT / 2, Constants.WIDTH + 5000, 2 * Constants.HEIGHT), 0.5, null),
-    Mountain: () => new Level("Mountain", new ArraySchema<Square>(
-        new Square(-4000, - Constants.HEIGHT, 500, 2 * Constants.HEIGHT, "goal", Constants.TEAM1),
-        new Square(Constants.WIDTH + 3500, - Constants.HEIGHT, 500, 2 * Constants.HEIGHT, "goal", Constants.TEAM2),
-        new Square(-4000, Constants.HEIGHT / 2, Constants.WIDTH + 8000, Constants.HEIGHT / 2),
-        new Square(-3000, - Constants.HEIGHT / 2, Constants.WIDTH + 6000, 3 * Constants.HEIGHT / 2),
-        new Square(-2000, - 3 * Constants.HEIGHT / 2, Constants.WIDTH + 4000, 2 * Constants.HEIGHT),
-        new Square(-1000, - 5 * Constants.HEIGHT / 2, Constants.WIDTH + 2000, 2 * Constants.HEIGHT),
-        new Square(0, - 7 * Constants.HEIGHT / 2, Constants.WIDTH, 2 * Constants.HEIGHT),
-        new Tree(500, - 7 * Constants.HEIGHT / 2, 400, 500),
-    ), new Square(-3500, -7 * Constants.HEIGHT / 2, Constants.WIDTH + 7000, 4 * Constants.HEIGHT), 0.5, null),
+    FootballHills: () => {
+        // Mirror layout of Hills, fitted to the LongIsland goal positions so
+        // the field is symmetric around cx = Constants.WIDTH / 2.
+        const cx = Constants.WIDTH / 2;
+        const floor = Constants.HEIGHT / 2;
+        // symPair places a hill at (cx + innerOffset) and its mirror so each
+        // pair's peaks sit equidistant from the midline.
+        // "solidfill" makes the hill interiors collidable so a player who
+        // tunnels through a slope at boost speed doesn't end up trapped
+        // between the slope and the ground.
+        const symPair = (innerOffset: number, width: number, height: number, segments: number = 8): Shape[] => [
+            ...makeHill(cx - innerOffset - width, width, height, floor, segments, "solidfill"),
+            ...makeHill(cx + innerOffset, width, height, floor, segments, "solidfill"),
+        ];
+        return new Level("Football Hills", new ArraySchema<Shape>(
+            // Goals + ground match LongIsland so the existing spawn / camera
+            // behaviour and respawn logic carry over unchanged.
+            new Square(-3000, -Constants.HEIGHT, 500, 2 * Constants.HEIGHT, "goal", Constants.TEAM1),
+            new Square(Constants.WIDTH + 2500, -Constants.HEIGHT, 500, 2 * Constants.HEIGHT, "goal", Constants.TEAM2),
+            new Square(-3000, floor, Constants.WIDTH + 6000, Constants.HEIGHT / 2),
+            // Central peak — single hill centred on cx so it remains
+            // symmetric by itself.
+            ...makeHill(cx - 400, 800, 220, floor, 10, "solidfill"),
+            // Mid-field rolling hills, mirrored.
+            ...symPair(600, 700, 150, 8),
+            // Smaller speed bumps near the goal mouths.
+            ...symPair(1700, 500, 90, 8),
+        ), new Square(-2500, -3 * Constants.HEIGHT / 2, Constants.WIDTH + 5000, 2 * Constants.HEIGHT), 0.5, null);
+    },
+    Mountain: () => {
+        // Hand-tuned ridge profile from the summit out to the right base; we
+        // mirror it across cx for a symmetric mountain. Each entry is the
+        // distance from cx (dx) and height above ground (h). Adjacent points
+        // get connected by either a Slope (when heights differ) or a thin
+        // platform Square (when flat). Small back-and-forth in h gives the
+        // craggy "rocky outcrop" look the user wants instead of pixel steps.
+        const cx = Constants.WIDTH / 2;
+        const groundY = Constants.HEIGHT / 2;
+        const ridge = [
+            { dx: 0,    h: 2160 }, // peak
+            { dx: 240,  h: 2160 }, // peak plateau
+            { dx: 420,  h: 1820 }, // first sharp drop
+            { dx: 580,  h: 1880 }, // small upthrust (rocky outcrop)
+            { dx: 800,  h: 1540 }, // drop
+            { dx: 1020, h: 1620 }, // ledge bump
+            { dx: 1280, h: 1260 }, // drop
+            { dx: 1520, h: 1320 }, // small bump
+            { dx: 1820, h: 900 },  // big drop
+            { dx: 2160, h: 980 },  // outcrop on the way down
+            { dx: 2520, h: 560 },  // continued slope
+            { dx: 2920, h: 240 },  // foothill
+            { dx: 3480, h: 0 },    // meets ground 750u short of the goal
+        ];
+        const shapes: Shape[] = [
+            new Square(-4000, -Constants.HEIGHT, 500, 2 * Constants.HEIGHT, "goal", Constants.TEAM1),
+            new Square(Constants.WIDTH + 3500, -Constants.HEIGHT, 500, 2 * Constants.HEIGHT, "goal", Constants.TEAM2),
+            // Single wide ground plane so flag carriers always have a
+            // walkable base between the goal and the mountain.
+            new Square(-4000, groundY, Constants.WIDTH + 8000, Constants.HEIGHT / 2),
+        ];
+        // Walk consecutive ridge pairs on both halves, emitting fills first
+        // (so they render behind) and slope/platform on top.
+        const fills: Shape[] = [];
+        const tops: Shape[] = [];
+        const pushSegment = (xL: number, xR: number, yL: number, yR: number) => {
+            const w = xR - xL;
+            if (w <= 0) return;
+            const lower = Math.max(yL, yR);
+            // Solid fill from the lower endpoint down to ground so the
+            // mountain reads as a single rock mass behind the ridge line.
+            if (lower < groundY) {
+                // "solidfill" keeps the mountain interior collidable so
+                // players can't phase through a slope and end up trapped on
+                // the ground inside the mountain.
+                fills.push(new Square(xL, lower, w, groundY - lower, "solidfill"));
+            }
+            if (Math.abs(yL - yR) < 1) {
+                // Flat ledge — a thin landable platform.
+                tops.push(new Square(xL, yL, w, 30));
+            } else if (yL > yR) {
+                // Going up to the right.
+                tops.push(new Slope(xL, yR, w, yL - yR, "up-right"));
+            } else {
+                // Going down to the right.
+                tops.push(new Slope(xL, yL, w, yR - yL, "up-left"));
+            }
+        };
+        for (let i = 0; i < ridge.length - 1; i++) {
+            const a = ridge[i];
+            const b = ridge[i + 1];
+            // Right half: dx grows from a.dx to b.dx.
+            pushSegment(cx + a.dx, cx + b.dx, groundY - a.h, groundY - b.h);
+            // Left half: mirror x. The left point of the mirrored pair is
+            // the further-from-centre one (b.dx) so the segment goes from
+            // cx-b.dx to cx-a.dx, with the height *order* flipped so the
+            // ridge stays symmetric.
+            pushSegment(cx - b.dx, cx - a.dx, groundY - b.h, groundY - a.h);
+        }
+        // A single tree on the summit gives an obvious landmark and sits in
+        // the middle of the peak plateau (cx - 200 → cx + 200 at h=2160).
+        shapes.push(...fills, ...tops);
+        shapes.push(new Tree(cx - 200, groundY - 2160, 400, 500));
+        return new Level("Mountain", new ArraySchema<Shape>(...shapes),
+            new Square(-3500, -7 * Constants.HEIGHT / 2, Constants.WIDTH + 7000, 4 * Constants.HEIGHT), 0.5, null);
+    },
     Hills: () => new Level("Hills", new ArraySchema<Shape>(
         // Open ground floor — no border walls or roof, players fall off the sides.
         new Square(-500, Constants.HEIGHT / 2, 5500, Constants.HEIGHT / 2),

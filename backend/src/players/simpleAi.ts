@@ -31,14 +31,19 @@ class SimpleAi extends Player {
     move(players: Player[], serverTime: number){
         var ticks = serverTime * 60 / 1000;
         var playerId = Utils.getHashCode(this.name);
-        
+
         var playersOnLeft = 0;
         var playersOnRight = 0;
         var playersAbove = 0;
         var playersBelow = 0;
 
+        // Dead players sit at their death spot until respawn ~1s later; they
+        // shouldn't influence AI movement. Type-special entities (ball, flag,
+        // orb) stay relevant even when "not alive".
+        var livingOpponents = players.filter(p => p.alive || p.type);
+
         // Calculate how many players on right and left.
-        players.forEach(player => {
+        livingOpponents.forEach(player => {
             if(player.x > this.x){
                 playersOnRight ++;
             }
@@ -66,7 +71,7 @@ class SimpleAi extends Player {
         }
 
         // Calculate players above and below.
-        players.forEach(player => {
+        livingOpponents.forEach(player => {
             if(player.y >= this.y){
                 playersBelow ++;
             }

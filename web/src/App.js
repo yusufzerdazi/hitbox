@@ -6,6 +6,7 @@ import React from 'react';
 import Game from './pages/game';
 import Leaderboard from './pages/leaderboard';
 import Instructions from './pages/instructions';
+import Training from './pages/training';
 
 
 import { store } from './redux/store';
@@ -39,6 +40,9 @@ class App extends React.Component {
             </Route>
             <Route exact path="/instructions">
               <Instructions />
+            </Route>
+            <Route exact path="/training">
+              <Training />
             </Route>
           </Switch>
           {/* Old options UI and footer removed - now handled by HUD */}

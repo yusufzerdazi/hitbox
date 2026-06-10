@@ -15,7 +15,7 @@ class Football extends GameMode {
     constructor(roomRef: Room<HitboxRoomState>){
         super(roomRef);
         this.damageEnabled = true;
-        this.possibleLevels = [Levels.LongIsland];
+        this.possibleLevels = [Levels.LongIsland, Levels.FootballHills];
         this.roomRef.state.level = this.getLevel();
         
         this.finished = false;

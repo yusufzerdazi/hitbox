@@ -8,6 +8,8 @@ import { Room } from 'colyseus';
 import { HitboxRoomState } from '../rooms/schema/HitboxRoomState';
 import EndStatus from '../ranking/endStatus';
 import Tree from '../level/tree';
+import { loadBrainForMode } from '../ml/agents/brainLoader';
+import NeuralAi from '../ml/agents/neuralPlayer';
 
 class DeathWall extends GameMode {
     jumpDistance: number;
@@ -30,9 +32,19 @@ class DeathWall extends GameMode {
     }
 
     setModeSpecificPlayers() {
+        // See gameMode.setModeSpecificPlayers: skip the AI swap during
+        // training so the population's NeuralAi instances survive.
+        if ((this.roomRef as any).training) {
+            return;
+        }
+        const brain = loadBrainForMode(this.title);
         this.roomRef.state.players.forEach((player, clientId) => {
             if(player.ai){
-                var newAI = new RunningAi(player.colour, player.name);
+                // Always use the trained brain when available; only fall back
+                // to RunningAi when no weights are on disk yet.
+                const newAI: any = brain
+                    ? new NeuralAi(player.colour, player.name, brain, this.title)
+                    : new RunningAi(player.colour, player.name);
                 newAI.clientId = Utils.uuidv4();
                 newAI.score = player.score;
                 this.roomRef.state.players.set(clientId, newAI);

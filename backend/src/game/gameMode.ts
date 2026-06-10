@@ -10,6 +10,8 @@ import { HitboxRoomState } from "../rooms/schema/HitboxRoomState";
 import EndStatus from '../ranking/endStatus';
 import Square from '../level/square';
 import Shape from '../level/shape';
+import { tryReplaceWithNeuralAi, loadBrainForMode } from "../ml/agents/brainLoader";
+import NeuralAi from "../ml/agents/neuralPlayer";
 
 const state = {
     STARTED: "started",
@@ -39,11 +41,21 @@ class GameMode {
     }
 
     setModeSpecificPlayers() {
+        // During training the room is pre-seeded with the population's
+        // NeuralAi instances; re-rolling them here would replace the brains
+        // we want to evaluate. The real Colyseus Room never sets this flag.
+        if ((this.roomRef as any).training) {
+            return;
+        }
         this.roomRef.state.players.forEach((player, clientId) => {
             if(player.ai){
-                var newAI = Math.random() > 0.5 ? 
-                    new SimpleAi(player.colour, player.name) :
-                    new CleverAi(player.colour, player.name)
+                // Always-NeuralAi when trained weights exist for this mode;
+                // fall back to the original heuristic mix only when no weights
+                // are on disk yet (e.g. mode never trained).
+                const neural = tryReplaceWithNeuralAi(this.title, player);
+                const newAI: Player = neural || (Math.random() > 0.5
+                    ? new SimpleAi(player.colour, player.name)
+                    : new CleverAi(player.colour, player.name));
                 newAI.score = player.score;
                 newAI.clientId = player.clientId;
                 this.roomRef.state.players.set(clientId, newAI);
@@ -52,9 +64,17 @@ class GameMode {
     }
 
     addAiPlayer(){
-        var newAI = Math.random() > 1 ? 
-            new SimpleAi(Utils.randomColor(),Utils.generateName()) :
-            new CleverAi(Utils.randomColor(), Utils.generateName())
+        const brain = loadBrainForMode(this.title);
+        var newAI: Player;
+        if (brain) {
+            newAI = new NeuralAi(Utils.randomColor(), Utils.generateName(), brain, this.title);
+        } else {
+            // No trained weights for this mode yet — keep the existing
+            // heuristic so the room still has competition.
+            newAI = Math.random() > 0.5
+                ? new SimpleAi(Utils.randomColor(), Utils.generateName())
+                : new CleverAi(Utils.randomColor(), Utils.generateName());
+        }
         newAI.clientId = Utils.uuidv4();
         this.roomRef.state.players.set(newAI.clientId, newAI);
         this.onPlayerJoin();

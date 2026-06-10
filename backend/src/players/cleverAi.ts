@@ -23,8 +23,15 @@ class CleverAi extends Player {
         this.alwaysHigher = this.playerId % 2 == 0;
     }
 
+    // Dead players sit at their death position until respawn ~1s later;
+    // none of the heuristics below should consider them. Type-special
+    // entities (orb/flag/ball) stay relevant regardless of alive flag.
+    livingPlayers(players: Player[]): Player[] {
+        return players.filter(p => p.alive || p.type);
+    }
+
     duckBoostingPlayers(players: Player[]){
-        players.forEach(p => {
+        this.livingPlayers(players).forEach(p => {
             var playerMovingTowardsMe = this.x < p.x && p.xVelocity < 0 || this.x > p.x && p.xVelocity > 0;
             var playerFasterThanMe = Math.abs(p.xVelocity) > Math.abs(this.xVelocity);
             var playerCloseToMe = Math.abs(p.x - this.x) < this.xBoostDistanceThreshold && Math.abs(p.y - this.y) < this.yBoostDistanceThreshold;
@@ -42,7 +49,7 @@ class CleverAi extends Player {
     }
 
     jumpDuckingPlayers(players: Player[]){
-        players.forEach(p => {
+        this.livingPlayers(players).forEach(p => {
             if(p.ducked && this.y == Constants.PLATFORMHEIGHT){
                 this.space = true;
             }
@@ -50,7 +57,7 @@ class CleverAi extends Player {
     }
 
     poundPlayersBelow(players: Player[]){
-        players.forEach(p => {
+        this.livingPlayers(players).forEach(p => {
             var playerBelowMe = this.y < p.y;
             var playerCloseToMe = Math.abs(p.x - this.x) < 100;
 
@@ -64,8 +71,9 @@ class CleverAi extends Player {
     }
 
     followFirstPlayer(players: Player[], ticks: number){
-        var followedPlayer = players.filter(p => p.type == "orb" || p.it || ((p.type == "flag" && p.colour != this.team && p.attachedToPlayer != this.name)));
-        var followablePlayers = followedPlayer.length > 0 ? followedPlayer : players;
+        var living = this.livingPlayers(players);
+        var followedPlayer = living.filter(p => p.type == "orb" || p.it || ((p.type == "flag" && p.colour != this.team && p.attachedToPlayer != this.name)));
+        var followablePlayers = followedPlayer.length > 0 ? followedPlayer : living;
         if(followablePlayers[0] && followablePlayers[0].x < this.x){
             var playerCloseToMeVertically = Math.abs(followablePlayers[0].y - this.y) < this.yBoostDistanceThreshold;
             if(playerCloseToMeVertically || (this.y > followablePlayers[0].y && this.x > 480)){

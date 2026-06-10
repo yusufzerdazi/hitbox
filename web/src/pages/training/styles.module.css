@@ -1,0 +1,294 @@
+.container {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at top, #0a0a23 0%, #000 60%, #000 100%);
+    color: #fff;
+    font-family: 'UnitBlock', 'Courier New', 'Monaco', 'Menlo', 'Consolas', monospace;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.topBar {
+    display: flex;
+    align-items: center;
+    padding: 14px 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    gap: 24px;
+    flex-shrink: 0;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.6));
+}
+
+.title {
+    font-size: 26px;
+    letter-spacing: 4px;
+    color: #fff;
+    text-transform: uppercase;
+    text-shadow: 0 0 12px rgba(34, 211, 238, 0.6);
+}
+
+.subtitle {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.modeBar {
+    display: flex;
+    gap: 8px;
+    margin-left: auto;
+    flex-wrap: wrap;
+}
+
+.modeButton {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.7);
+    padding: 8px 14px;
+    font-family: inherit;
+    font-size: 12px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border-radius: 2px;
+}
+
+.modeButton:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.modeButton.active {
+    background: linear-gradient(135deg, #ff3864, #ff7849);
+    color: #000;
+    border-color: #ff7849;
+    box-shadow: 0 0 18px rgba(255, 56, 100, 0.6);
+}
+
+.modeGen {
+    opacity: 0.6;
+    font-size: 10px;
+    margin-left: 4px;
+}
+
+.body {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 16px;
+    padding: 16px 24px 24px;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.left {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-height: 0;
+}
+
+.right {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-height: 0;
+}
+
+.canvasFrame {
+    position: relative;
+    background: #000;
+    border: 1px solid rgba(34, 211, 238, 0.3);
+    border-radius: 4px;
+    box-shadow: 0 0 32px rgba(34, 211, 238, 0.15) inset;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.overlay {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    pointer-events: none;
+    text-shadow: 0 0 8px rgba(0, 0, 0, 0.9);
+}
+
+.bigGen {
+    font-size: 48px;
+    letter-spacing: 4px;
+    color: #fff;
+    text-shadow: 0 0 18px rgba(255, 56, 100, 0.8);
+}
+
+.bigGenLabel {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-top: 2px;
+}
+
+.statRow {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+.statCell {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 14px;
+    border-radius: 3px;
+}
+
+.statLabel {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.statValue {
+    font-size: 26px;
+    margin-top: 4px;
+    color: #fff;
+}
+
+.statValue.good {
+    color: #34d399;
+    text-shadow: 0 0 8px rgba(52, 211, 153, 0.5);
+}
+
+.statValue.bad {
+    color: #ff3864;
+    text-shadow: 0 0 8px rgba(255, 56, 100, 0.5);
+}
+
+.chartFrame {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 14px;
+    border-radius: 3px;
+    min-height: 200px;
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.chartTitle {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+
+.chart {
+    flex: 1 1 auto;
+    width: 100%;
+    min-height: 0;
+    display: block;
+}
+
+.snapshotBadge {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    background: rgba(255, 56, 100, 0.2);
+    border: 1px solid #ff3864;
+    color: #ff3864;
+    padding: 6px 12px;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    border-radius: 3px;
+    text-shadow: 0 0 8px rgba(255, 56, 100, 0.8);
+    animation: pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 12px rgba(255, 56, 100, 0.5); }
+    50% { opacity: 0.5; box-shadow: 0 0 24px rgba(255, 56, 100, 0.9); }
+}
+
+.empty {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 13px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    gap: 12px;
+    text-align: center;
+    padding: 24px;
+}
+
+.empty .big {
+    font-size: 22px;
+    color: rgba(255, 255, 255, 0.5);
+    letter-spacing: 4px;
+}
+
+.statusDot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #34d399;
+    box-shadow: 0 0 8px #34d399;
+    display: inline-block;
+    margin-right: 6px;
+    animation: blink 1.2s infinite;
+}
+
+.statusDot.off {
+    background: #6b7280;
+    box-shadow: none;
+    animation: none;
+}
+
+@keyframes blink {
+    50% { opacity: 0.3; }
+}
+
+.matchInfo {
+    position: absolute;
+    bottom: 14px;
+    left: 14px;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.flash {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(circle at center, rgba(34, 211, 238, 0.25) 0%, transparent 60%);
+    opacity: 0;
+    animation: flashIn 600ms ease-out forwards;
+}
+
+@keyframes flashIn {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+@media (max-width: 1024px) {
+    .body {
+        grid-template-columns: 1fr;
+    }
+}

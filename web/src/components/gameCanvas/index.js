@@ -468,10 +468,10 @@ class GameCanvas extends React.Component {
             return;
         }
         this.ctx.beginPath();
-        Utils.roundRect(this.ctx, level.x - this.camera.x, level.y - this.camera.y, level.width, level.height, (useExistingFillStyle || ['border', 'trunk', 'house', 'hillfill'].includes(level.type)) ? 0 : PLATFORMRADIUS, true, false);
+        Utils.roundRect(this.ctx, level.x - this.camera.x, level.y - this.camera.y, level.width, level.height, (useExistingFillStyle || ['border', 'trunk', 'house', 'hillfill', 'solidfill'].includes(level.type)) ? 0 : PLATFORMRADIUS, true, false);
         this.ctx.fill();
 
-        if(!colour && !['trunk', 'leaves', 'goal', 'border', 'backgroundleaves', 'house', 'roof', 'hillfill'].includes(level.type) && !useExistingFillStyle){
+        if(!colour && !['trunk', 'leaves', 'goal', 'border', 'backgroundleaves', 'house', 'roof', 'hillfill', 'solidfill'].includes(level.type) && !useExistingFillStyle){
             this.ctx.beginPath();
             this.ctx.fillStyle = colour || "green";
             Utils.roundRect(this.ctx, level.x - 5 - this.camera.x, level.y - this.camera.y, level.width + 10, 30, 8, true, false);
