@@ -4,6 +4,7 @@ import { PlayFabClient } from 'playfab-sdk';
 
 import React from 'react';
 import Game from './pages/game';
+import Game3D from './pages/game3d';
 import Leaderboard from './pages/leaderboard';
 import Instructions from './pages/instructions';
 
@@ -33,6 +34,9 @@ class App extends React.Component {
           <Switch>
             <Route exact path="/">
               <Game toggleGui={this.toggleGui}/>
+            </Route>
+            <Route exact path="/3d">
+              <Game3D toggleGui={this.toggleGui}/>
             </Route>
             <Route exact path="/leaderboard">
               <Leaderboard />
